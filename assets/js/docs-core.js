@@ -12,6 +12,14 @@
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false">
 			<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
 		</svg>`;
+	const EDIT_CONFIRM_ICON = `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false">
+			<path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+		</svg>`;
+	const EDIT_CANCEL_ICON = `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false">
+			<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+		</svg>`;
 
 	function escapeHtml(value) {
 		return String(value ?? "")
@@ -964,7 +972,9 @@
 
 	function ensureEditHandles(container) {
 		if (!container) return;
-		const editableNodes = container.querySelectorAll('[data-editable="true"]');
+		const editableNodes = container.querySelectorAll(
+			'[data-editable="true"]',
+		);
 		editableNodes.forEach((node) => {
 			node.classList.add("editable-target");
 			if (node.querySelector(".edit-handle")) return;
@@ -980,10 +990,86 @@
 		});
 	}
 
+	function getOrCreateEditableContent(target, type) {
+		if (!target || safeClassToken(type) === "code") return null;
+		let content = target.querySelector(":scope > .editable-content");
+		if (!content) {
+			content = document.createElement("span");
+			content.className = "editable-content";
+			const movableNodes = Array.from(target.childNodes).filter(
+				(node) => {
+					return !(
+						node.nodeType === Node.ELEMENT_NODE &&
+						(node.classList?.contains("edit-handle") ||
+							node.classList?.contains("edit-actions"))
+					);
+				},
+			);
+			movableNodes.forEach((node) => content.append(node));
+			target.prepend(content);
+		}
+		return content;
+	}
+
+	function setCaretToEnd(node) {
+		if (!node) return;
+		const selection = window.getSelection?.();
+		if (!selection || typeof document.createRange !== "function") return;
+		const range = document.createRange();
+		range.selectNodeContents(node);
+		range.collapse(false);
+		selection.removeAllRanges();
+		selection.addRange(range);
+	}
+
+	function readEditableValue(node) {
+		if (!node) return "";
+		const raw =
+			typeof node.innerText === "string"
+				? node.innerText
+				: node.textContent;
+		return String(raw ?? "").replace(/\r\n/g, "\n");
+	}
+
+	function createEditActionButton(kind, label, iconMarkup) {
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = `edit-handle edit-action-btn ${kind}`;
+		button.setAttribute("aria-label", label);
+		button.setAttribute("title", label);
+		button.innerHTML = iconMarkup;
+		return button;
+	}
+
+	function mountInlineEditActions(target, label) {
+		if (!target) return null;
+		let actions = target.querySelector(":scope > .edit-actions");
+		if (actions) return actions;
+
+		actions = document.createElement("div");
+		actions.className = "edit-actions";
+
+		const applyButton = createEditActionButton(
+			"confirm",
+			`Confirmar ${label}`,
+			EDIT_CONFIRM_ICON,
+		);
+		const cancelButton = createEditActionButton(
+			"cancel",
+			`Cancelar edição de ${label}`,
+			EDIT_CANCEL_ICON,
+		);
+
+		actions.append(applyButton, cancelButton);
+		target.append(actions);
+		return actions;
+	}
+
 	function renderEntry(entry, defaultCodeLanguage, sectionIndex, entryIndex) {
 		const title = escapeHtml(entry.title);
 		const kicker = escapeHtml(entry.kicker);
-		const descriptionClass = entry.descriptionTone === "warn" ? "em-warn" : "";
+		const descriptionClass =
+			entry.descriptionTone === "warn" ? "em-warn" : "";
 		const descriptionClassAttr = descriptionClass
 			? ` class="${descriptionClass}"`
 			: "";
@@ -1029,10 +1115,15 @@
 			const label = escapeHtml(entry.callout.label);
 			const text = formatInlineTokens(entry.callout.text);
 			const markClass = MARK_CLASS_BY_TYPE[type] || "mark-info";
+			const calloutTextAttrs = editableAttrs(
+				`${pathPrefix}.callout.text`,
+				"multiline",
+				"texto do aviso",
+			);
 
 			calloutMarkup = `
         <div class="${type} code-head">
-          <div class="callout-copy"><strong class="${markClass}">${label}</strong> ${text}</div>
+          <div class="callout-copy"><strong class="${markClass}">${label}</strong> <span${calloutTextAttrs}>${text}</span></div>
         </div>`;
 		}
 
@@ -1060,7 +1151,12 @@
 
 		if (titleEl) {
 			titleEl.textContent = docData.title || "";
-			markEditableNode(titleEl, "title", "title", "título da documentação");
+			markEditableNode(
+				titleEl,
+				"title",
+				"title",
+				"título da documentação",
+			);
 		}
 		if (subtitleEl) {
 			subtitleEl.textContent = docData.subtitle || "";
@@ -1123,15 +1219,15 @@
               </div>
               <div class="entry-grid">
                 ${entries
-									.map((entry, entryIndex) =>
-										renderEntry(
-											entry,
-											defaultCodeLanguage,
-											sectionIndex,
-											entryIndex,
-										),
-									)
-									.join("")}
+					.map((entry, entryIndex) =>
+						renderEntry(
+							entry,
+							defaultCodeLanguage,
+							sectionIndex,
+							entryIndex,
+						),
+					)
+					.join("")}
               </div>
             </section>`;
 				})
@@ -1215,13 +1311,17 @@
 	}
 
 	function resolveDocDataFilename(docId) {
-		const scripts = Array.from(document.querySelectorAll('script[src]'));
+		const scripts = Array.from(document.querySelectorAll("script[src]"));
 		const currentDataScript = scripts.find((script) =>
-			/data\/[^?#]+\.data\.js(?:[?#].*)?$/i.test(script.getAttribute("src") || ""),
+			/data\/[^?#]+\.data\.js(?:[?#].*)?$/i.test(
+				script.getAttribute("src") || "",
+			),
 		);
 		if (currentDataScript) {
 			const src = currentDataScript.getAttribute("src") || "";
-			const match = src.match(/\/?data\/([^/?#]+\.data\.js)(?:[?#].*)?$/i);
+			const match = src.match(
+				/\/?data\/([^/?#]+\.data\.js)(?:[?#].*)?$/i,
+			);
 			if (match && match[1]) return match[1];
 		}
 		return `${docId || "documentacao"}.data.js`;
@@ -1310,7 +1410,10 @@
 
 		function getBaseFieldValue(path, type) {
 			const sourceValue = getValueByPath(docData, path);
-			return normalizeFieldValue(sourceValue == null ? "" : sourceValue, type);
+			return normalizeFieldValue(
+				sourceValue == null ? "" : sourceValue,
+				type,
+			);
 		}
 
 		function getPendingCount() {
@@ -1319,10 +1422,13 @@
 
 		function updateDirtyMarkers() {
 			if (!appShell) return;
-			const editableNodes = appShell.querySelectorAll('[data-editable="true"]');
+			const editableNodes = appShell.querySelectorAll(
+				'[data-editable="true"]',
+			);
 			editableNodes.forEach((node) => {
 				const path = node.getAttribute("data-edit-path") || "";
-				const isDirty = Boolean(path) && editorState.draftChanges.has(path);
+				const isDirty =
+					Boolean(path) && editorState.draftChanges.has(path);
 				node.classList.toggle("is-dirty", isDirty);
 			});
 		}
@@ -1347,12 +1453,18 @@
 			}
 
 			if (appShell) {
-				appShell.classList.toggle("has-pending-edits", pendingCount > 0);
+				appShell.classList.toggle(
+					"has-pending-edits",
+					pendingCount > 0,
+				);
 			}
 
 			if (saveDataButton) {
-				saveDataButton.disabled = pendingCount === 0 || editorState.isSaving;
-				saveDataButton.textContent = editorState.isSaving ? "Salvando..." : "Salvar";
+				saveDataButton.disabled =
+					pendingCount === 0 || editorState.isSaving;
+				saveDataButton.textContent = editorState.isSaving
+					? "Salvando..."
+					: "Salvar";
 			}
 
 			updateDirtyMarkers();
@@ -1388,7 +1500,9 @@
 
 		function updateLinkedTabLabel(sectionId, value) {
 			if (!sectionId) return;
-			const tab = tabs.find((node) => node.getAttribute("href") === `#${sectionId}`);
+			const tab = tabs.find(
+				(node) => node.getAttribute("href") === `#${sectionId}`,
+			);
 			if (tab) {
 				tab.textContent = value;
 			}
@@ -1396,7 +1510,9 @@
 
 		function renderFieldValue(target, path, type, value) {
 			if (!target) return;
-			const normalizedType = safeClassToken(type || target.dataset.editType || "text");
+			const normalizedType = safeClassToken(
+				type || target.dataset.editType || "text",
+			);
 			const safeValue = String(value ?? "");
 			const handle = target.querySelector(":scope > .edit-handle");
 
@@ -1412,14 +1528,26 @@
 				const inferredLanguage =
 					currentLanguage !== "plain"
 						? currentLanguage
-						: detectCodeLanguage(undefined, docData?.codeLanguage || "", safeValue);
+						: detectCodeLanguage(
+								undefined,
+								docData?.codeLanguage || "",
+								safeValue,
+							);
 
 				codeEl.className = `code-block language-${safeClassToken(inferredLanguage)}`;
 				codeEl.innerHTML = highlightCode(safeValue, inferredLanguage);
 			} else if (normalizedType === "multiline") {
-				target.innerHTML = formatInlineTokens(safeValue);
+				const contentEl = getOrCreateEditableContent(
+					target,
+					normalizedType,
+				);
+				contentEl.innerHTML = formatInlineTokens(safeValue);
 			} else {
-				target.innerHTML = escapeHtml(safeValue);
+				const contentEl = getOrCreateEditableContent(
+					target,
+					normalizedType,
+				);
+				contentEl.innerHTML = escapeHtml(safeValue);
 			}
 
 			if (handle) {
@@ -1471,7 +1599,9 @@
 			if (!supportsDirectFileSave()) return null;
 
 			if (editorState.fileHandle) {
-				const allowed = await requestWritePermission(editorState.fileHandle);
+				const allowed = await requestWritePermission(
+					editorState.fileHandle,
+				);
 				if (allowed) return editorState.fileHandle;
 				editorState.fileHandle = null;
 			}
@@ -1492,7 +1622,9 @@
 			const handle = await window.showSaveFilePicker(pickerOptions);
 			const allowed = await requestWritePermission(handle);
 			if (!allowed) {
-				throw new Error("Permissão de gravação negada para o arquivo selecionado.");
+				throw new Error(
+					"Permissão de gravação negada para o arquivo selecionado.",
+				);
 			}
 			editorState.fileHandle = handle;
 			return handle;
@@ -1505,7 +1637,10 @@
 
 			if (getPendingCount() === 0 || editorState.isSaving) return;
 
-			const mergedSnapshot = mergeDraftIntoDocData(docData, editorState.draftChanges);
+			const mergedSnapshot = mergeDraftIntoDocData(
+				docData,
+				editorState.draftChanges,
+			);
 			const fileContent = buildDocDataFileContent(docId, mergedSnapshot);
 			const filename = resolveDocDataFilename(docId);
 
@@ -1515,7 +1650,9 @@
 			try {
 				const handle = await ensureWritableFileHandle();
 				if (!handle) {
-					throw new Error("Navegador sem suporte para gravação direta de arquivos.");
+					throw new Error(
+						"Navegador sem suporte para gravação direta de arquivos.",
+					);
 				}
 
 				const writable = await handle.createWritable();
@@ -1527,7 +1664,11 @@
 					return;
 				}
 
-				triggerFileDownload(filename, fileContent, "text/javascript;charset=utf-8");
+				triggerFileDownload(
+					filename,
+					fileContent,
+					"text/javascript;charset=utf-8",
+				);
 				window.alert(
 					"Não foi possível salvar diretamente no arquivo do projeto. " +
 						"Baixei uma cópia atualizada para você substituir manualmente no diretório data/.",
@@ -1542,9 +1683,26 @@
 			const { focusHandle = false } = options;
 			if (!editorState.activeEditor) return;
 
-			const { target, editorElement } = editorState.activeEditor;
+			const { target, editorElement, contentElement, path, type } =
+				editorState.activeEditor;
+			if (contentElement) {
+				contentElement.onkeydown = null;
+				contentElement.removeAttribute("contenteditable");
+				contentElement.removeAttribute("role");
+				contentElement.removeAttribute("aria-label");
+				contentElement.removeAttribute("spellcheck");
+				contentElement.removeAttribute("aria-multiline");
+			}
 			if (editorElement && editorElement.parentNode) {
 				editorElement.remove();
+			}
+			if (target && path) {
+				renderFieldValue(
+					target,
+					path,
+					type,
+					getCurrentFieldValue(path),
+				);
 			}
 			target.classList.remove("is-editing");
 
@@ -1559,8 +1717,12 @@
 
 		function applyActiveEditor() {
 			if (!editorState.activeEditor) return;
-			const { path, type, target, inputElement } = editorState.activeEditor;
-			const nextValue = normalizeFieldValue(inputElement.value, type);
+			const { path, type, target, inputElement, contentElement } =
+				editorState.activeEditor;
+			const rawValue = contentElement
+				? readEditableValue(contentElement)
+				: inputElement.value;
+			const nextValue = normalizeFieldValue(rawValue, type);
 			const baseValue = getBaseFieldValue(path, type);
 			if (nextValue === baseValue) {
 				editorState.draftChanges.delete(path);
@@ -1576,17 +1738,92 @@
 		function openEditor(target) {
 			if (!target || !editorState.isEditMode) return;
 
+			const path = target.getAttribute("data-edit-path") || "";
+			const type = safeClassToken(
+				target.getAttribute("data-edit-type") || "text",
+			);
+			const label = target.getAttribute("data-edit-label") || "campo";
+			const currentValue = getCurrentFieldValue(path);
+			const supportsDirectTextEditing = type !== "code";
+
 			if (editorState.activeEditor?.target === target) {
-				editorState.activeEditor.inputElement.focus();
+				const focusTarget =
+					editorState.activeEditor.contentElement ||
+					editorState.activeEditor.inputElement;
+				focusTarget?.focus();
 				return;
 			}
 
 			closeEditor({ focusHandle: false });
 
-			const path = target.getAttribute("data-edit-path") || "";
-			const type = safeClassToken(target.getAttribute("data-edit-type") || "text");
-			const label = target.getAttribute("data-edit-label") || "campo";
-			const currentValue = getCurrentFieldValue(path);
+			if (supportsDirectTextEditing) {
+				const contentElement = getOrCreateEditableContent(target, type);
+				const actions = mountInlineEditActions(target, label);
+				const applyButton = actions?.querySelector(
+					".edit-action-btn.confirm",
+				);
+				const cancelButton = actions?.querySelector(
+					".edit-action-btn.cancel",
+				);
+
+				target.classList.add("is-editing");
+				contentElement.innerHTML = escapeHtml(currentValue);
+				contentElement.setAttribute("contenteditable", "true");
+				contentElement.setAttribute("role", "textbox");
+				contentElement.setAttribute("aria-label", `Editar ${label}`);
+				contentElement.setAttribute("spellcheck", "false");
+				if (type === "multiline") {
+					contentElement.setAttribute("aria-multiline", "true");
+				} else {
+					contentElement.removeAttribute("aria-multiline");
+				}
+
+				applyButton?.addEventListener("click", applyActiveEditor);
+				cancelButton?.addEventListener("click", () => {
+					closeEditor({ focusHandle: false });
+				});
+
+				contentElement.onkeydown = (event) => {
+					if (event.key === "Escape") {
+						event.preventDefault();
+						closeEditor({ focusHandle: true });
+						return;
+					}
+
+					if (type !== "multiline" && event.key === "Enter") {
+						event.preventDefault();
+						applyActiveEditor();
+						return;
+					}
+
+					if (
+						type === "multiline" &&
+						event.key === "Enter" &&
+						(event.ctrlKey || event.metaKey)
+					) {
+						event.preventDefault();
+						applyActiveEditor();
+					}
+				};
+
+				editorState.activeEditor = {
+					target,
+					path,
+					type,
+					label,
+					editorElement: actions,
+					contentElement,
+					inputElement: null,
+				};
+
+				updateHeaderOffset();
+				requestAnimationFrame(() => {
+					contentElement.focus();
+					setCaretToEnd(contentElement);
+				});
+				return;
+			}
+
 			const isTextArea = type === "code" || type === "multiline";
 
 			const editorElement = document.createElement("div");
@@ -1606,7 +1843,10 @@
 			inputElement.value = currentValue;
 
 			if (isTextArea) {
-				const rows = Math.max(3, Math.min(14, currentValue.split("\n").length + 1));
+				const rows = Math.max(
+					3,
+					Math.min(14, currentValue.split("\n").length + 1),
+				);
 				inputElement.rows = rows;
 				if (type === "code") {
 					inputElement.spellcheck = false;
@@ -1632,7 +1872,7 @@
 			});
 
 			cancelButton.addEventListener("click", () => {
-				closeEditor({ focusHandle: true });
+				closeEditor({ focusHandle: false });
 			});
 
 			inputElement.addEventListener("keydown", (event) => {
@@ -1692,7 +1932,10 @@
 			}
 
 			if (editModeToggle) {
-				editModeToggle.setAttribute("aria-pressed", isEnabled ? "true" : "false");
+				editModeToggle.setAttribute(
+					"aria-pressed",
+					isEnabled ? "true" : "false",
+				);
 				editModeToggle.setAttribute(
 					"aria-label",
 					isEnabled ? "Desativar modo edição" : "Ativar modo edição",
@@ -1723,6 +1966,7 @@
 
 		if (appShell) {
 			appShell.addEventListener("click", (event) => {
+				if (event.target.closest(".edit-action-btn")) return;
 				const handle = event.target.closest(".edit-handle");
 				if (!handle) return;
 				event.preventDefault();
