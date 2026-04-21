@@ -124,14 +124,7 @@ window.DOC_DATA_REGISTRY["git-github-terminal"] = {
 						"Use mensagens claras para facilitar revisão e rastreio.",
 					descriptionTone: "default",
 					code: 'git commit -m "feat: adiciona validação no login"',
-					tags: [
-						"commit",
-						"criar",
-						"commit",
-						"mensagem",
-						"fluxo",
-						"diario",
-					],
+					tags: ["commit", "criar", "mensagem", "fluxo", "diario"],
 				},
 				{
 					title: "Fazer push",
@@ -255,7 +248,6 @@ window.DOC_DATA_REGISTRY["git-github-terminal"] = {
 						"apagar",
 						"branch",
 						"deletar",
-						"branch",
 						"limpar",
 						"remoto",
 						"branches",
