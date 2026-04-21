@@ -997,6 +997,12 @@
 		);
 		editableNodes.forEach((node) => {
 			node.classList.add("editable-target");
+			const editType = safeClassToken(
+				node.getAttribute("data-edit-type") || "text",
+			);
+			if (editType !== "code") {
+				getOrCreateEditableContent(node, editType);
+			}
 			if (node.querySelector(".edit-handle")) return;
 
 			const label = node.getAttribute("data-edit-label") || "conteúdo";
