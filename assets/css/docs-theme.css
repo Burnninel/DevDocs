@@ -624,6 +624,66 @@ code {
 	font-weight: 600;
 }
 
+.entry-output {
+	border: 1px solid rgba(148, 163, 184, 0.14);
+	border-radius: 8px;
+	background: rgba(15, 23, 34, 0.42);
+	overflow: hidden;
+}
+
+.entry-output[open] {
+	border-color: rgba(96, 165, 250, 0.22);
+	background: rgba(30, 41, 59, 0.36);
+}
+
+.output-toggle {
+	list-style: none;
+	cursor: pointer;
+	user-select: none;
+	padding: 9px 12px;
+	color: #cfe0fb;
+	font-size: 0.84rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	background: rgba(96, 165, 250, 0.1);
+	border-bottom: 1px solid transparent;
+}
+
+.entry-output > summary {
+	cursor: pointer;
+}
+
+.output-toggle::-webkit-details-marker {
+	display: none;
+}
+
+.output-toggle::before {
+	content: "▸";
+	display: inline-block;
+	margin-right: 7px;
+	color: #93c5fd;
+	transition: transform var(--transition);
+}
+
+.entry-output[open] .output-toggle {
+	border-bottom-color: rgba(148, 163, 184, 0.16);
+}
+
+.entry-output[open] .output-toggle::before {
+	transform: rotate(90deg);
+}
+
+.output-block {
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	padding: 12px 14px 13px;
+	color: #dbeafe;
+	font-size: 0.9rem;
+	line-height: 1.5;
+}
+
 pre {
 	margin: 0;
 	padding: 14px 16px;
