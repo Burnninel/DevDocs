@@ -87,6 +87,27 @@ window.DOC_DATA_REGISTRY["php-arrays"] = {
 					],
 				},
 				{
+					title: "Alterar itens com foreach por referência",
+					kicker: "Quando você quer modificar o array original",
+					description:
+						"Use `foreach (&$item)` quando precisar alterar os valores diretamente durante a iteração. Depois do loop, faça `unset($item)` para evitar efeitos colaterais com a referência.",
+					descriptionTone: "default",
+					code: "<?php\n$precos = [100, 250, 400];\n\nforeach ($precos as &$preco) {\n    $preco = $preco * 1.1;\n}\nunset($preco);\n\nprint_r($precos);\n\n/*\nSaída:\nArray\n(\n    [0] => 110\n    [1] => 275\n    [2] => 440\n)\n*/",
+					tags: [
+						"php",
+						"foreach",
+						"referencia",
+						"alterar",
+						"mutacao",
+						"loop",
+					],
+					callout: {
+						type: "warn",
+						label: "Atenção:",
+						text: "depois de usar `foreach` por referência, faça `unset($item)` para não manter a última posição referenciada por acidente.",
+					},
+				},
+				{
 					title: "Contar itens e reindexar array",
 					kicker: "count e array_values",
 					description:
@@ -293,6 +314,22 @@ window.DOC_DATA_REGISTRY["php-arrays"] = {
 						"preco",
 					],
 				},
+				{
+					title: "Ordenar preservando chaves com uasort",
+					kicker: "Regra customizada sem perder a associação",
+					description:
+						"Quando você precisa de ordenação personalizada em arrays associativos, `uasort` mantém as chaves originais enquanto usa sua função de comparação.",
+					descriptionTone: "default",
+					code: '<?php\n$ranking = [\n    "ana" => ["pontos" => 120],\n    "bruno" => ["pontos" => 95],\n    "carla" => ["pontos" => 140],\n];\n\nuasort($ranking, fn($a, $b) => $b["pontos"] <=> $a["pontos"]);\n\nprint_r($ranking);\n\n/*\nSaída:\nArray\n(\n    [carla] => Array\n        (\n            [pontos] => 140\n        )\n    [ana] => Array\n        (\n            [pontos] => 120\n        )\n    [bruno] => Array\n        (\n            [pontos] => 95\n        )\n)\n*/',
+					tags: [
+						"php",
+						"uasort",
+						"ordenacao",
+						"associativo",
+						"chaves",
+						"customizada",
+					],
+				},
 			],
 		},
 		{
@@ -351,6 +388,22 @@ window.DOC_DATA_REGISTRY["php-arrays"] = {
 						"composicao",
 					],
 				},
+				{
+					title: "Comparar listas com array_diff e array_intersect",
+					kicker: "Descobrir o que entrou, saiu ou coincide",
+					description:
+						"`array_diff` mostra o que existe em uma lista e não na outra. `array_intersect` mostra apenas os valores em comum. Isso é muito usado para permissões, tags e sincronização de dados.",
+					descriptionTone: "default",
+					code: '<?php\n$permissoesAtuais = ["ler", "editar", "publicar"];\n$permissoesNovas = ["ler", "editar", "excluir"];\n\n$removidas = array_diff($permissoesAtuais, $permissoesNovas);\n$mantidas = array_intersect($permissoesAtuais, $permissoesNovas);\n\nprint_r($removidas);\nprint_r($mantidas);\n\n/*\nSaída:\nArray\n(\n    [2] => publicar\n)\nArray\n(\n    [0] => ler\n    [1] => editar\n)\n*/',
+					tags: [
+						"php",
+						"array_diff",
+						"array_intersect",
+						"comparar",
+						"listas",
+						"composicao",
+					],
+				},
 			],
 		},
 		{
@@ -405,6 +458,36 @@ window.DOC_DATA_REGISTRY["php-arrays"] = {
 						"listas",
 						"utilidades",
 					],
+				},
+			],
+		},
+		{
+			id: "decisao-rapida",
+			name: "Decisão Rápida",
+			layout: "single",
+			entries: [
+				{
+					title: "Quando usar cada grupo de funções",
+					kicker: "Atalho mental para escolher mais rápido",
+					description:
+						"Use esta leitura rápida como mapa: `array_map` para transformar, `array_filter` para filtrar, `array_reduce` para acumular, `array_column` para extrair uma coluna, `array_merge` para juntar, `array_diff` e `array_intersect` para comparar listas, `sort`/`asort`/`usort`/`uasort` para ordenar e `array_values` para reindexar.",
+					descriptionTone: "default",
+					code: '<?php\n// Transformar cada item\narray_map(fn($item) => ..., $lista);\n\n// Filtrar por condição\narray_filter($lista, fn($item) => ...);\n\n// Acumular em um valor final\narray_reduce($lista, fn($acc, $item) => ..., $valorInicial);\n\n// Extrair uma coluna de uma lista de registros\narray_column($registros, "campo");\n\n// Juntar arrays\narray_merge($a, $b);\n\n// Comparar listas\narray_diff($a, $b);\narray_intersect($a, $b);\n\n// Reindexar após filtro ou unset\narray_values($lista);',
+					tags: [
+						"php",
+						"guia",
+						"decisao",
+						"map",
+						"filter",
+						"reduce",
+						"ordenacao",
+						"comparacao",
+					],
+					callout: {
+						type: "hint",
+						label: "Dica:",
+						text: "se estiver em dúvida, primeiro pense no objetivo: transformar, filtrar, acumular, comparar, ordenar ou reindexar. A função costuma vir naturalmente depois disso.",
+					},
 				},
 			],
 		},

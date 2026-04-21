@@ -35,6 +35,18 @@
 		return escaped.replace(/`([^`]+)`/g, "<code>$1</code>");
 	}
 
+	function splitCodeAndExpectedOutput(codeText) {
+		const raw = String(codeText ?? "").replace(/\r\n/g, "\n");
+		const match = raw.match(/\n\/\*\nSa[íi]da:\n([\s\S]*?)\n\*\/\s*$/);
+		if (!match) {
+			return { code: raw, output: "" };
+		}
+
+		const output = String(match[1] ?? "").trimEnd();
+		const code = raw.slice(0, match.index).trimEnd();
+		return { code, output };
+	}
+
 	function normalizeText(value) {
 		return String(value ?? "")
 			.toLowerCase()
@@ -1074,13 +1086,16 @@
 			? ` class="${descriptionClass}"`
 			: "";
 		const description = formatInlineTokens(entry.description);
+		const extracted = splitCodeAndExpectedOutput(entry.code);
+		const codeSource = extracted.code;
+		const outputSource = String(entry.output ?? extracted.output ?? "");
 		const language = detectCodeLanguage(
 			entry,
 			defaultCodeLanguage,
-			entry.code,
+			codeSource,
 		);
 		const languageClass = safeClassToken(language);
-		const code = highlightCode(entry.code, languageClass);
+		const code = highlightCode(codeSource, languageClass);
 		const spanClass = entry.span === "full" ? " span-full" : "";
 		const pathPrefix = `sections.${sectionIndex}.entries.${entryIndex}`;
 		const titleAttrs = editableAttrs(
@@ -1127,6 +1142,14 @@
         </div>`;
 		}
 
+		const outputMarkup = outputSource.trim()
+			? `
+          <details class="entry-output">
+            <summary class="output-toggle">Mostrar saída esperada</summary>
+            <pre class="output-block"><code class="code-block language-output">${escapeHtml(outputSource)}</code></pre>
+          </details>`
+			: "";
+
 		return `
       <article class="entry${spanClass}" data-tags="${safeTags}">
         <div class="entry-head">
@@ -1137,6 +1160,7 @@
           <p${descriptionClassAttr}${descriptionAttrs}>${description}</p>
           ${calloutMarkup}
           <pre${codeAttrs}><code class="code-block language-${languageClass}">${code}</code></pre>
+          ${outputMarkup}
         </div>
       </article>`;
 	}
