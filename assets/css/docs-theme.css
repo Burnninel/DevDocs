@@ -736,7 +736,6 @@ pre
 	display: block;
 	width: fit-content;
 	max-width: 100%;
-	vertical-align: top;
 }
 
 .editable-target[data-edit-type="multiline"] {
