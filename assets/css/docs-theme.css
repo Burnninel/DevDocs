@@ -684,6 +684,83 @@ code {
 	line-height: 1.5;
 }
 
+.entry-code {
+	position: relative;
+	padding-right: 54px;
+}
+
+.code-copy-btn {
+	position: absolute;
+	top: 9px;
+	right: 8px;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 24px;
+	padding: 0 8px;
+	border: 1px solid rgba(148, 163, 184, 0.28);
+	border-radius: 7px;
+	background: rgba(15, 23, 34, 0.52);
+	color: #cfe0fb;
+	cursor: pointer;
+	transition:
+		border-color var(--transition),
+		background-color var(--transition),
+		color var(--transition),
+		opacity var(--transition);
+}
+
+.code-copy-btn:hover,
+.code-copy-btn:focus-visible {
+	border-color: rgba(96, 165, 250, 0.42);
+	background: rgba(30, 41, 59, 0.64);
+	color: #dbeafe;
+	outline: none;
+}
+
+.code-copy-btn .copy-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.code-copy-btn .copy-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+.code-copy-btn .copy-icon.done,
+.code-copy-btn .copy-feedback {
+	display: none;
+}
+
+.code-copy-btn.is-copied .copy-icon.copy {
+	display: none;
+}
+
+.code-copy-btn.is-copied .copy-icon.done,
+.code-copy-btn.is-copied .copy-feedback {
+	display: inline-flex;
+}
+
+.code-copy-btn.is-copied {
+	border-color: rgba(74, 222, 128, 0.46);
+	background: rgba(22, 101, 52, 0.34);
+	color: #bbf7d0;
+}
+
+.code-copy-btn.is-error {
+	border-color: rgba(248, 113, 113, 0.46);
+	background: rgba(127, 29, 29, 0.34);
+	color: #fecaca;
+}
+
+.code-copy-btn .copy-feedback {
+	font-size: 0.73rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+}
+
 pre {
 	margin: 0;
 	padding: 14px 16px;

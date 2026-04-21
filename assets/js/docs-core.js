@@ -20,6 +20,14 @@
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false">
 			<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
 		</svg>`;
+	const COPY_CODE_ICON = `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false">
+			<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5V6.75A2.25 2.25 0 0 1 10.5 4.5h6.75a2.25 2.25 0 0 1 2.25 2.25v6.75a2.25 2.25 0 0 1-2.25 2.25h-.75m-8.25 3.75H6.75A2.25 2.25 0 0 1 4.5 17.25V10.5a2.25 2.25 0 0 1 2.25-2.25h6.75a2.25 2.25 0 0 1 2.25 2.25v6.75a2.25 2.25 0 0 1-2.25 2.25Z" />
+		</svg>`;
+	const COPY_DONE_ICON = `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false">
+			<path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+		</svg>`;
 
 	function escapeHtml(value) {
 		return String(value ?? "")
@@ -1149,6 +1157,7 @@
             <pre class="output-block"><code class="code-block language-output">${escapeHtml(outputSource)}</code></pre>
           </details>`
 			: "";
+		const codeCopyButtonMarkup = `<button class="code-copy-btn" type="button" aria-label="Copiar código" title="Copiar código"><span class="copy-icon copy">${COPY_CODE_ICON}</span><span class="copy-icon done">${COPY_DONE_ICON}</span><span class="copy-feedback">Copiado</span></button>`;
 
 		return `
       <article class="entry${spanClass}" data-tags="${safeTags}">
@@ -1159,7 +1168,7 @@
         <div class="entry-body">
           <p${descriptionClassAttr}${descriptionAttrs}>${description}</p>
           ${calloutMarkup}
-          <pre${codeAttrs}><code class="code-block language-${languageClass}">${code}</code></pre>
+          <pre class="entry-code"${codeAttrs}>${codeCopyButtonMarkup}<code class="code-block language-${languageClass}">${code}</code></pre>
           ${outputMarkup}
         </div>
       </article>`;
@@ -1363,6 +1372,39 @@
 		anchor.click();
 		anchor.remove();
 		setTimeout(() => URL.revokeObjectURL(url), 2000);
+	}
+
+	async function writeTextToClipboard(value) {
+		const text = String(value ?? "");
+		if (!text) return false;
+		if (
+			typeof navigator !== "undefined" &&
+			navigator.clipboard &&
+			typeof navigator.clipboard.writeText === "function"
+		) {
+			try {
+				await navigator.clipboard.writeText(text);
+				return true;
+			} catch (_error) {}
+		}
+
+		const textArea = document.createElement("textarea");
+		textArea.value = text;
+		textArea.setAttribute("readonly", "true");
+		textArea.style.position = "fixed";
+		textArea.style.left = "-9999px";
+		textArea.style.top = "0";
+		document.body.append(textArea);
+		textArea.select();
+		textArea.setSelectionRange(0, textArea.value.length);
+		let copied = false;
+		try {
+			copied = document.execCommand("copy");
+		} catch (_error) {
+			copied = false;
+		}
+		textArea.remove();
+		return copied;
 	}
 
 	function initializeInteractions() {
@@ -1990,6 +2032,49 @@
 
 		if (appShell) {
 			appShell.addEventListener("click", (event) => {
+				const copyButton = event.target.closest(".code-copy-btn");
+				if (copyButton) {
+					event.preventDefault();
+					event.stopPropagation();
+					const codeBlock = copyButton
+						.closest("pre.entry-code")
+						?.querySelector("code.code-block");
+					const rawCode = String(
+						codeBlock?.textContent ?? "",
+					).replace(/\u00a0/g, " ");
+
+					void writeTextToClipboard(rawCode).then((copied) => {
+						copyButton.classList.remove("is-copied", "is-error");
+						copyButton.classList.add(
+							copied ? "is-copied" : "is-error",
+						);
+						copyButton.setAttribute(
+							"aria-label",
+							copied ? "Copiado" : "Falha ao copiar",
+						);
+						copyButton.setAttribute(
+							"title",
+							copied ? "Copiado" : "Falha ao copiar",
+						);
+
+						if (copyButton.__copyFeedbackTimer) {
+							clearTimeout(copyButton.__copyFeedbackTimer);
+						}
+						copyButton.__copyFeedbackTimer = setTimeout(() => {
+							copyButton.classList.remove(
+								"is-copied",
+								"is-error",
+							);
+							copyButton.setAttribute(
+								"aria-label",
+								"Copiar código",
+							);
+							copyButton.setAttribute("title", "Copiar código");
+						}, 1400);
+					});
+					return;
+				}
+
 				if (event.target.closest(".edit-action-btn")) return;
 				const handle = event.target.closest(".edit-handle");
 				if (!handle) return;
