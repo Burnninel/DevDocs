@@ -975,6 +975,122 @@
 		return explicitTabs.length ? explicitTabs : fallbackTabs;
 	}
 
+	function renderQuickStart(docData) {
+		const quickStart = docData?.quickStart;
+		if (!quickStart || typeof quickStart !== "object") return "";
+
+		const title = String(quickStart.title ?? "").trim();
+		const kicker = String(quickStart.kicker ?? "").trim();
+		const description = String(quickStart.description ?? "").trim();
+		const rawSteps = Array.isArray(quickStart.steps)
+			? quickStart.steps
+			: [];
+		const hasSteps = rawSteps.some((step) => String(step ?? "").trim());
+		const codeSource = String(quickStart.code ?? "").trim();
+		const callout = quickStart.callout || null;
+		const hasCallout =
+			Boolean(callout) &&
+			CALL_OUT_TYPES.has(callout.type) &&
+			String(callout.label ?? "").trim() &&
+			String(callout.text ?? "").trim();
+
+		if (
+			!title &&
+			!kicker &&
+			!description &&
+			!hasSteps &&
+			!codeSource &&
+			!hasCallout
+		) {
+			return "";
+		}
+
+		const titleAttrs = editableAttrs(
+			"quickStart.title",
+			"title",
+			"título do início rápido",
+		);
+		const kickerAttrs = editableAttrs(
+			"quickStart.kicker",
+			"subtitle",
+			"subtítulo do início rápido",
+		);
+		const descriptionAttrs = editableAttrs(
+			"quickStart.description",
+			"multiline",
+			"descrição do início rápido",
+		);
+
+		const safeTitle = escapeHtml(title || "Início rápido");
+		const kickerMarkup = kicker
+			? `<div class="quick-start-kicker"${kickerAttrs}>${escapeHtml(kicker)}</div>`
+			: "";
+		const descriptionMarkup = description
+			? `<p${descriptionAttrs}>${formatInlineTokens(description)}</p>`
+			: "";
+
+		const stepsMarkup = hasSteps
+			? `<ol class="quick-start-steps">${rawSteps
+					.map((step, stepIndex) => {
+						const value = String(step ?? "").trim();
+						if (!value) return "";
+						const stepAttrs = editableAttrs(
+							`quickStart.steps.${stepIndex}`,
+							"multiline",
+							`passo ${stepIndex + 1} do início rápido`,
+						);
+						return `<li><span class="quick-start-step-copy"${stepAttrs}>${formatInlineTokens(value)}</span></li>`;
+					})
+					.join("")}</ol>`
+			: "";
+
+		let codeMarkup = "";
+		if (codeSource) {
+			const codeLanguage = detectCodeLanguage(
+				quickStart,
+				docData?.codeLanguage || "",
+				codeSource,
+			);
+			const languageClass = safeClassToken(codeLanguage);
+			const highlightedCode = highlightCode(codeSource, languageClass);
+			const codeAttrs = editableAttrs(
+				"quickStart.code",
+				"code",
+				"bloco de comando de início rápido",
+			);
+			const codeCopyButtonMarkup = `<button class="code-copy-btn" type="button" aria-label="Copiar código" title="Copiar código"><span class="copy-icon copy">${COPY_CODE_ICON}</span><span class="copy-icon done">${COPY_DONE_ICON}</span><span class="copy-feedback">Copiado</span></button>`;
+			codeMarkup = `<pre class="entry-code quick-start-code"${codeAttrs}>${codeCopyButtonMarkup}<code class="code-block language-${languageClass}">${highlightedCode}</code></pre>`;
+		}
+
+		let calloutMarkup = "";
+		if (hasCallout) {
+			const type = callout.type;
+			const label = escapeHtml(callout.label);
+			const text = formatInlineTokens(callout.text);
+			const markClass = MARK_CLASS_BY_TYPE[type] || "mark-info";
+			const calloutTextAttrs = editableAttrs(
+				"quickStart.callout.text",
+				"multiline",
+				"aviso do início rápido",
+			);
+			calloutMarkup = `<div class="${type} quick-start-callout"><div class="callout-copy"><strong class="${markClass}">${label}</strong> <span${calloutTextAttrs}>${text}</span></div></div>`;
+		}
+
+		return `
+      <section class="quick-start-panel" aria-label="Início rápido">
+        <div class="quick-start-head">
+          ${kickerMarkup}
+          <h2${titleAttrs}>${safeTitle}</h2>
+          ${descriptionMarkup}
+        </div>
+        <div class="quick-start-body">
+          ${stepsMarkup}
+          ${codeMarkup}
+        </div>
+        ${calloutMarkup}
+      </section>`;
+	}
+
 	function editableAttrs(path, type, label) {
 		const safePath = escapeHtml(path || "");
 		const safeType = escapeHtml(safeClassToken(type || "text"));
@@ -1238,7 +1354,8 @@
 			const defaultCodeLanguage = safeClassToken(
 				docData.codeLanguage || "",
 			);
-			sectionsContainer.innerHTML = sections
+			const quickStartMarkup = renderQuickStart(docData);
+			const sectionsMarkup = sections
 				.map((section, sectionIndex) => {
 					const id = escapeHtml(section.id);
 					const name = escapeHtml(section.name);
@@ -1271,6 +1388,7 @@
             </section>`;
 				})
 				.join("");
+			sectionsContainer.innerHTML = `${quickStartMarkup}${sectionsMarkup}`;
 		}
 	}
 
@@ -1420,6 +1538,7 @@
 		const searchInput = document.getElementById("searchInput");
 		const emptyState = document.getElementById("emptyState");
 		const sections = Array.from(document.querySelectorAll(".doc-section"));
+		const quickStartPanel = document.querySelector(".quick-start-panel");
 		const tabs = Array.from(document.querySelectorAll(".tab-link"));
 		const appHeader = document.querySelector(".app-header");
 		const searchRow = appHeader?.querySelector(".search-row");
@@ -2144,6 +2263,9 @@
 
 		function filterEntries() {
 			const query = normalizeText(searchInput.value.trim());
+			if (quickStartPanel) {
+				quickStartPanel.classList.toggle("is-hidden", Boolean(query));
+			}
 			sections.forEach((section) => {
 				section.querySelectorAll(".entry").forEach((entry) => {
 					const haystack = normalizeText(

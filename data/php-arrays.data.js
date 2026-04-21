@@ -8,6 +8,25 @@ window.DOC_DATA_REGISTRY["php-arrays"] = {
 	shortcutHint: "Atalho: pressione / para focar a busca.",
 	codeLanguage: "php",
 	defaultSectionLayout: "single",
+	quickStart: {
+		title: "Como testar os exemplos desta documentação",
+		kicker: "Requisitos e execução no terminal",
+		description:
+			"Para acompanhar os exemplos, você só precisa do PHP CLI instalado e acessível no terminal.",
+		steps: [
+			"Verifique se o PHP está disponível com `php --version`.",
+			"Crie um arquivo `.php`, por exemplo `arrays.php`.",
+			"Cole no arquivo um dos exemplos desta página.",
+			"Execute no terminal com `php arrays.php`.",
+		],
+		codeLanguage: "shell",
+		code: "php --version\nphp arrays.php",
+		callout: {
+			type: "hint",
+			label: "Dica:",
+			text: "se o comando `php` não for reconhecido, instale o PHP CLI e adicione o executável ao `PATH` do sistema.",
+		},
+	},
 	sections: [
 		{
 			id: "base",

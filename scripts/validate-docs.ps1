@@ -51,6 +51,30 @@ foreach ($file in $files) {
     $errors += "[$($file.Name)] defaultSectionLayout inválido: $($doc.defaultSectionLayout). Use single/two."
   }
 
+  if ($doc.quickStart) {
+    if (-not $doc.quickStart.title) {
+      $errors += "[$($file.Name)] quickStart sem title."
+    }
+    if (-not $doc.quickStart.description) {
+      $errors += "[$($file.Name)] quickStart sem description."
+    }
+    if ($doc.quickStart.steps -and @($doc.quickStart.steps).Count -eq 0) {
+      $errors += "[$($file.Name)] quickStart com steps vazio."
+    }
+
+    if ($doc.quickStart.callout) {
+      if (@("hint", "warn", "danger") -notcontains $doc.quickStart.callout.type) {
+        $errors += "[$($file.Name)] quickStart.callout.type inválido."
+      }
+      if (-not $doc.quickStart.callout.label) {
+        $errors += "[$($file.Name)] quickStart.callout sem label."
+      }
+      if (-not $doc.quickStart.callout.text) {
+        $errors += "[$($file.Name)] quickStart.callout sem text."
+      }
+    }
+  }
+
   $sectionIds = @{}
   foreach ($section in @($doc.sections)) {
     if (-not $section.id) {

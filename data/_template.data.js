@@ -6,6 +6,24 @@ window.DOC_DATA_REGISTRY["template-doc-id"] = {
 	searchPlaceholder: "Buscar comando ou palavra...",
 	shortcutHint: "Atalho: pressione / para focar a busca.",
 	defaultSectionLayout: "two",
+	quickStart: {
+		title: "Como começar rápido",
+		kicker: "Pré-requisitos e primeiro teste",
+		description:
+			"Use este bloco para explicar setup mínimo e primeira execução da doc.",
+		steps: [
+			"Valide se a ferramenta principal está instalada.",
+			"Crie um arquivo de exemplo e cole um snippet.",
+			"Execute o comando base no terminal.",
+		],
+		codeLanguage: "shell",
+		code: "comando --version\ncomando arquivo_exemplo.ext",
+		callout: {
+			type: "hint",
+			label: "Dica:",
+			text: "mantenha os passos curtos e objetivos para onboarding rápido.",
+		},
+	},
 	sections: [
 		{
 			id: "inicio",
