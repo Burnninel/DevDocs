@@ -20,5 +20,13 @@ window.DOCS_MANIFEST = {
 			href: "./docs/php-arrays.html",
 			actionLabel: "Abrir documentação",
 		},
+		{
+			id: "php-orientacao-objetos",
+			title: "PHP: Orientação a Objetos",
+			description:
+				"Guia prático com classes, propriedades, métodos, encapsulamento, herança, polimorfismo e exemplos reais.",
+			href: "./docs/php-orientacao-objetos.html",
+			actionLabel: "Abrir documentação",
+		},
 	],
 };
