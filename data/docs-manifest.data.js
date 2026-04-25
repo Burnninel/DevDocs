@@ -28,5 +28,13 @@ window.DOCS_MANIFEST = {
 			href: "./docs/php-orientacao-objetos.html",
 			actionLabel: "Abrir documentação",
 		},
+		{
+			id: "php-debugging",
+			title: "PHP: Debugging",
+			description:
+				"Guia prático para investigar erros com echo, print_r, var_dump, dd, breakpoints e boas práticas de diagnóstico.",
+			href: "./docs/php-debugging.html",
+			actionLabel: "Abrir documentação",
+		},
 	],
 };
