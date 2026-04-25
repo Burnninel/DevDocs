@@ -36,5 +36,13 @@ window.DOCS_MANIFEST = {
 			href: "./docs/php-debugging.html",
 			actionLabel: "Abrir documentação",
 		},
+		{
+			id: "php-headers-http",
+			title: "PHP: Headers HTTP com header()",
+			description:
+				"Guia prático para usar header() em APIs PHP com CORS, cache, status HTTP e respostas JSON consistentes.",
+			href: "./docs/php-headers-http.html",
+			actionLabel: "Abrir documentação",
+		},
 	],
 };
