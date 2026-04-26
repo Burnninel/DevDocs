@@ -207,6 +207,18 @@ window.DOC_DATA_REGISTRY["php-headers-http"] = {
 					description:
 						"Em API, use status code correto, `Content-Type` explícito e estrutura JSON previsível. Faça isso sempre para facilitar tratamento de erro no frontend e em integrações. Sem esse padrão, cliente precisa adivinhar resultado e surgem bugs de parsing e fallback.",
 					descriptionTone: "default",
+					contentBlocks: [
+						{
+							type: "flow-steps",
+							title: "Ordem recomendada",
+							steps: [
+								"Defina `Content-Type` e política de cache antes do body.",
+								"Valide entrada e decida o status HTTP.",
+								"Monte um JSON previsível para sucesso ou erro.",
+								"Finalize cedo com `exit` quando a rota já tiver respondido.",
+							],
+						},
+					],
 					code: '<?php\n$usuarioId = (int) ($_GET["id"] ?? 0);\n\nheader("Content-Type: application/json; charset=utf-8");\nheader("Cache-Control: no-store");\n\nif ($usuarioId <= 0) {\n    http_response_code(422); // Erro de validação\n    echo json_encode([\n        "ok" => false,\n        "erro" => "id inválido",\n    ]);\n    exit;\n}\n\nhttp_response_code(200); // Sucesso\n\necho json_encode([\n    "ok" => true,\n    "data" => ["id" => $usuarioId, "nome" => "Ana"],\n]);',
 					output: "{\"ok\":false,\"erro\":\"id inválido\"}",
 					tags: [

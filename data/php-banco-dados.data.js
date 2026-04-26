@@ -196,6 +196,39 @@ window.DOC_DATA_REGISTRY["php-banco-dados"] = {
 						text: "evite reutilizar a mesma variável em fluxos longos sem controle, para não enviar valor errado por referência.",
 					},
 				},
+				{
+					title: "bindValue x bindParam em leitura rápida",
+					kicker: "Escolha pelo momento em que o valor é resolvido",
+					description:
+						"Os dois ajudam no prepared statement, mas servem melhor para cenários diferentes. A comparação abaixo ajuda a decidir sem precisar reler toda a teoria.",
+					contentBlocks: [
+						{
+							type: "comparison-block",
+							title: "Comparação direta",
+							columns: [
+								{
+									title: "bindValue",
+									description: "Resolve o valor no momento do bind.",
+									items: [
+										"Melhor para formulário, filtros e CRUD simples.",
+										"Mais previsível quando o valor já está pronto.",
+										"Evita surpresa com variável mudando antes do `execute()`.",
+									],
+								},
+								{
+									title: "bindParam",
+									description: "Liga o placeholder à variável por referência.",
+									items: [
+										"Útil quando a mesma query roda várias vezes mudando a variável.",
+										"O valor final só é lido no `execute()`.",
+										"Exige mais cuidado em fluxos longos para não enviar dado inesperado.",
+									],
+								},
+							],
+						},
+					],
+					tags: ["php", "bindvalue", "bindparam", "comparacao", "pdo", "prepared-statements"],
+				},
 			],
 		},
 		{
@@ -229,13 +262,27 @@ window.DOC_DATA_REGISTRY["php-banco-dados"] = {
 					kicker: "Decisões simples que evitam problema depois",
 					description:
 						"Separe `config.php`, use `charset=utf8mb4`, valide dados antes do banco, não exponha credenciais e evite SQL direto no controller. `Service` e `Repository` fazem sentido quando o projeto começa a crescer.",
-					code: '<?php\n$dados = [\n    "nome" => trim($_POST["nome"] ?? ""),\n    "email" => trim($_POST["email"] ?? ""),\n];\n\nif ($dados["nome"] === "" || !filter_var($dados["email"], FILTER_VALIDATE_EMAIL)) {\n    throw new InvalidArgumentException("Dados inválidos.");\n}\n\n$pdo = DatabaseConnection::make();\n$stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, status) VALUES (:nome, :email, :status)");\n$stmt->execute([\n    ":nome" => $dados["nome"],\n    ":email" => strtolower($dados["email"]),\n    ":status" => "ativo",\n]);',
+					contentBlocks: [
+						{
+							type: "checklist-block",
+							title: "Antes de fechar o acesso ao banco",
+							items: [
+								"Separe `config.php` da criação da conexão.",
+								"Use `charset=utf8mb4` no DSN.",
+								"Valide dados antes de montar o `execute()`.",
+								"Não exponha credenciais nem mensagem técnica para o usuário final.",
+								"Evite SQL direto no controller quando o projeto começar a crescer.",
+								"Use `fetchAll()` só com volume pequeno ou paginação.",
+							],
+						},
+						{
+							type: "context-block",
+							variant: "good-practice",
+							label: "Fechamento:",
+							text: "o trio mais importante continua o mesmo: prepared statement sempre, validação antes do SQL e mensagens técnicas apenas em log.",
+						},
+					],
 					tags: ["php", "boas-praticas", "validacao", "config", "repository", "service"],
-					callout: {
-						type: "hint",
-						label: "Resumo:",
-						text: "prepared statement sempre, validação antes do SQL e `fetchAll()` só quando o volume for pequeno ou paginado.",
-					},
 				},
 			],
 		},
@@ -249,8 +296,53 @@ window.DOC_DATA_REGISTRY["php-banco-dados"] = {
 					kicker: "Opções pequenas que mudam o comportamento do PDO",
 					description:
 						"Essas são algumas das constantes e opções mais usadas com `PDO` no dia a dia. O objetivo aqui é servir como consulta rápida: o nome da constante e o que ela faz.",
-					codeLanguage: "plain",
-					code: "PDO::PARAM_STR\nDefine que o valor enviado no bind deve ser tratado como string.\n\nPDO::PARAM_INT\nDefine que o valor enviado no bind deve ser tratado como inteiro.\n\nPDO::PARAM_BOOL\nDefine que o valor enviado no bind deve ser tratado como booleano.\n\nPDO::FETCH_ASSOC\nFaz o fetch retornar array associativo, usando o nome das colunas como chave.\n\nPDO::FETCH_OBJ\nFaz o fetch retornar objeto em vez de array.\n\nPDO::ATTR_ERRMODE\nDefine como o PDO reage quando acontece um erro.\n\nPDO::ERRMODE_EXCEPTION\nFaz o PDO lançar exceção em caso de erro. É a opção mais usada em projetos atuais.\n\nPDO::ATTR_DEFAULT_FETCH_MODE\nDefine o modo padrão de retorno do fetch, sem precisar repetir isso em toda consulta.\n\nPDO::ATTR_EMULATE_PREPARES\nControla se o prepare será emulado pelo driver ou executado de forma nativa pelo banco.\n\nPDO::PARAM_NULL\nDefine que o valor enviado no bind deve ser tratado como null.",
+					contentBlocks: [
+						{
+							type: "tech-list",
+							items: [
+								{
+									term: "PDO::PARAM_STR",
+									description: "Define que o valor enviado no bind deve ser tratado como string.",
+								},
+								{
+									term: "PDO::PARAM_INT",
+									description: "Define que o valor enviado no bind deve ser tratado como inteiro.",
+								},
+								{
+									term: "PDO::PARAM_BOOL",
+									description: "Define que o valor enviado no bind deve ser tratado como booleano.",
+								},
+								{
+									term: "PDO::FETCH_ASSOC",
+									description: "Faz o fetch retornar array associativo, usando o nome das colunas como chave.",
+								},
+								{
+									term: "PDO::FETCH_OBJ",
+									description: "Faz o fetch retornar objeto em vez de array.",
+								},
+								{
+									term: "PDO::ATTR_ERRMODE",
+									description: "Define como o PDO reage quando acontece um erro.",
+								},
+								{
+									term: "PDO::ERRMODE_EXCEPTION",
+									description: "Faz o PDO lançar exceção em caso de erro. É a opção mais usada em projetos atuais.",
+								},
+								{
+									term: "PDO::ATTR_DEFAULT_FETCH_MODE",
+									description: "Define o modo padrão de retorno do fetch, sem precisar repetir isso em toda consulta.",
+								},
+								{
+									term: "PDO::ATTR_EMULATE_PREPARES",
+									description: "Controla se o prepare será emulado pelo driver ou executado de forma nativa pelo banco.",
+								},
+								{
+									term: "PDO::PARAM_NULL",
+									description: "Define que o valor enviado no bind deve ser tratado como `null`.",
+								},
+							],
+						},
+					],
 					tags: ["php", "pdo", "param-int", "param-str", "fetch-assoc", "errmode"],
 				},
 			],

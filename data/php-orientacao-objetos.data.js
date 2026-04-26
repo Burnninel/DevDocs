@@ -504,8 +504,18 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Esse bloco funciona como atalho mental: ele ajuda a decidir qual ferramenta usar quando você está modelando uma solução orientada a objetos e precisa escolher a estrutura certa.",
 					descriptionTone: "default",
-					code: '<?php\ninterface Logger\n{\n    public function info(string $msg): void; // interface = contrato\n}\n\nabstract class BaseService\n{\n    public function validarId(int $id): bool\n    {\n        return $id > 0; // abstract = base compartilhada\n    }\n}\n\ntrait GeraSlug\n{\n    public function slug(string $texto): string\n    {\n        return strtolower(str_replace(" ", "-", trim($texto))); // trait = reuso pequeno\n    }\n}\n\nclass ProdutoService extends BaseService implements Logger\n{\n    use GeraSlug;\n\n    public function info(string $msg): void\n    {\n        echo "[INFO] {$msg}" . PHP_EOL; // class = implementacao concreta\n    }\n}\n\n$service = new ProdutoService();\n$service->info("Serviço ativo");\necho $service->slug("Teclado Mecânico RGB") . PHP_EOL;',
-					output: "[INFO] Serviço ativo\nteclado-mecânico-rgb",
+					contentBlocks: [
+						{
+							type: "reference-card",
+							title: "Escolha rápida",
+							items: [
+								"`interface` para contrato comum entre implementações.",
+								"`abstract` para base compartilhada com parte do fluxo pronta.",
+								"`trait` para reuso pequeno e horizontal.",
+								"`class` para comportamento concreto que será instanciado de verdade.",
+							],
+						},
+					],
 					tags: [
 						"php",
 						"decisao",

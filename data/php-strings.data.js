@@ -481,8 +481,30 @@ window.DOC_DATA_REGISTRY["php-strings"] = {
 					description:
 						"Os erros mais frequentes são: `strpos` com validação errada, comparação frouxa, esquecer `trim` e confundir aspas simples com duplas. Corrigir esses pontos evita comportamento inconsistente em produção.",
 					descriptionTone: "warn",
-					code: '<?php\n$texto = "api:ok";\n\nif (strpos($texto, "api") ) { // Errado: posição 0 vira false\n    echo "Encontrou api (errado)" . PHP_EOL;\n}\n\nif (strpos($texto, "api") !== false) { // Correto: valida posição 0\n    echo "Encontrou api (correto)" . PHP_EOL;\n}\n\n$valor = "  admin ";\nif ($valor === "admin") {\n    echo "Perfil válido (sem trim)" . PHP_EOL; // Não entra por espaço extra\n}\n\nif (trim($valor) === "admin") {\n    echo "Perfil válido (com trim)" . PHP_EOL; // Validação correta\n}\n\n$nome = "Ana";\necho \'Olá, $nome\' . PHP_EOL; // Erro comum: esperava interpolação com aspas simples',
-					output: "Encontrou api (correto)\nPerfil válido (com trim)\nOlá, $nome",
+					contentBlocks: [
+						{
+							type: "comparison-block",
+							title: "Errado x correto",
+							columns: [
+								{
+									title: "Errado",
+									items: [
+										"Usar `if (strpos($texto, \"api\"))` e perder o caso em que a posição é `0`.",
+										"Comparar `\"  admin \" === \"admin\"` sem aplicar `trim()` antes.",
+										"Esperar interpolação em `echo 'Olá, $nome'` com aspas simples.",
+									],
+								},
+								{
+									title: "Correto",
+									items: [
+										"Validar busca com `strpos($texto, \"api\") !== false`.",
+										"Normalizar entrada antes de comparar, por exemplo `trim($valor) === \"admin\"`.",
+										"Usar aspas duplas quando a string precisar interpolar variável.",
+									],
+								},
+							],
+						},
+					],
 					tags: [
 						"php",
 						"strings",

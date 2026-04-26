@@ -549,7 +549,23 @@ window.DOC_DATA_REGISTRY["php-arrays"] = {
 					description:
 						"Use esta leitura rápida como mapa: `array_map` para transformar, `array_filter` para filtrar, `array_reduce` para acumular, `array_column` para extrair uma coluna, `array_merge` ou `array_replace` para juntar/substituir, `array_diff`/`array_intersect` para comparar valores, `array_diff_key`/`array_intersect_key` para comparar chaves, `sort`/`asort`/`usort`/`uasort` para ordenar e `array_values` para reindexar.",
 					descriptionTone: "default",
-					code: '<?php\n// Transformar cada item\narray_map(fn($item) => ..., $lista);\n\n// Filtrar por condição\narray_filter($lista, fn($item) => ...);\n\n// Acumular em um valor final\narray_reduce($lista, fn($acc, $item) => ..., $valorInicial);\n\n// Extrair uma coluna de uma lista de registros\narray_column($registros, "campo");\n\n// Juntar ou substituir estruturas\narray_merge($a, $b);\narray_replace($base, $override);\n\n// Comparar listas por valor\narray_diff($a, $b);\narray_intersect($a, $b);\n\n// Comparar listas por chave\narray_diff_key($a, $b);\narray_intersect_key($a, $b);\n\n// Acesso seguro em nível profundo\n$cidade = $usuario["endereco"]["cidade"] ?? "não informado";\n\n// Reindexar após filtro ou unset\narray_values($lista);',
+					contentBlocks: [
+						{
+							type: "reference-card",
+							title: "Mapa de decisão",
+							items: [
+								"`array_map` para transformar cada item.",
+								"`array_filter` para filtrar por condição.",
+								"`array_reduce` para acumular em um valor final.",
+								"`array_column` para extrair uma coluna.",
+								"`array_merge` ou `array_replace` para juntar ou sobrescrever estruturas.",
+								"`array_diff` e `array_intersect` para comparar valores.",
+								"`array_diff_key` e `array_intersect_key` para comparar chaves.",
+								"`sort`, `asort`, `usort` e `uasort` para ordenar.",
+								"`array_values` para reindexar depois de filtro ou `unset`.",
+							],
+						},
+					],
 					tags: [
 						"php",
 						"guia",

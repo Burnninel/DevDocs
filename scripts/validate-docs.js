@@ -13,6 +13,20 @@ const VALID_LAYOUTS = new Set(["single", "two"]);
 const VALID_DESCRIPTION_TONES = new Set(["default", "warn"]);
 const VALID_SPANS = new Set(["full"]);
 const VALID_CALLOUT_TYPES = new Set(["hint", "warn", "danger"]);
+const VALID_CONTENT_BLOCK_TYPES = new Set([
+	"tech-list",
+	"checklist-block",
+	"comparison-block",
+	"context-block",
+	"flow-steps",
+	"reference-card",
+]);
+const VALID_CONTEXT_BLOCK_VARIANTS = new Set([
+	"attention",
+	"tip",
+	"good-practice",
+	"common-error",
+]);
 
 const errors = [];
 const warnings = [];
@@ -193,6 +207,171 @@ function validateQuickStart(quickStart, context) {
 	validateCallout(quickStart.callout, `${context} > quickStart`);
 }
 
+function validateNonEmptyStringArray(values, context) {
+	ensure(
+		Array.isArray(values) && values.length > 0,
+		`[${context}] deve ser um array nao vazio.`,
+	);
+
+	if (!Array.isArray(values)) return;
+
+	values.forEach((value, index) => {
+		ensure(
+			isNonEmptyString(value),
+			`[${context}] item ${index} deve ser texto nao vazio.`,
+		);
+	});
+}
+
+function validateContentBlock(block, context) {
+	ensure(isObject(block), `[${context}] bloco deve ser um objeto.`);
+	if (!isObject(block)) return;
+
+	ensure(
+		VALID_CONTENT_BLOCK_TYPES.has(block.type),
+		`[${context}] type invalido: ${String(block.type)}.`,
+	);
+
+	if (!VALID_CONTENT_BLOCK_TYPES.has(block.type)) return;
+
+	if (block.title != null) {
+		ensure(
+			isNonEmptyString(block.title),
+			`[${context}] title deve ser texto nao vazio quando informado.`,
+		);
+	}
+
+	if (block.type === "tech-list") {
+		ensure(
+			Array.isArray(block.items) && block.items.length > 0,
+			`[${context}] items deve ser um array nao vazio.`,
+		);
+
+		if (Array.isArray(block.items)) {
+			block.items.forEach((item, index) => {
+				ensure(
+					isObject(item),
+					`[${context}] items.${index} deve ser um objeto.`,
+				);
+				if (!isObject(item)) return;
+				ensure(
+					isNonEmptyString(item.term),
+					`[${context}] items.${index}.term obrigatorio.`,
+				);
+				ensure(
+					isNonEmptyString(item.description),
+					`[${context}] items.${index}.description obrigatorio.`,
+				);
+			});
+		}
+		return;
+	}
+
+	if (block.type === "checklist-block") {
+		validateNonEmptyStringArray(block.items, `${context} > items`);
+		return;
+	}
+
+	if (block.type === "comparison-block") {
+		ensure(
+			Array.isArray(block.columns) && block.columns.length === 2,
+			`[${context}] columns deve ter exatamente 2 colunas.`,
+		);
+
+		if (Array.isArray(block.columns)) {
+			block.columns.forEach((column, index) => {
+				ensure(
+					isObject(column),
+					`[${context}] columns.${index} deve ser um objeto.`,
+				);
+				if (!isObject(column)) return;
+				ensure(
+					isNonEmptyString(column.title),
+					`[${context}] columns.${index}.title obrigatorio.`,
+				);
+
+				if (column.description != null) {
+					ensure(
+						isNonEmptyString(column.description),
+						`[${context}] columns.${index}.description deve ser texto nao vazio quando informado.`,
+					);
+				}
+
+				if (column.items != null) {
+					validateNonEmptyStringArray(
+						column.items,
+						`${context} > columns.${index}.items`,
+					);
+				}
+
+				ensure(
+					isNonEmptyString(column.description) ||
+						(Array.isArray(column.items) &&
+							column.items.length > 0),
+					`[${context}] columns.${index} precisa de description ou items.`,
+				);
+			});
+		}
+		return;
+	}
+
+	if (block.type === "context-block") {
+		ensure(
+			VALID_CONTEXT_BLOCK_VARIANTS.has(block.variant),
+			`[${context}] variant invalido: ${String(block.variant)}.`,
+		);
+		ensure(
+			isNonEmptyString(block.text),
+			`[${context}] text obrigatorio.`,
+		);
+		if (block.label != null) {
+			ensure(
+				isNonEmptyString(block.label),
+				`[${context}] label deve ser texto nao vazio quando informado.`,
+			);
+		}
+		return;
+	}
+
+	if (block.type === "flow-steps") {
+		validateNonEmptyStringArray(block.steps, `${context} > steps`);
+		return;
+	}
+
+	if (block.type === "reference-card") {
+		if (block.description != null) {
+			ensure(
+				isNonEmptyString(block.description),
+				`[${context}] description deve ser texto nao vazio quando informado.`,
+			);
+		}
+		if (block.items != null) {
+			validateNonEmptyStringArray(block.items, `${context} > items`);
+		}
+		ensure(
+			isNonEmptyString(block.title) ||
+				isNonEmptyString(block.description) ||
+				(Array.isArray(block.items) && block.items.length > 0),
+			`[${context}] reference-card precisa de title, description ou items.`,
+		);
+	}
+}
+
+function validateContentBlocks(blocks, context) {
+	if (blocks == null) return;
+
+	ensure(
+		Array.isArray(blocks) && blocks.length > 0,
+		`[${context}] contentBlocks deve ser um array nao vazio quando informado.`,
+	);
+
+	if (!Array.isArray(blocks)) return;
+
+	blocks.forEach((block, index) => {
+		validateContentBlock(block, `${context} > contentBlocks.${index}`);
+	});
+}
+
 function validateEntry(entry, context) {
 	ensure(isObject(entry), `[${context}] entry deve ser um objeto.`);
 	if (!isObject(entry)) return;
@@ -203,7 +382,13 @@ function validateEntry(entry, context) {
 		isNonEmptyString(entry.description),
 		`[${context}] description obrigatorio.`,
 	);
-	ensure(isNonEmptyString(entry.code), `[${context}] code obrigatorio.`);
+	const hasCode = isNonEmptyString(entry.code);
+	const hasContentBlocks =
+		Array.isArray(entry.contentBlocks) && entry.contentBlocks.length > 0;
+	ensure(
+		hasCode || hasContentBlocks,
+		`[${context}] entry precisa ter code ou contentBlocks.`,
+	);
 
 	ensure(
 		Array.isArray(entry.tags) && entry.tags.length > 0,
@@ -257,6 +442,7 @@ function validateEntry(entry, context) {
 	}
 
 	validateCallout(entry.callout, context);
+	validateContentBlocks(entry.contentBlocks, context);
 }
 
 function validateSection(section, context, seenSectionIds) {

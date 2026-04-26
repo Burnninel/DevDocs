@@ -2,12 +2,21 @@
 	"use strict";
 
 	const CALL_OUT_TYPES = new Set(["hint", "warn", "danger"]);
-	const MARK_CLASS_BY_TYPE = {
-		hint: "mark-info",
-		warn: "mark-warn",
-		danger: "mark-danger",
-	};
 	const SECTION_LAYOUTS = new Set(["two", "single"]);
+	const CONTENT_BLOCK_TYPES = new Set([
+		"tech-list",
+		"checklist-block",
+		"comparison-block",
+		"context-block",
+		"flow-steps",
+		"reference-card",
+	]);
+	const CONTEXT_BLOCK_VARIANTS = new Set([
+		"attention",
+		"tip",
+		"good-practice",
+		"common-error",
+	]);
 	const EDIT_HANDLE_ICON = `
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false">
 			<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
@@ -115,6 +124,245 @@
 			return "javascript";
 		}
 		return "plain";
+	}
+
+	function isTerminalLanguage(language) {
+		return normalizeCodeLanguage(language) === "shell";
+	}
+
+	function renderCodeBlock(
+		codeSource,
+		codeLanguage,
+		path,
+		label,
+		extraClass = "",
+	) {
+		const source = String(codeSource ?? "").trim();
+		if (!source) return "";
+
+		const languageClass = safeClassToken(codeLanguage);
+		const highlightedCode = highlightCode(source, languageClass);
+		const codeAttrs = path ? editableAttrs(path, "code", label) : "";
+		const surfaceClass = isTerminalLanguage(languageClass)
+			? "terminal-block"
+			: "real-code-block";
+		const codeCopyButtonMarkup = `<button class="code-copy-btn" type="button" aria-label="Copiar código" title="Copiar código"><span class="copy-icon copy">${COPY_CODE_ICON}</span><span class="copy-icon done">${COPY_DONE_ICON}</span><span class="copy-feedback">Copiado</span></button>`;
+
+		return `<pre class="entry-code ${surfaceClass}${extraClass}"${codeAttrs}>${codeCopyButtonMarkup}<code class="code-block language-${languageClass}">${highlightedCode}</code></pre>`;
+	}
+
+	function mapLegacyCalloutTypeToContextVariant(type, label = "") {
+		const normalizedLabel = normalizeText(label);
+		if (normalizedLabel.includes("boa pratica")) return "good-practice";
+		if (normalizedLabel.includes("boas praticas")) return "good-practice";
+		if (normalizedLabel.includes("erro comum")) return "common-error";
+		if (type === "warn") return "attention";
+		if (type === "danger") return "common-error";
+		return "tip";
+	}
+
+	function renderContextBlock(block, options = {}) {
+		if (!block || typeof block !== "object") return "";
+
+		const variant = CONTEXT_BLOCK_VARIANTS.has(block.variant)
+			? block.variant
+			: mapLegacyCalloutTypeToContextVariant(block.type, block.label);
+		const label = String(block.label ?? "").trim();
+		const text = String(block.text ?? "").trim();
+		if (!label && !text) return "";
+
+		const textAttrs =
+			options.textPath && options.textLabel
+				? editableAttrs(
+						options.textPath,
+						"multiline",
+						options.textLabel,
+					)
+				: "";
+		const labelMarkup = label
+			? `<strong class="context-block-label">${escapeHtml(label)}</strong>`
+			: "";
+		const textMarkup = text
+			? `<span class="context-block-copy"${textAttrs}>${formatInlineTokens(text)}</span>`
+			: "";
+
+		return `
+      <aside class="content-block context-block variant-${safeClassToken(variant)}">
+        <div class="context-block-content">
+          ${labelMarkup}
+          ${textMarkup}
+        </div>
+      </aside>`;
+	}
+
+	function renderListItems(items, className) {
+		return items
+			.map((item) => {
+				const value = String(item ?? "").trim();
+				if (!value) return "";
+				return `<li class="${className}">${formatInlineTokens(value)}</li>`;
+			})
+			.join("");
+	}
+
+	function renderContentBlock(block) {
+		if (!block || typeof block !== "object") return "";
+		if (!CONTENT_BLOCK_TYPES.has(block.type)) return "";
+
+		const title = String(block.title ?? "").trim();
+		const titleMarkup = title
+			? `<div class="content-block-title">${escapeHtml(title)}</div>`
+			: "";
+
+		if (block.type === "tech-list") {
+			const items = Array.isArray(block.items) ? block.items : [];
+			const termHeader = String(
+				block.termHeader ?? "Constante ou opção",
+			).trim();
+			const descriptionHeader = String(
+				block.descriptionHeader ?? "Descrição",
+			).trim();
+			const rowsMarkup = items
+				.map((item) => {
+					if (!item || typeof item !== "object") return "";
+					const term = String(item.term ?? "").trim();
+					const description = String(item.description ?? "").trim();
+					if (!term || !description) return "";
+					return `
+            <div class="tech-list-row">
+              <code class="tech-list-term">${escapeHtml(term)}</code>
+              <p class="tech-list-description">${formatInlineTokens(description)}</p>
+            </div>`;
+				})
+				.join("");
+
+			if (!rowsMarkup) return "";
+
+			return `
+        <section class="content-block tech-list">
+          ${titleMarkup}
+          <div class="tech-list-header" role="presentation">
+            <span class="tech-list-head-cell">${escapeHtml(termHeader || "Constante ou opção")}</span>
+            <span class="tech-list-head-cell">${escapeHtml(descriptionHeader || "Descrição")}</span>
+          </div>
+          <div class="tech-list-rows">
+            ${rowsMarkup}
+          </div>
+        </section>`;
+		}
+
+		if (block.type === "checklist-block") {
+			const items = Array.isArray(block.items) ? block.items : [];
+			const itemsMarkup = renderListItems(items, "checklist-item");
+			if (!itemsMarkup) return "";
+
+			return `
+        <section class="content-block checklist-block">
+          ${titleMarkup}
+          <ul class="checklist-list">
+            ${itemsMarkup}
+          </ul>
+        </section>`;
+		}
+
+		if (block.type === "comparison-block") {
+			const columns = Array.isArray(block.columns) ? block.columns : [];
+			const columnsMarkup = columns
+				.slice(0, 2)
+				.map((column) => {
+					if (!column || typeof column !== "object") return "";
+					const columnTitle = String(column.title ?? "").trim();
+					const columnDescription = String(
+						column.description ?? "",
+					).trim();
+					const columnItems = Array.isArray(column.items)
+						? column.items
+						: [];
+					const itemsMarkup = renderListItems(
+						columnItems,
+						"comparison-item",
+					);
+					if (!columnTitle && !columnDescription && !itemsMarkup) {
+						return "";
+					}
+					return `
+            <article class="comparison-column">
+              ${
+						columnTitle
+							? `<h4>${escapeHtml(columnTitle)}</h4>`
+							: ""
+					}
+              ${
+						columnDescription
+							? `<p>${formatInlineTokens(columnDescription)}</p>`
+							: ""
+					}
+              ${
+						itemsMarkup
+							? `<ul class="comparison-list">${itemsMarkup}</ul>`
+							: ""
+					}
+            </article>`;
+				})
+				.join("");
+
+			if (!columnsMarkup) return "";
+
+			return `
+        <section class="content-block comparison-block">
+          ${titleMarkup}
+          <div class="comparison-grid">
+            ${columnsMarkup}
+          </div>
+        </section>`;
+		}
+
+		if (block.type === "context-block") {
+			return renderContextBlock(block);
+		}
+
+		if (block.type === "flow-steps") {
+			const steps = Array.isArray(block.steps) ? block.steps : [];
+			const stepsMarkup = renderListItems(steps, "flow-step-item");
+			if (!stepsMarkup) return "";
+
+			return `
+        <section class="content-block flow-steps">
+          ${titleMarkup}
+          <ol class="flow-steps-list">
+            ${stepsMarkup}
+          </ol>
+        </section>`;
+		}
+
+		if (block.type === "reference-card") {
+			const description = String(block.description ?? "").trim();
+			const items = Array.isArray(block.items) ? block.items : [];
+			const itemsMarkup = renderListItems(items, "reference-item");
+			if (!titleMarkup && !description && !itemsMarkup) return "";
+
+			return `
+        <section class="content-block reference-card">
+          ${titleMarkup}
+          ${
+				description
+					? `<p class="reference-card-description">${formatInlineTokens(description)}</p>`
+					: ""
+			}
+          ${
+				itemsMarkup
+					? `<ul class="reference-card-list">${itemsMarkup}</ul>`
+					: ""
+			}
+        </section>`;
+		}
+
+		return "";
+	}
+
+	function renderContentBlocks(blocks) {
+		if (!Array.isArray(blocks) || !blocks.length) return "";
+		return blocks.map((block) => renderContentBlock(block)).join("");
 	}
 
 	function highlightPhp(codeText) {
@@ -1051,29 +1299,23 @@
 				docData?.codeLanguage || "",
 				codeSource,
 			);
-			const languageClass = safeClassToken(codeLanguage);
-			const highlightedCode = highlightCode(codeSource, languageClass);
-			const codeAttrs = editableAttrs(
+			codeMarkup = renderCodeBlock(
+				codeSource,
+				codeLanguage,
 				"quickStart.code",
-				"code",
-				"bloco de comando de início rápido",
+				isTerminalLanguage(codeLanguage)
+					? "bloco de terminal do início rápido"
+					: "bloco de código do início rápido",
+				" quick-start-code",
 			);
-			const codeCopyButtonMarkup = `<button class="code-copy-btn" type="button" aria-label="Copiar código" title="Copiar código"><span class="copy-icon copy">${COPY_CODE_ICON}</span><span class="copy-icon done">${COPY_DONE_ICON}</span><span class="copy-feedback">Copiado</span></button>`;
-			codeMarkup = `<pre class="entry-code quick-start-code"${codeAttrs}>${codeCopyButtonMarkup}<code class="code-block language-${languageClass}">${highlightedCode}</code></pre>`;
 		}
 
 		let calloutMarkup = "";
 		if (hasCallout) {
-			const type = callout.type;
-			const label = escapeHtml(callout.label);
-			const text = formatInlineTokens(callout.text);
-			const markClass = MARK_CLASS_BY_TYPE[type] || "mark-info";
-			const calloutTextAttrs = editableAttrs(
-				"quickStart.callout.text",
-				"multiline",
-				"aviso do início rápido",
-			);
-			calloutMarkup = `<div class="${type} quick-start-callout"><div class="callout-copy"><strong class="${markClass}">${label}</strong> <span${calloutTextAttrs}>${text}</span></div></div>`;
+			calloutMarkup = renderContextBlock(callout, {
+				textPath: "quickStart.callout.text",
+				textLabel: "aviso do início rápido",
+			});
 		}
 
 		return `
@@ -1219,13 +1461,10 @@
 		const extracted = splitCodeAndExpectedOutput(entry.code);
 		const codeSource = extracted.code;
 		const outputSource = String(entry.output ?? extracted.output ?? "");
-		const language = detectCodeLanguage(
-			entry,
-			defaultCodeLanguage,
-			codeSource,
-		);
-		const languageClass = safeClassToken(language);
-		const code = highlightCode(codeSource, languageClass);
+		const hasCode = Boolean(codeSource.trim());
+		const language = hasCode
+			? detectCodeLanguage(entry, defaultCodeLanguage, codeSource)
+			: "plain";
 		const spanClass = entry.span === "full" ? " span-full" : "";
 		const pathPrefix = `sections.${sectionIndex}.entries.${entryIndex}`;
 		const titleAttrs = editableAttrs(
@@ -1243,33 +1482,18 @@
 			"multiline",
 			"descrição do item",
 		);
-		const codeAttrs = editableAttrs(
-			`${pathPrefix}.code`,
-			"code",
-			"bloco de código",
-		);
-
 		const tags = Array.isArray(entry.tags)
 			? entry.tags.join(" ")
 			: String(entry.tags ?? "");
 		const safeTags = escapeHtml(tags.trim());
+		const contentBlocksMarkup = renderContentBlocks(entry.contentBlocks);
 
 		let calloutMarkup = "";
 		if (entry.callout && CALL_OUT_TYPES.has(entry.callout.type)) {
-			const type = entry.callout.type;
-			const label = escapeHtml(entry.callout.label);
-			const text = formatInlineTokens(entry.callout.text);
-			const markClass = MARK_CLASS_BY_TYPE[type] || "mark-info";
-			const calloutTextAttrs = editableAttrs(
-				`${pathPrefix}.callout.text`,
-				"multiline",
-				"texto do aviso",
-			);
-
-			calloutMarkup = `
-        <div class="${type} code-head">
-          <div class="callout-copy"><strong class="${markClass}">${label}</strong> <span${calloutTextAttrs}>${text}</span></div>
-        </div>`;
+			calloutMarkup = renderContextBlock(entry.callout, {
+				textPath: `${pathPrefix}.callout.text`,
+				textLabel: "texto do aviso",
+			});
 		}
 
 		const outputMarkup = outputSource.trim()
@@ -1279,7 +1503,16 @@
             <pre class="output-block"><code class="code-block language-output">${escapeHtml(outputSource)}</code></pre>
           </details>`
 			: "";
-		const codeCopyButtonMarkup = `<button class="code-copy-btn" type="button" aria-label="Copiar código" title="Copiar código"><span class="copy-icon copy">${COPY_CODE_ICON}</span><span class="copy-icon done">${COPY_DONE_ICON}</span><span class="copy-feedback">Copiado</span></button>`;
+		const codeMarkup = hasCode
+			? renderCodeBlock(
+					codeSource,
+					language,
+					`${pathPrefix}.code`,
+					isTerminalLanguage(language)
+						? "bloco de terminal"
+						: "bloco de código",
+				)
+			: "";
 
 		return `
       <article class="entry${spanClass}" data-tags="${safeTags}">
@@ -1290,7 +1523,8 @@
         <div class="entry-body">
           <p${descriptionClassAttr}${descriptionAttrs}>${description}</p>
           ${calloutMarkup}
-          <pre class="entry-code"${codeAttrs}>${codeCopyButtonMarkup}<code class="code-block language-${languageClass}">${code}</code></pre>
+          ${contentBlocksMarkup}
+          ${codeMarkup}
           ${outputMarkup}
         </div>
       </article>`;
