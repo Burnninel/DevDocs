@@ -44,5 +44,13 @@ window.DOCS_MANIFEST = {
 			href: "./docs/php-headers-http.html",
 			actionLabel: "Abrir documentação",
 		},
+		{
+			id: "php-strings",
+			title: "PHP: Manipulação de Strings",
+			description:
+				"Guia prático para manipular strings no dia a dia com validação, transformação, APIs e formatação de dados.",
+			href: "./docs/php-strings.html",
+			actionLabel: "Abrir documentação",
+		},
 	],
 };
