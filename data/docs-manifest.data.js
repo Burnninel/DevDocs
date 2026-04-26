@@ -52,5 +52,13 @@ window.DOCS_MANIFEST = {
 			href: "./docs/php-strings.html",
 			actionLabel: "Abrir documentação",
 		},
+		{
+			id: "php-banco-dados",
+			title: "PHP: Conexão e Manipulação de Banco de Dados",
+			description:
+				"Guia prático para conectar com PDO, executar CRUD com segurança, evitar SQL Injection e organizar acesso ao banco.",
+			href: "./docs/php-banco-dados.html",
+			actionLabel: "Abrir documentação",
+		},
 	],
 };
