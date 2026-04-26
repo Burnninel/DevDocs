@@ -60,5 +60,13 @@ window.DOCS_MANIFEST = {
 			href: "./docs/php-banco-dados.html",
 			actionLabel: "Abrir documentação",
 		},
+		{
+			id: "php-sessoes-cookies-tokens",
+			title: "PHP: Sessões, Cookies e Tokens",
+			description:
+				"Guia prático para autenticação com sessão, cookies seguros, geração de tokens e proteção com CSRF.",
+			href: "./docs/php-sessoes-cookies-tokens.html",
+			actionLabel: "Abrir documentação",
+		},
 	],
 };
