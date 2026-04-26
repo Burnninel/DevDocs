@@ -14,7 +14,7 @@ window.DOCS_MANIFEST = {
 		},
 		{
 			id: "php-arrays",
-			title: "PHP no Terminal: Arrays",
+			title: "PHP: Manipulando Arrays",
 			description:
 				"Base inicial com criação, transformação, busca, ordenação e composição de arrays.",
 			href: "./docs/php-arrays.html",

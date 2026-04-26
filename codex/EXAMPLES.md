@@ -32,7 +32,7 @@ Arquivos reais: `docs/_template.html`, `docs/php-arrays.html`
     <header class="app-header">
         <div class="header-inner">
             <div class="brand">
-                <h1 id="docTitle">PHP no Terminal: Arrays</h1>
+                <h1 id="docTitle">PHP: Manipulando Arrays</h1>
                 <p id="docSubtitle">Base pratica para manipulacao de arrays em PHP no dia a dia.</p>
             </div>
         </div>
