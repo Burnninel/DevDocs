@@ -19,19 +19,51 @@ DevDocs/
     PROJECT_RULES.md
     STRUCTURE.md
     EXAMPLES.md
+    PHP_DOCS_IMPROVEMENT_PLAN.md
+    GO_DOCS_IMPROVEMENT_PLAN.md
   data/
     docs-manifest.data.js
     _template.data.js
     git-github-terminal.data.js
     php-arrays.data.js
+    php-banco-dados.data.js
+    php-composer-autoload.data.js
+    php-datetime.data.js
+    php-debugging.data.js
+    php-erros-excecoes.data.js
+    php-ficheiros-io.data.js
+    php-headers-http.data.js
+    php-json.data.js
+    php-orientacao-objetos.data.js
+    php-regex.data.js
+    php-sessoes-cookies-tokens.data.js
+    php-strings.data.js
+    php-superglobais.data.js
   docs/
     _template.html
     git-github-terminal.html
     php-arrays.html
+    php-banco-dados.html
+    php-composer-autoload.html
+    php-datetime.html
+    php-debugging.html
+    php-erros-excecoes.html
+    php-ficheiros-io.html
+    php-headers-http.html
+    php-json.html
+    php-orientacao-objetos.html
+    php-regex.html
+    php-sessoes-cookies-tokens.html
+    php-strings.html
+    php-superglobais.html
   scripts/
     validate-docs.js
     validate-docs.ps1
 ```
+
+Documentações listadas no hub (`data/docs-manifest.data.js`): Git (1) e PHP (14), incluindo Fase 1 (`php-erros-excecoes`, `php-json`, `php-composer-autoload`) e Fase 2 (`php-datetime`, `php-ficheiros-io`, `php-regex`). A **Fase 3** do plano PHP atualizou sobretudo `php-banco-dados`, `php-sessoes-cookies-tokens`, `php-superglobais`, `php-headers-http` e `php-strings` (conteúdo nos respetivos `data/*.data.js`).
+
+**Go:** ainda não há entradas `go-*` no manifesto. Roadmap e checklist em `codex/GO_DOCS_IMPROVEMENT_PLAN.md`. Após a primeira leva de guias, atualizar a árvore acima com `docs/go-*.html` e `data/go-*.data.js` para não divergir da realidade.
 
 ## Fluxo principal da aplicacao
 

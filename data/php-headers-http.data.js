@@ -23,8 +23,8 @@ window.DOC_DATA_REGISTRY["php-headers-http"] = {
 		code: "php --version\nphp -S localhost:8000 api.php\ncurl -i http://localhost:8000",
 		callout: {
 			type: "hint",
-			label: "Dica:",
-			text: "se você testar só via CLI (`php arquivo.php`), não verá o comportamento HTTP completo dos headers.",
+			label: "Documentação relacionada:",
+			text: "corpo JSON e flags em `PHP: JSON`; erros de API sem vazar stack em `PHP: Erros e exceções`. Se testar só com `php arquivo.php`, não verá o comportamento HTTP completo dos headers.",
 		},
 	},
 	sections: [
@@ -233,6 +233,28 @@ window.DOC_DATA_REGISTRY["php-headers-http"] = {
 						type: "hint",
 						label: "Padrão útil:",
 						text: "mantenha o mesmo formato para sucesso/erro (`ok`, `data`, `erro`) para reduzir ifs no consumidor da API.",
+					},
+				},
+				{
+					title: "Montar o body JSON com encode seguro",
+					kicker: "Flags, Unicode e erros de serialização",
+					description:
+						"Depois de definir status e `Content-Type`, use `json_encode` com critério: `JSON_UNESCAPED_UNICODE` para acentos legíveis, `JSON_THROW_ON_ERROR` para falhar com `JsonException` em vez de `false` silencioso. Para contrato de decode, validação de chaves e armadilhas com `null`, abra no hub a documentação `PHP: JSON (encode e decode)`.",
+					descriptionTone: "default",
+					code: '<?php\n$payload = ["ok" => true, "mensagem" => "Pedido criado"];\n\ntry {\n    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);\n} catch (JsonException $e) {\n    http_response_code(500);\n    header("Content-Type: application/json; charset=utf-8");\n    echo json_encode(["ok" => false, "erro" => "Falha ao serializar"]);\n}',
+					output: '{"ok":true,"mensagem":"Pedido criado"}',
+					tags: [
+						"php",
+						"json_encode",
+						"json",
+						"api",
+						"unicode",
+						"jsonexception",
+					],
+					callout: {
+						type: "hint",
+						label: "Cruzamento:",
+						text: "a doc `PHP: JSON` aprofunda decode, profundidade e `json_last_error`; esta página foca em headers e ordem de saída.",
 					},
 				},
 			],

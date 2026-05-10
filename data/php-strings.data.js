@@ -23,8 +23,8 @@ window.DOC_DATA_REGISTRY["php-strings"] = {
 		code: "php --version\nphp strings.php",
 		callout: {
 			type: "hint",
-			label: "Dica:",
-			text: "em manipulação de strings, pequenos detalhes de espaço, maiúscula e acento mudam o resultado final.",
+			label: "Documentação relacionada:",
+			text: "padrões em texto livre com `preg_*` em `PHP: Expressões regulares`; serialização em `PHP: JSON`.",
 		},
 	},
 	sections: [

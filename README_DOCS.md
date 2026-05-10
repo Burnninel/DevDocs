@@ -4,6 +4,11 @@
 
 Manter as documentações locais, reutilizáveis e fáceis de evoluir, com abertura direta via `file://`, sem depender de servidor.
 
+## Planos por eixo (codex)
+
+- PHP (estado e checklist): `codex/PHP_DOCS_IMPROVEMENT_PLAN.md`
+- Go (roadmap a implementar): `codex/GO_DOCS_IMPROVEMENT_PLAN.md`
+
 ## Estrutura atual
 
 ```txt

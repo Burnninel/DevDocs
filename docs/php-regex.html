@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PHP: Expressões regulares (preg_*)</title>
+    <link rel="stylesheet" href="../assets/css/docs-theme.css" />
+</head>
+
+<body>
+    <div class="app-shell" data-doc-id="php-regex">
+        <header class="app-header">
+            <div class="header-inner">
+                <div class="brand">
+                    <h1 id="docTitle">PHP: Expressões regulares (preg_*)</h1>
+                    <p id="docSubtitle">Guia prático para preg_match, preg_replace, delimitadores e quando evitar regex.</p>
+                </div>
+
+                <div class="search-panel">
+                    <div class="search-label">Busca rápida</div>
+                    <div class="search-row">
+                        <label class="search-field" for="searchInput">
+                            <span class="sr-only">Buscar regex, preg, pattern ou palavra</span>
+                            <input id="searchInput" class="search-input" type="search"
+                                placeholder="Buscar preg_match, preg_replace, delimitador, unicode ou palavra..." autocomplete="off" />
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </label>
+                        <button id="editModeToggle" class="edit-mode-toggle" type="button" aria-pressed="false"
+                            aria-label="Ativar modo edição">
+                            <span class="edit-mode-toggle-track" aria-hidden="true">
+                                <span class="edit-mode-toggle-thumb"></span>
+                            </span>
+                            <span class="edit-mode-toggle-label">Modo edição</span>
+                        </button>
+                        <button id="saveDataButton" class="header-action-btn" type="button">
+                            Salvar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="tabs-bar" aria-label="Navegação rápida por seções">
+                <div class="tabs-inner" id="tabsContainer"></div>
+            </nav>
+        </header>
+
+        <main class="doc-main">
+            <div class="main-inner">
+                <p class="meta-line" id="shortcutHint">Atalho: pressione <strong>/</strong> para focar a busca.</p>
+                <div class="sections" id="sectionsContainer"></div>
+                <div id="emptyState" class="empty-state">Nenhum item encontrado para esta busca.</div>
+            </div>
+        </main>
+    </div>
+
+    <script defer src="../data/php-regex.data.js"></script>
+    <script defer src="../assets/js/docs-core.js"></script>
+</body>
+
+</html>

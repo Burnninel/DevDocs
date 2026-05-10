@@ -24,8 +24,8 @@ window.DOC_DATA_REGISTRY["php-sessoes-cookies-tokens"] = {
 		code: "php --version\nphp -S localhost:8000",
 		callout: {
 			type: "hint",
-			label: "Dica:",
-			text: "sessão e cookie ficam muito mais claros quando você testa navegação real no navegador.",
+			label: "Documentação relacionada:",
+			text: "`PHP: Superglobais` resume `$_SESSION`, `$_COOKIE` e `$_SERVER` na requisição; este guia aprofunda fluxo de login, flags de cookie, tokens e CSRF.",
 		},
 	},
 	sections: [
@@ -38,9 +38,18 @@ window.DOC_DATA_REGISTRY["php-sessoes-cookies-tokens"] = {
 					title: "Sessão guarda estado no servidor entre requisições",
 					kicker: "Dados da sessão ficam no servidor, não no navegador",
 					description:
-						"Em HTTP puro, cada requisição é independente. Sessão resolve isso guardando dados no servidor para cada usuário. O navegador mantém apenas o identificador dessa sessão.",
+						"Em HTTP puro, cada requisição é independente. Sessão resolve isso guardando dados no servidor para cada usuário. O navegador mantém apenas o identificador dessa sessão. O array `$_SESSION` (superglobal) só fica disponível após `session_start()`; para o mapa de todas as superglobais na mesma requisição, veja `PHP: Superglobais` no hub.",
 					code: '<?php\nsession_start(); // sempre inicie a sessao antes de acessar $_SESSION\n\n$_SESSION["carrinho_itens"] = 3; // valor salvo no servidor para este usuario\n$_SESSION["ultimo_acesso"] = date("c"); // estado da sessao persiste entre requisicoes\n\necho "Sessão ativa no servidor. ID: " . session_id() . PHP_EOL;',
-					tags: ["php", "sessao", "estado", "servidor", "autenticacao", "base"],
+					tags: [
+						"php",
+						"sessao",
+						"session",
+						"superglobais",
+						"estado",
+						"servidor",
+						"autenticacao",
+						"base",
+					],
 				},
 			],
 		},
