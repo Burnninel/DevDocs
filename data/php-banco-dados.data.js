@@ -25,7 +25,7 @@ window.DOC_DATA_REGISTRY["php-banco-dados"] = {
 		callout: {
 			type: "hint",
 			label: "Dica:",
-			text: "use `charset=utf8mb4` no DSN para evitar problema com acentuação e caracteres especiais.",
+			text: "use `charset=utf8mb4` no DSN para evitar problema com acentuação e caracteres especiais. A secção **8. Transações** cobre `beginTransaction`, `commit` e `rollBack`; erros com PDO combinam com `PHP: Erros e exceções` no hub.",
 		},
 	},
 	sections: [
@@ -232,8 +232,59 @@ window.DOC_DATA_REGISTRY["php-banco-dados"] = {
 			],
 		},
 		{
+			id: "transacoes-pdo",
+			name: "8. Transações (BEGIN, COMMIT, ROLLBACK)",
+			layout: "single",
+			entries: [
+				{
+					title: "beginTransaction, commit e rollBack no PDO",
+					kicker: "Várias escritas passam a falhar ou confirmar em conjunto",
+					description:
+						"Use transação quando duas ou mais operações devem ser atómicas: se uma falhar, nenhuma alteração fica persistida. `beginTransaction()` inicia, `commit()` confirma e `rollBack()` desfaz alterações pendentes na mesma transação. Em `PDO`, `rollBack` também é chamado automaticamente em alguns erros se `ATTR_AUTOCOMMIT` estiver desligado — ainda assim trate exceções e faça `rollBack` explícito no `catch` para fluxo legível.",
+					descriptionTone: "default",
+					code: '<?php\n$pdo = DatabaseConnection::make();\n\n// $pdo: conexão; $deId/$paraId: contas; $pontos: quantidade (não usada neste SQL mínimo de exemplo)\nfunction transferirPontos(PDO $pdo, int $deId, int $paraId, int $pontos): void\n{\n    $pdo->beginTransaction();\n\n    try {\n        $u1 = $pdo->prepare("UPDATE usuarios SET status = status WHERE id = :id");\n        $u1->execute([":id" => $deId]);\n\n        if ($u1->rowCount() === 0) {\n            throw new RuntimeException("Origem inexistente");\n        }\n\n        $u2 = $pdo->prepare("UPDATE usuarios SET status = status WHERE id = :id");\n        $u2->execute([":id" => $paraId]);\n\n        if ($u2->rowCount() === 0) {\n            throw new RuntimeException("Destino inexistente");\n        }\n\n        $pdo->commit();\n        echo "Transação concluída com commit." . PHP_EOL;\n    } catch (Throwable $e) {\n        if ($pdo->inTransaction()) {\n            $pdo->rollBack();\n        }\n        echo "Rollback: " . $e->getMessage() . PHP_EOL;\n    }\n}\n\ntransferirPontos($pdo, 7, 8, 100);',
+					output: "Transação concluída com commit.",
+					tags: [
+						"php",
+						"pdo",
+						"transacao",
+						"commit",
+						"rollback",
+						"acid",
+					],
+					callout: {
+						type: "hint",
+						label: "Padrão:",
+						text: "`beginTransaction` → vários `execute` → `commit`; em `catch`, `rollBack` se `inTransaction()` for verdadeiro.",
+					},
+				},
+				{
+					title: "Evitar transação longa e misturar leituras desnecessárias",
+					kicker: "Locks prolongados degradam o sistema",
+					description:
+						"Mantenha a transação curta: abra só quando for escrever e feche rapidamente. Não deixe I/O externo (HTTP, disco lento) dentro da transação. Para padrões avançados (níveis de isolamento), consulte a documentação do motor (MySQL/InnoDB, etc.).",
+					descriptionTone: "warn",
+					code: '<?php\n$pdo = DatabaseConnection::make();\n\necho "inTransaction antes: " . ($pdo->inTransaction() ? "sim" : "nao") . PHP_EOL;\n$pdo->beginTransaction();\necho "inTransaction durante: " . ($pdo->inTransaction() ? "sim" : "nao") . PHP_EOL;\n$pdo->rollBack();\necho "inTransaction depois: " . ($pdo->inTransaction() ? "sim" : "nao") . PHP_EOL;',
+					output: "inTransaction antes: nao\ninTransaction durante: sim\ninTransaction depois: nao",
+					tags: [
+						"php",
+						"pdo",
+						"intransaction",
+						"lock",
+						"performance",
+						"transacao",
+					],
+					callout: {
+						type: "hint",
+						label: "Cruzamento:",
+						text: "erros de SQL dentro de transação combinam com `PHP: Erros e exceções` para não expor detalhes ao cliente da API.",
+					},
+				},
+			],
+		},
+		{
 			id: "tratamento-erros",
-			name: "8. Tratamento de erros",
+			name: "9. Tratamento de erros",
 			layout: "single",
 			entries: [
 				{
@@ -254,7 +305,7 @@ window.DOC_DATA_REGISTRY["php-banco-dados"] = {
 		},
 		{
 			id: "boas-praticas",
-			name: "9. Boas práticas",
+			name: "10. Boas práticas",
 			layout: "single",
 			entries: [
 				{
@@ -273,6 +324,7 @@ window.DOC_DATA_REGISTRY["php-banco-dados"] = {
 								"Não exponha credenciais nem mensagem técnica para o usuário final.",
 								"Evite SQL direto no controller quando o projeto começar a crescer.",
 								"Use `fetchAll()` só com volume pequeno ou paginação.",
+								"Use transação quando várias escritas têm de ser atómicas (`beginTransaction` / `commit` / `rollBack`).",
 							],
 						},
 						{
@@ -288,7 +340,7 @@ window.DOC_DATA_REGISTRY["php-banco-dados"] = {
 		},
 		{
 			id: "constantes-opcoes-pdo",
-			name: "10. Constantes e opções comuns do PDO",
+			name: "11. Constantes e opções comuns do PDO",
 			layout: "single",
 			entries: [
 				{
@@ -349,7 +401,7 @@ window.DOC_DATA_REGISTRY["php-banco-dados"] = {
 		},
 		{
 			id: "visao-geral-arquivos",
-			name: "11. Exemplo simples mais completo",
+			name: "12. Exemplo simples mais completo",
 			layout: "single",
 			entries: [
 				{

@@ -55,6 +55,28 @@ window.DOC_DATA_REGISTRY["php-debugging"] = {
 						text: "primeiro confirme o que o código está fazendo agora; depois aplique a correção com base nessa evidência.",
 					},
 				},
+				{
+					title: "Debug inspeciona estado; exceções modelam falha de fluxo",
+					kicker: "Complemento à documentação de erros e exceções",
+					description:
+						"Debug responde \"o que está na variável agora?\". Exceções respondem \"esta operação falhou e o fluxo deve parar ou ser traduzido\". Depois de entender a causa com debug, use `try/catch` e tipos de exceção para tratar o caso de forma repetível e segura em produção. No hub, abra também `PHP: Erros e exceções` para padrões de `Throwable`, relançamento e resposta JSON sem vazar stack.",
+					descriptionTone: "default",
+					code: '<?php\nfunction calcularDesconto(float $valor, float $percentual): float\n{\n    if ($percentual < 0 || $percentual > 100) {\n        throw new InvalidArgumentException("Percentual fora do intervalo 0 a 100");\n    }\n    return $valor * ($percentual / 100.0);\n}\n\ntry {\n    $desconto = calcularDesconto(200.0, 150.0);\n    echo "Desconto: {$desconto}" . PHP_EOL;\n} catch (InvalidArgumentException $e) {\n    echo "Tratado: " . $e->getMessage() . PHP_EOL; // Fluxo controlado após regra violada\n}',
+					output: "Tratado: Percentual fora do intervalo 0 a 100",
+					tags: [
+						"php",
+						"debug",
+						"excecao",
+						"fluxo",
+						"tratamento",
+						"invalidargumentexception",
+					],
+					callout: {
+						type: "hint",
+						label: "Ordem sugerida:",
+						text: "1) reproduza com dados mínimos; 2) inspecione com debug; 3) corrija a regra; 4) onde fizer sentido, substitua retornos mágicos por exceções ou resultados tipados.",
+					},
+				},
 			],
 		},
 		{
@@ -172,7 +194,7 @@ window.DOC_DATA_REGISTRY["php-debugging"] = {
 					title: "Validar status, body bruto e parsing JSON",
 					kicker: "Diagnóstico completo de integração HTTP",
 					description:
-						"Quando uma integração falha, você precisa olhar três pontos: código HTTP, body bruto e resultado do `json_decode`. Use essa sequência para diferenciar erro de transporte, erro de contrato e erro de parsing. Isso evita correções no lugar errado.",
+						"Quando uma integração falha, você precisa olhar três pontos: código HTTP, body bruto e resultado do `json_decode`. Use essa sequência para diferenciar erro de transporte, erro de contrato e erro de parsing. Isso evita correções no lugar errado. Para flags de `json_encode`/`json_decode`, `JsonException` e validação de payload, abra também `PHP: JSON (encode e decode)` no hub.",
 					descriptionTone: "default",
 					code: '<?php\n$statusCode = 422;\n$bodyBruto = \'{"erro":"E-mail inválido","campos":{"email":"formato inválido"}}\';\n\necho "HTTP: {$statusCode}" . PHP_EOL;\necho "Body bruto: {$bodyBruto}" . PHP_EOL; // Primeiro confirme o retorno original\n\n$dados = json_decode($bodyBruto, true);\n\nif (json_last_error() !== JSON_ERROR_NONE) {\n    echo "Falha no decode: " . json_last_error_msg() . PHP_EOL;\n    exit(1);\n}\n\nprint_r($dados["campos"]); // Depois do decode, foque no campo de erro útil\n\n$jsonInvalido = \'{"ok":true\';\njson_decode($jsonInvalido, true);\necho "Erro no JSON inválido: " . json_last_error_msg() . PHP_EOL; // Mostra erro real de sintaxe',
 					output: "HTTP: 422\nBody bruto: {\"erro\":\"E-mail inválido\",\"campos\":{\"email\":\"formato inválido\"}}\nArray\n(\n    [email] => formato inválido\n)\nErro no JSON inválido: Syntax error",
@@ -276,7 +298,7 @@ window.DOC_DATA_REGISTRY["php-debugging"] = {
 					description:
 						"Boas práticas de debug reduzem retrabalho: centralize pontos de inspeção, ligue e desligue debug por ambiente e remova artefatos temporários depois da análise. Isso mantém o projeto limpo e evita vazamento de informação sensível.",
 					descriptionTone: "default",
-					code: '<?php\nconst DEBUG = true;\n\nfunction debugLog(string $ponto, mixed $valor): void\n{\n    if (!DEBUG) {\n        return; // Evita debug em ambiente onde ele não deve aparecer\n    }\n\n    echo "[DEBUG] {$ponto}" . PHP_EOL;\n\n    if (is_array($valor) || is_object($valor)) {\n        print_r($valor); // Estruturas complexas ficam legíveis\n        return;\n    }\n\n    var_dump($valor); // Escalares com tipo explícito\n}\n\n$usuario = ["id" => 10, "perfil" => "admin"];\ndebugLog("payload de autenticação", $usuario);\ndebugLog("token ativo", true);',
+					code: '<?php\nconst DEBUG = true;\n\n// $ponto: rótulo no log; $valor: dado a inspecionar\nfunction debugLog(string $ponto, mixed $valor): void\n{\n    if (!DEBUG) {\n        return;\n    }\n\n    echo "[DEBUG] {$ponto}" . PHP_EOL;\n\n    if (is_array($valor) || is_object($valor)) {\n        print_r($valor); // Estruturas complexas ficam legíveis\n        return;\n    }\n\n    var_dump($valor); // Escalares com tipo explícito\n}\n\n$usuario = ["id" => 10, "perfil" => "admin"];\ndebugLog("payload de autenticação", $usuario);\ndebugLog("token ativo", true);',
 					output: "[DEBUG] payload de autenticação\nArray\n(\n    [id] => 10\n    [perfil] => admin\n)\n[DEBUG] token ativo\nbool(true)",
 					tags: [
 						"php",

@@ -39,7 +39,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Em vez de espalhar dados e funções soltas, OO agrupa tudo em objetos que representam algo do sistema, como produto, pedido, cliente ou serviço.",
 					descriptionTone: "default",
-					code: '<?php\nclass Produto\n{\n    public string $nome;\n    public float $preco;\n\n    public function resumo(): string // Metodo que usa os dados do objeto\n    {\n        return "{$this->nome} - R$ {$this->preco}";\n    }\n}\n\n$produto = new Produto(); // Objeto criado a partir da classe\n$produto->nome = "Teclado Mecânico";\n$produto->preco = 299.90;\n\necho $produto->resumo() . PHP_EOL;\n\n/*\nSaída:\nTeclado Mecânico - R$ 299.9\n*/',
+					code: '<?php\nclass Produto\n{\n    public string $nome;\n    public float $preco;\n\n    public function resumo(): string\n    {\n        return "{$this->nome} - R$ {$this->preco}";\n    }\n}\n\n$produto = new Produto();\n$produto->nome = "Teclado Mecânico";\n$produto->preco = 299.90;\n\necho $produto->resumo() . PHP_EOL;\n\n/*\nSaída:\nTeclado Mecânico - R$ 299.9\n*/',
 					tags: [
 						"php",
 						"oop",
@@ -55,7 +55,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"A classe descreve como o objeto deve ser montado. Depois disso, cada `new` cria uma instância com seu próprio estado e seus próprios valores.",
 					descriptionTone: "default",
-					code: '<?php\nclass Usuario\n{\n    public string $nome = \"\";\n\n    public function apresentar(): string\n    {\n        return \"Olá, eu sou {$this->nome}\";\n    }\n}\n\n$ana = new Usuario(); // Primeira instancia da classe\n$ana->nome = \"Ana\";\n\n$bruno = new Usuario(); // Segunda instancia da mesma classe\n$bruno->nome = \"Bruno\";\n\necho $ana->apresentar() . PHP_EOL;\necho $bruno->apresentar() . PHP_EOL;',
+					code: '<?php\nclass Usuario\n{\n    public string $nome = \"\";\n\n    public function apresentar(): string\n    {\n        return \"Olá, eu sou {$this->nome}\";\n    }\n}\n\n$ana = new Usuario();\n$ana->nome = \"Ana\";\n\n$bruno = new Usuario();\n$bruno->nome = \"Bruno\";\n\necho $ana->apresentar() . PHP_EOL;\necho $bruno->apresentar() . PHP_EOL;',
 					output: "Olá, eu sou Ana\nOlá, eu sou Bruno",
 					tags: [
 						"php",
@@ -72,7 +72,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"`new` cria um objeto novo na memória e `$this` é a forma de a própria classe acessar seus dados e métodos internamente. Esses dois elementos aparecem o tempo todo em OO.",
 					descriptionTone: "default",
-					code: '<?php\nclass Saudacao\n{\n    public string $nome = \"\";\n\n    public function definirNome(string $nome): void\n    {\n        $this->nome = $nome; // $this acessa a propriedade do proprio objeto\n    }\n\n    public function mensagem(): string\n    {\n        return \"Olá, {$this->nome}\"; // $this tambem le o valor salvo no objeto\n    }\n}\n\n$saudacao = new Saudacao(); // new cria a instancia da classe\n$saudacao->definirNome(\"Camila\");\n\necho $saudacao->mensagem() . PHP_EOL;',
+					code: '<?php\nclass Saudacao\n{\n    public string $nome = \"\";\n\n    public function definirNome(string $nome): void\n    {\n        $this->nome = $nome;\n    }\n\n    public function mensagem(): string\n    {\n        return \"Olá, {$this->nome}\";\n    }\n}\n\n$saudacao = new Saudacao();\n$saudacao->definirNome(\"Camila\");\n\necho $saudacao->mensagem() . PHP_EOL;',
 					output: "Olá, Camila",
 					tags: ["php", "instancia", "new", "this", "objeto", "base"],
 					callout: {
@@ -87,7 +87,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Propriedades guardam o estado do objeto. Quando você tipa essas propriedades, fica mais claro que tipo de dado cada classe espera armazenar.",
 					descriptionTone: "default",
-					code: '<?php\nclass Conta\n{\n    public string $titular; // Propriedade publica: pode ser acessada fora da classe\n    private float $saldo = 0.0; // Propriedade privada: fica protegida dentro da classe\n\n    public function depositar(float $valor): void\n    {\n        $this->saldo += $valor;\n    }\n\n    public function getSaldo(): float\n    {\n        return $this->saldo;\n    }\n}\n\n$conta = new Conta();\n$conta->titular = "Carla";\n$conta->depositar(500);\n\necho $conta->titular . " -> R$ " . number_format($conta->getSaldo(), 2, ",", ".") . PHP_EOL;',
+					code: '<?php\nclass Conta\n{\n    public string $titular; // visível fora da classe\n    private float $saldo = 0.0; // só métodos desta classe alteram\n\n    public function depositar(float $valor): void\n    {\n        $this->saldo += $valor;\n    }\n\n    public function getSaldo(): float\n    {\n        return $this->saldo;\n    }\n}\n\n$conta = new Conta();\n$conta->titular = "Carla";\n$conta->depositar(500);\n\necho $conta->titular . " -> R$ " . number_format($conta->getSaldo(), 2, ",", ".") . PHP_EOL;',
 					output: "Carla -> R$ 500,00",
 					tags: [
 						"php",
@@ -104,7 +104,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Métodos são as ações do objeto. Em vez de manipular os dados da classe por fora, você coloca a regra dentro dela e deixa o comportamento mais previsível.",
 					descriptionTone: "default",
-					code: '<?php\nclass Carrinho\n{\n    private array $itens = [];\n\n    public function adicionarItem(string $nome, float $preco): void // Metodo que altera o estado do objeto\n    {\n        $this->itens[] = ["nome" => $nome, "preco" => $preco];\n    }\n\n    public function total(): float // Metodo que concentra a regra de calculo\n    {\n        $soma = 0;\n\n        foreach ($this->itens as $item) {\n            $soma += $item["preco"];\n        }\n\n        return $soma;\n    }\n}\n\n$carrinho = new Carrinho();\n$carrinho->adicionarItem("Mouse", 120);\n$carrinho->adicionarItem("Teclado", 220);\n\necho "Total: R$ " . number_format($carrinho->total(), 2, ",", ".") . PHP_EOL;',
+					code: '<?php\nclass Carrinho\n{\n    private array $itens = [];\n\n    // $nome/$preco: dados do produto na linha do carrinho\n    public function adicionarItem(string $nome, float $preco): void\n    {\n        $this->itens[] = ["nome" => $nome, "preco" => $preco];\n    }\n\n    public function total(): float\n    {\n        $soma = 0;\n\n        foreach ($this->itens as $item) {\n            $soma += $item["preco"];\n        }\n\n        return $soma;\n    }\n}\n\n$carrinho = new Carrinho();\n$carrinho->adicionarItem("Mouse", 120);\n$carrinho->adicionarItem("Teclado", 220);\n\necho "Total: R$ " . number_format($carrinho->total(), 2, ",", ".") . PHP_EOL;',
 					output: "Total: R$ 340,00",
 					tags: [
 						"php",
@@ -121,7 +121,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"O construtor executa assim que o objeto é criado. Ele é útil para garantir que a classe já nasça com os dados mínimos necessários para funcionar.",
 					descriptionTone: "default",
-					code: '<?php\nclass ConexaoApi\n{\n    private string $baseUrl;\n    private string $token;\n\n    public function __construct(string $baseUrl, string $token) // Constructor recebe os dados obrigatorios\n    {\n        $this->baseUrl = $baseUrl;\n        $this->token = $token;\n    }\n\n    public function resumo(): string\n    {\n        return "API: {$this->baseUrl} (token configurado)";\n    }\n}\n\n$conexao = new ConexaoApi("https://api.empresa.com", "token-123");\necho $conexao->resumo() . PHP_EOL;',
+					code: '<?php\nclass ConexaoApi\n{\n    private string $baseUrl;\n    private string $token;\n\n    // $baseUrl: URL base; $token: credencial de autenticação\n    public function __construct(string $baseUrl, string $token)\n    {\n        $this->baseUrl = $baseUrl;\n        $this->token = $token;\n    }\n\n    public function resumo(): string\n    {\n        return "API: {$this->baseUrl} (token configurado)";\n    }\n}\n\n$conexao = new ConexaoApi("https://api.empresa.com", "token-123");\necho $conexao->resumo() . PHP_EOL;',
 					output: "API: https://api.empresa.com (token configurado)",
 					tags: [
 						"php",
@@ -138,7 +138,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Constructor promotion reduz repetição quando a classe só precisa receber e guardar alguns dados. Em vez de declarar a propriedade em cima e atribuir no corpo do construtor, você faz isso direto na assinatura.",
 					descriptionTone: "default",
-					code: '<?php\nclass Cliente\n{\n    public function __construct(\n        public string $nome, // Constructor promotion: declara e preenche a propriedade aqui\n        public string $email // Constructor promotion: evita declarar a propriedade fora do construtor\n    ) {}\n\n    public function contato(): string\n    {\n        return "{$this->nome} <{$this->email}>";\n    }\n}\n\n$cliente = new Cliente("João", "joao@email.com");\necho $cliente->contato() . PHP_EOL;',
+					code: '<?php\nclass Cliente\n{\n    public function __construct(\n        public string $nome,\n        public string $email // promotion: cria propriedades a partir destes parâmetros\n    ) {}\n\n    public function contato(): string\n    {\n        return "{$this->nome} <{$this->email}>";\n    }\n}\n\n$cliente = new Cliente("João", "joao@email.com");\necho $cliente->contato() . PHP_EOL;',
 					output: "João <joao@email.com>",
 					tags: [
 						"php",
@@ -152,6 +152,28 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 						type: "hint",
 						label: "Dica:",
 						text: "esse formato funciona muito bem quando a classe recebe poucos dados e não precisa de lógica extra no construtor.",
+					},
+				},
+				{
+					title: "De classes em ficheiro único para Composer e PSR-4",
+					kicker: "Namespaces ganham escala com autoload",
+					description:
+						"Nesta documentação os exemplos cabem num só ficheiro para leitura rápida. Em projetos reais você divide `src/` por namespace, adiciona `autoload.psr-4` no `composer.json` e carrega tudo com `vendor/autoload.php`. No hub, siga `PHP: Composer e autoload` para `composer require`, `dump-autoload` e o mapeamento exato entre namespace e caminho de pastas.",
+					descriptionTone: "default",
+					code: '<?php\n// composer.json (trecho ilustrativo)\n// "autoload": { "psr-4": { "App\\\\": "src/" } }\n\n// src/Modelo/Pedido.php em projeto real:\n// namespace App\\Modelo;\n// final class Pedido { ... }\n\n// public/index.php\ndeclare(strict_types=1);\nrequire __DIR__ . "/../vendor/autoload.php";\n\necho "Pronto: classes em src/ carregadas pelo Composer." . PHP_EOL;',
+					output: "Pronto: classes em src/ carregadas pelo Composer.",
+					tags: [
+						"php",
+						"composer",
+						"psr-4",
+						"autoload",
+						"namespace",
+						"projeto",
+					],
+					callout: {
+						type: "hint",
+						label: "Próximo passo:",
+						text: "configure o `composer.json`, rode `composer install` e mantenha o nome da classe igual ao nome do ficheiro `.php`.",
 					},
 				},
 			],
@@ -184,7 +206,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Getter e setter fazem sentido quando a classe precisa controlar leitura ou escrita. O ganho real aparece quando você valida, transforma ou protege dados antes de salvar.",
 					descriptionTone: "default",
-					code: '<?php\nclass ProdutoEstoque\n{\n    private int $quantidade = 0;\n\n    public function setQuantidade(int $quantidade): void // Setter: controla como o valor entra na classe\n    {\n        if ($quantidade < 0) { // Validacao feita antes de salvar a propriedade\n            throw new InvalidArgumentException("Quantidade não pode ser negativa");\n        }\n\n        $this->quantidade = $quantidade;\n    }\n\n    public function getQuantidade(): int // Getter: libera a leitura do valor protegido\n    {\n        return $this->quantidade;\n    }\n}\n\n$estoque = new ProdutoEstoque();\n$estoque->setQuantidade(15); // Usa o setter em vez de alterar a propriedade direto\n\necho "Quantidade: " . $estoque->getQuantidade() . PHP_EOL; // Usa o getter para ler o valor',
+					code: '<?php\nclass ProdutoEstoque\n{\n    private int $quantidade = 0;\n\n    public function setQuantidade(int $quantidade): void\n    {\n        if ($quantidade < 0) { // rejeita estado inválido antes de gravar\n            throw new InvalidArgumentException("Quantidade não pode ser negativa");\n        }\n\n        $this->quantidade = $quantidade;\n    }\n\n    public function getQuantidade(): int\n    {\n        return $this->quantidade;\n    }\n}\n\n$estoque = new ProdutoEstoque();\n$estoque->setQuantidade(15);\n\necho "Quantidade: " . $estoque->getQuantidade() . PHP_EOL;',
 					output: "Quantidade: 15",
 					tags: [
 						"php",
@@ -206,7 +228,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"`readonly` serve para valores que podem ser definidos na criação, mas não devem ser alterados depois, como id, data de criação ou chave externa.",
 					descriptionTone: "default",
-					code: '<?php\nclass PedidoId\n{\n    public function __construct(\n        public readonly string $valor // readonly: pode definir no new, mas nao pode alterar depois\n    ) {}\n}\n\n$pedidoId = new PedidoId("PED-2026-0001");\necho $pedidoId->valor . PHP_EOL;\n\n// $pedidoId->valor = "PED-2026-0002"; // Erro: readonly bloqueia alteracao depois da criacao',
+					code: '<?php\nclass PedidoId\n{\n    public function __construct(\n        public readonly string $valor // definido no new; não pode ser alterado depois\n    ) {}\n}\n\n$pedidoId = new PedidoId("PED-2026-0001");\necho $pedidoId->valor . PHP_EOL;\n\n// $pedidoId->valor = "PED-2026-0002"; // erro: readonly bloqueia alteração após a criação',
 					output: "PED-2026-0001",
 					tags: [
 						"php",
@@ -223,7 +245,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Use `const` para valores fixos da classe e `static` para comportamentos que fazem sentido no contexto da classe, mas não precisam de um objeto específico.",
 					descriptionTone: "default",
-					code: '<?php\nclass Frete\n{\n    public const VALOR_MINIMO_GRATIS = 250.00; // const: valor fixo que pertence a classe\n\n    public static function calcular(float $subtotal): float // static: chama pela classe, sem criar objeto\n    {\n        if ($subtotal >= self::VALOR_MINIMO_GRATIS) {\n            return 0;\n        }\n\n        return 19.90;\n    }\n}\n\necho "Frete 120: R$ " . number_format(Frete::calcular(120), 2, ",", ".") . PHP_EOL;\necho "Frete 300: R$ " . number_format(Frete::calcular(300), 2, ",", ".") . PHP_EOL;',
+					code: '<?php\nclass Frete\n{\n    public const VALOR_MINIMO_GRATIS = 250.00;\n\n    public static function calcular(float $subtotal): float\n    {\n        if ($subtotal >= self::VALOR_MINIMO_GRATIS) {\n            return 0;\n        }\n\n        return 19.90;\n    }\n}\n\necho "Frete 120: R$ " . number_format(Frete::calcular(120), 2, ",", ".") . PHP_EOL;\necho "Frete 300: R$ " . number_format(Frete::calcular(300), 2, ",", ".") . PHP_EOL;',
 					output: "Frete 120: R$ 19,90\nFrete 300: R$ 0,00",
 					tags: [
 						"php",
@@ -247,7 +269,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Herança permite criar uma classe nova a partir de outra que já existe. A classe filha reaproveita estrutura da classe pai e altera apenas o que for específico.",
 					descriptionTone: "default",
-					code: '<?php\nclass Funcionario\n{\n    public function __construct(protected string $nome) {} // protected permite uso direto na classe filha\n\n    public function cargo(): string\n    {\n        return "Funcionário";\n    }\n\n    public function resumo(): string\n    {\n        return $this->nome . " - " . $this->cargo();\n    }\n}\n\nclass Gerente extends Funcionario // extends cria a heranca entre as classes\n{\n    public function cargo(): string\n    {\n        return "Gerente"; // A classe filha sobrescreve o comportamento da classe pai\n    }\n}\n\n$gerente = new Gerente("Diego");\necho $gerente->resumo() . PHP_EOL;',
+					code: '<?php\nclass Funcionario\n{\n    public function __construct(protected string $nome) {} // visível na subclasse (filha)\n\n    public function cargo(): string\n    {\n        return "Funcionário";\n    }\n\n    public function resumo(): string\n    {\n        return $this->nome . " - " . $this->cargo();\n    }\n}\n\nclass Gerente extends Funcionario\n{\n    public function cargo(): string\n    {\n        return "Gerente"; // sobrescreve o método da classe pai\n    }\n}\n\n$gerente = new Gerente("Diego");\necho $gerente->resumo() . PHP_EOL;',
 					output: "Diego - Gerente",
 					tags: [
 						"php",
@@ -264,7 +286,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Quando a regra da classe pai quase serve, mas precisa de um complemento, `parent::` ajuda a reaproveitar a base antes de adicionar o comportamento novo.",
 					descriptionTone: "default",
-					code: '<?php\nclass PlanoBasico\n{\n    public function recursos(): array\n    {\n        return ["dashboard", "suporte-email"];\n    }\n}\n\nclass PlanoPro extends PlanoBasico\n{\n    public function recursos(): array\n    {\n        $base = parent::recursos(); // parent:: reutiliza o metodo da classe pai\n        $base[] = "relatorios-avancados";\n        $base[] = "suporte-prioritario";\n\n        return $base;\n    }\n}\n\n$plano = new PlanoPro();\nprint_r($plano->recursos());',
+					code: '<?php\nclass PlanoBasico\n{\n    public function recursos(): array\n    {\n        return ["dashboard", "suporte-email"];\n    }\n}\n\nclass PlanoPro extends PlanoBasico\n{\n    public function recursos(): array\n    {\n        $base = parent::recursos(); // reutiliza o método da classe pai\n        $base[] = "relatorios-avancados";\n        $base[] = "suporte-prioritario";\n\n        return $base;\n    }\n}\n\n$plano = new PlanoPro();\nprint_r($plano->recursos());',
 					output: "Array\n(\n    [0] => dashboard\n    [1] => suporte-email\n    [2] => relatorios-avancados\n    [3] => suporte-prioritario\n)",
 					tags: [
 						"php",
@@ -298,7 +320,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Polimorfismo aparece quando partes diferentes do sistema seguem o mesmo contrato. Assim, quem usa a interface troca a implementação sem precisar reescrever o fluxo.",
 					descriptionTone: "default",
-					code: '<?php\ninterface GatewayPagamento\n{\n    public function pagar(float $valor): string; // Interface define o contrato comum\n}\n\nclass PixGateway implements GatewayPagamento // Implementacao 1 do mesmo contrato\n{\n    public function pagar(float $valor): string\n    {\n        return "PIX aprovado: R$ {$valor}";\n    }\n}\n\nclass CartaoGateway implements GatewayPagamento // Implementacao 2 do mesmo contrato\n{\n    public function pagar(float $valor): string\n    {\n        return "Cartão aprovado: R$ {$valor}";\n    }\n}\n\nfunction finalizarCompra(GatewayPagamento $gateway, float $valor): void // A funcao depende do contrato, nao da classe concreta\n{\n    echo $gateway->pagar($valor) . PHP_EOL;\n}\n\nfinalizarCompra(new PixGateway(), 150);\nfinalizarCompra(new CartaoGateway(), 150);',
+					code: '<?php\ninterface GatewayPagamento\n{\n    public function pagar(float $valor): string;\n}\n\nclass PixGateway implements GatewayPagamento\n{\n    public function pagar(float $valor): string\n    {\n        return "PIX aprovado: R$ {$valor}";\n    }\n}\n\nclass CartaoGateway implements GatewayPagamento\n{\n    public function pagar(float $valor): string\n    {\n        return "Cartão aprovado: R$ {$valor}";\n    }\n}\n\n// $gateway: implementação concreta; $valor: total da compra\nfunction finalizarCompra(GatewayPagamento $gateway, float $valor): void\n{\n    echo $gateway->pagar($valor) . PHP_EOL;\n}\n\nfinalizarCompra(new PixGateway(), 150);\nfinalizarCompra(new CartaoGateway(), 150);',
 					output: "PIX aprovado: R$ 150\nCartão aprovado: R$ 150",
 					tags: [
 						"php",
@@ -315,7 +337,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Classe abstrata é útil quando existe um fluxo base que deve ser reaproveitado, mas uma ou mais etapas precisam mudar em cada classe filha.",
 					descriptionTone: "default",
-					code: '<?php\nabstract class Exportador\n{\n    public function exportar(array $dados): string\n    {\n        $dadosNormalizados = $this->normalizar($dados); // Parte fixa do fluxo compartilhado\n        return $this->formatar($dadosNormalizados); // Parte que cada classe filha implementa\n    }\n\n    protected function normalizar(array $dados): array\n    {\n        return array_map("trim", $dados);\n    }\n\n    abstract protected function formatar(array $dados): string; // Metodo abstrato: obriga a filha a definir o formato\n}\n\nclass ExportadorCsv extends Exportador\n{\n    protected function formatar(array $dados): string\n    {\n        return implode(",", $dados);\n    }\n}\n\nclass ExportadorJson extends Exportador\n{\n    protected function formatar(array $dados): string\n    {\n        return json_encode($dados, JSON_UNESCAPED_UNICODE);\n    }\n}\n\n$csv = new ExportadorCsv();\n$json = new ExportadorJson();\n\necho $csv->exportar([" Ana ", "Bruno "]) . PHP_EOL;\necho $json->exportar([" Ana ", "Bruno "]) . PHP_EOL;',
+					code: '<?php\nabstract class Exportador\n{\n    public function exportar(array $dados): string\n    {\n        $dadosNormalizados = $this->normalizar($dados);\n        return $this->formatar($dadosNormalizados); // cada filha define o formato\n    }\n\n    protected function normalizar(array $dados): array\n    {\n        return array_map("trim", $dados);\n    }\n\n    abstract protected function formatar(array $dados): string;\n}\n\nclass ExportadorCsv extends Exportador\n{\n    protected function formatar(array $dados): string\n    {\n        return implode(",", $dados);\n    }\n}\n\nclass ExportadorJson extends Exportador\n{\n    protected function formatar(array $dados): string\n    {\n        return json_encode($dados, JSON_UNESCAPED_UNICODE);\n    }\n}\n\n$csv = new ExportadorCsv();\n$json = new ExportadorJson();\n\necho $csv->exportar([" Ana ", "Bruno "]) . PHP_EOL;\necho $json->exportar([" Ana ", "Bruno "]) . PHP_EOL;',
 					output: 'Ana,Bruno\n["Ana","Bruno"]',
 					tags: [
 						"php",
@@ -332,7 +354,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"`trait` permite compartilhar métodos pequenos entre classes diferentes sem obrigar uma relação de pai e filha. É uma boa saída para utilidades curtas e bem isoladas.",
 					descriptionTone: "default",
-					code: '<?php\ntrait GeraSlug\n{\n    public function slug(string $texto): string\n    {\n        return strtolower(str_replace(" ", "-", trim($texto)));\n    }\n}\n\nclass Categoria\n{\n    use GeraSlug; // A trait injeta esse metodo dentro da classe\n}\n\nclass Produto\n{\n    use GeraSlug; // A mesma trait pode ser reutilizada em outra classe\n}\n\n$categoria = new Categoria();\n$produto = new Produto();\n\necho $categoria->slug("Casa e Escritório") . PHP_EOL;\necho $produto->slug("Mouse Gamer RGB") . PHP_EOL;',
+					code: '<?php\ntrait GeraSlug\n{\n    public function slug(string $texto): string\n    {\n        return strtolower(str_replace(" ", "-", trim($texto)));\n    }\n}\n\nclass Categoria\n{\n    use GeraSlug; // inclui o método slug nesta classe\n}\n\nclass Produto\n{\n    use GeraSlug;\n}\n\n$categoria = new Categoria();\n$produto = new Produto();\n\necho $categoria->slug("Casa e Escritório") . PHP_EOL;\necho $produto->slug("Mouse Gamer RGB") . PHP_EOL;',
 					output: "casa-e-escritório\nmouse-gamer-rgb",
 					tags: [
 						"php",
@@ -361,7 +383,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Esse exemplo mostra OO resolvendo um caso real: cada classe cuida de uma parte do problema e a regra de preço fica mais clara para manter e expandir.",
 					descriptionTone: "default",
-					code: '<?php\nclass ItemPedido\n{\n    public function __construct(\n        public string $nome,\n        public float $preco,\n        public int $quantidade\n    ) {}\n\n    public function subtotal(): float // Cada item conhece seu proprio subtotal\n    {\n        return $this->preco * $this->quantidade;\n    }\n}\n\nclass Cupom\n{\n    public function __construct(private float $desconto) {}\n\n    public function aplicar(float $valor): float // O cupom concentra a regra de desconto\n    {\n        return max(0, $valor - $this->desconto);\n    }\n}\n\nclass Pedido\n{\n    private array $itens = [];\n\n    public function adicionarItem(ItemPedido $item): void // O pedido recebe objetos ItemPedido\n    {\n        $this->itens[] = $item;\n    }\n\n    public function total(?Cupom $cupom = null): float\n    {\n        $soma = 0;\n\n        foreach ($this->itens as $item) {\n            $soma += $item->subtotal();\n        }\n\n        if ($cupom === null) {\n            return $soma;\n        }\n\n        return $cupom->aplicar($soma);\n    }\n}\n\n$pedido = new Pedido();\n$pedido->adicionarItem(new ItemPedido("Notebook", 3500, 1));\n$pedido->adicionarItem(new ItemPedido("Mouse", 120, 2));\n\n$cupom = new Cupom(150);\necho "Total final: R$ " . number_format($pedido->total($cupom), 2, ",", ".") . PHP_EOL;',
+					code: '<?php\nclass ItemPedido\n{\n    public function __construct(\n        public string $nome,\n        public float $preco,\n        public int $quantidade\n    ) {}\n\n    public function subtotal(): float\n    {\n        return $this->preco * $this->quantidade;\n    }\n}\n\nclass Cupom\n{\n    public function __construct(private float $desconto) {}\n\n    public function aplicar(float $valor): float\n    {\n        return max(0, $valor - $this->desconto);\n    }\n}\n\nclass Pedido\n{\n    private array $itens = [];\n\n    public function adicionarItem(ItemPedido $item): void\n    {\n        $this->itens[] = $item;\n    }\n\n    public function total(?Cupom $cupom = null): float\n    {\n        $soma = 0;\n\n        foreach ($this->itens as $item) {\n            $soma += $item->subtotal();\n        }\n\n        if ($cupom === null) {\n            return $soma;\n        }\n\n        return $cupom->aplicar($soma);\n    }\n}\n\n$pedido = new Pedido();\n$pedido->adicionarItem(new ItemPedido("Notebook", 3500, 1));\n$pedido->adicionarItem(new ItemPedido("Mouse", 120, 2));\n\n$cupom = new Cupom(150);\necho "Total final: R$ " . number_format($pedido->total($cupom), 2, ",", ".") . PHP_EOL;',
 					output: "Total final: R$ 3.590,00",
 					tags: [
 						"php",
@@ -378,7 +400,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Aqui o serviço não depende de Pix nem de cartão diretamente. Ele depende do contrato, o que facilita troca de provedor e testes.",
 					descriptionTone: "default",
-					code: '<?php\ninterface Gateway\n{\n    public function cobrar(float $valor): bool; // Contrato que qualquer gateway precisa seguir\n}\n\nclass GatewayPix implements Gateway\n{\n    public function cobrar(float $valor): bool\n    {\n        echo "Cobrança Pix: R$ " . number_format($valor, 2, ",", ".") . PHP_EOL;\n        return true;\n    }\n}\n\nclass GatewayCartao implements Gateway\n{\n    public function cobrar(float $valor): bool\n    {\n        echo "Cobrança Cartão: R$ " . number_format($valor, 2, ",", ".") . PHP_EOL;\n        return true;\n    }\n}\n\nclass CheckoutService\n{\n    public function __construct(private Gateway $gateway) {} // O servico depende da interface, nao do Pix ou Cartao direto\n\n    public function finalizar(float $total): void\n    {\n        $ok = $this->gateway->cobrar($total);\n        echo $ok ? "Pedido aprovado" . PHP_EOL : "Pedido recusado" . PHP_EOL;\n    }\n}\n\n(new CheckoutService(new GatewayPix()))->finalizar(499.90);\n(new CheckoutService(new GatewayCartao()))->finalizar(499.90);',
+					code: '<?php\ninterface Gateway\n{\n    public function cobrar(float $valor): bool;\n}\n\nclass GatewayPix implements Gateway\n{\n    public function cobrar(float $valor): bool\n    {\n        echo "Cobrança Pix: R$ " . number_format($valor, 2, ",", ".") . PHP_EOL;\n        return true;\n    }\n}\n\nclass GatewayCartao implements Gateway\n{\n    public function cobrar(float $valor): bool\n    {\n        echo "Cobrança Cartão: R$ " . number_format($valor, 2, ",", ".") . PHP_EOL;\n        return true;\n    }\n}\n\nclass CheckoutService\n{\n    // $gateway: implementação concreta (Pix, cartão, etc.)\n    public function __construct(private Gateway $gateway) {}\n\n    public function finalizar(float $total): void\n    {\n        $ok = $this->gateway->cobrar($total);\n        echo $ok ? "Pedido aprovado" . PHP_EOL : "Pedido recusado" . PHP_EOL;\n    }\n}\n\n(new CheckoutService(new GatewayPix()))->finalizar(499.90);\n(new CheckoutService(new GatewayCartao()))->finalizar(499.90);',
 					output: "Cobrança Pix: R$ 499,90\nPedido aprovado\nCobrança Cartão: R$ 499,90\nPedido aprovado",
 					tags: [
 						"php",
@@ -395,7 +417,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Esse é um caso clássico de polimorfismo: a regra de aviso continua a mesma, mas o canal muda sem bagunçar quem chama o serviço.",
 					descriptionTone: "default",
-					code: '<?php\ninterface Notificador\n{\n    public function enviar(string $mensagem): void; // Contrato comum para qualquer canal de notificacao\n}\n\nclass NotificadorEmail implements Notificador\n{\n    public function enviar(string $mensagem): void\n    {\n        echo "Email enviado: {$mensagem}" . PHP_EOL;\n    }\n}\n\nclass NotificadorSms implements Notificador\n{\n    public function enviar(string $mensagem): void\n    {\n        echo "SMS enviado: {$mensagem}" . PHP_EOL;\n    }\n}\n\nclass AlertaService\n{\n    public function __construct(private Notificador $notificador) {} // O servico pode receber Email, SMS ou outro canal que siga o contrato\n\n    public function avisarAtrasoPedido(string $pedidoId): void\n    {\n        $mensagem = "Pedido {$pedidoId} está em rota";\n        $this->notificador->enviar($mensagem);\n    }\n}\n\n(new AlertaService(new NotificadorEmail()))->avisarAtrasoPedido("PED-10");\n(new AlertaService(new NotificadorSms()))->avisarAtrasoPedido("PED-10");',
+					code: '<?php\ninterface Notificador\n{\n    public function enviar(string $mensagem): void;\n}\n\nclass NotificadorEmail implements Notificador\n{\n    public function enviar(string $mensagem): void\n    {\n        echo "Email enviado: {$mensagem}" . PHP_EOL;\n    }\n}\n\nclass NotificadorSms implements Notificador\n{\n    public function enviar(string $mensagem): void\n    {\n        echo "SMS enviado: {$mensagem}" . PHP_EOL;\n    }\n}\n\nclass AlertaService\n{\n    // $notificador: canal concreto (email, SMS, etc.)\n    public function __construct(private Notificador $notificador) {}\n\n    public function avisarAtrasoPedido(string $pedidoId): void\n    {\n        $mensagem = "Pedido {$pedidoId} está em rota";\n        $this->notificador->enviar($mensagem);\n    }\n}\n\n(new AlertaService(new NotificadorEmail()))->avisarAtrasoPedido("PED-10");\n(new AlertaService(new NotificadorSms()))->avisarAtrasoPedido("PED-10");',
 					output: "Email enviado: Pedido PED-10 está em rota\nSMS enviado: Pedido PED-10 está em rota",
 					tags: [
 						"php",
@@ -412,7 +434,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"A classe de serviço cuida da regra de cadastro e o repositório cuida de salvar os dados. Como ambos trabalham com um objeto `Usuario`, o fluxo fica mais coeso e mais orientado a objetos.",
 					descriptionTone: "default",
-					code: '<?php\nclass Usuario\n{\n    public function __construct(\n        public string $nome,\n        public string $email\n    ) {}\n\n    public function resumo(): string\n    {\n        return "{$this->nome} <{$this->email}>";\n    }\n}\n\ninterface UsuarioRepository\n{\n    public function salvar(Usuario $usuario): void; // O repositorio trabalha com objetos Usuario\n    public function listar(): array;\n}\n\nclass UsuarioRepositoryMemoria implements UsuarioRepository\n{\n    private array $dados = [];\n\n    public function salvar(Usuario $usuario): void\n    {\n        $this->dados[] = $usuario;\n    }\n\n    public function listar(): array\n    {\n        return $this->dados;\n    }\n}\n\nclass CadastroUsuarioService\n{\n    public function __construct(private UsuarioRepository $repository) {} // O servico depende do contrato do repositorio\n\n    public function cadastrar(string $nome, string $email): void\n    {\n        $usuario = new Usuario($nome, strtolower($email)); // A regra monta o objeto antes de persistir\n        $this->repository->salvar($usuario);\n    }\n}\n\n$repo = new UsuarioRepositoryMemoria();\n$service = new CadastroUsuarioService($repo);\n\n$service->cadastrar("Ana", "ANA@EMAIL.COM");\n$service->cadastrar("Bruno", "bruno@email.com");\n\nforeach ($repo->listar() as $usuario) {\n    echo $usuario->resumo() . PHP_EOL;\n}',
+					code: '<?php\nclass Usuario\n{\n    public function __construct(\n        public string $nome,\n        public string $email\n    ) {}\n\n    public function resumo(): string\n    {\n        return "{$this->nome} <{$this->email}>";\n    }\n}\n\ninterface UsuarioRepository\n{\n    public function salvar(Usuario $usuario): void;\n    public function listar(): array;\n}\n\nclass UsuarioRepositoryMemoria implements UsuarioRepository\n{\n    private array $dados = [];\n\n    public function salvar(Usuario $usuario): void\n    {\n        $this->dados[] = $usuario;\n    }\n\n    public function listar(): array\n    {\n        return $this->dados;\n    }\n}\n\nclass CadastroUsuarioService\n{\n    // $repository: persistência atrás do contrato (memória, BD, etc.)\n    public function __construct(private UsuarioRepository $repository) {}\n\n    public function cadastrar(string $nome, string $email): void\n    {\n        $usuario = new Usuario($nome, strtolower($email));\n        $this->repository->salvar($usuario);\n    }\n}\n\n$repo = new UsuarioRepositoryMemoria();\n$service = new CadastroUsuarioService($repo);\n\n$service->cadastrar("Ana", "ANA@EMAIL.COM");\n$service->cadastrar("Bruno", "bruno@email.com");\n\nforeach ($repo->listar() as $usuario) {\n    echo $usuario->resumo() . PHP_EOL;\n}',
 					output: "Ana <ana@email.com>\nBruno <bruno@email.com>",
 					tags: [
 						"php",
@@ -437,7 +459,7 @@ window.DOC_DATA_REGISTRY["php-orientacao-objetos"] = {
 					description:
 						"Na prática, boas práticas de OO servem para reduzir acoplamento, facilitar testes e deixar a intenção da classe mais clara para quem mantém o código depois.",
 					descriptionTone: "default",
-					code: '<?php\ninterface GeradorRelatorio\n{\n    public function gerar(array $dados): string; // Contrato para qualquer estrategia de geracao\n}\n\nclass RelatorioCsv implements GeradorRelatorio\n{\n    public function gerar(array $dados): string\n    {\n        return implode(",", $dados);\n    }\n}\n\nclass RelatorioService\n{\n    public function __construct(private GeradorRelatorio $gerador) {} // Inversao de dependencia: recebe o contrato\n\n    public function exportar(array $dados): void\n    {\n        $conteudo = $this->gerador->gerar($dados);\n        echo $conteudo . PHP_EOL;\n    }\n}\n\n$service = new RelatorioService(new RelatorioCsv());\n$service->exportar(["id", "nome", "email"]);',
+					code: '<?php\ninterface GeradorRelatorio\n{\n    public function gerar(array $dados): string;\n}\n\nclass RelatorioCsv implements GeradorRelatorio\n{\n    public function gerar(array $dados): string\n    {\n        return implode(",", $dados);\n    }\n}\n\nclass RelatorioService\n{\n    // $gerador: estratégia de saída (CSV, PDF, etc.) via contrato\n    public function __construct(private GeradorRelatorio $gerador) {}\n\n    public function exportar(array $dados): void\n    {\n        $conteudo = $this->gerador->gerar($dados);\n        echo $conteudo . PHP_EOL;\n    }\n}\n\n$service = new RelatorioService(new RelatorioCsv());\n$service->exportar(["id", "nome", "email"]);',
 					output: "id,nome,email",
 					tags: [
 						"php",
