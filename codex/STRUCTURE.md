@@ -39,6 +39,19 @@ DevDocs/
     php-sessoes-cookies-tokens.data.js
     php-strings.data.js
     php-superglobais.data.js
+    go-concorrencia.data.js
+    go-context.data.js
+    go-erros.data.js
+    go-ficheiros-io.data.js
+    go-http.data.js
+    go-interfaces.data.js
+    go-json.data.js
+    go-modulos.data.js
+    go-primeiros-passos.data.js
+    go-slices-maps.data.js
+    go-testing.data.js
+    go-time.data.js
+    go-tipos-valores.data.js
   docs/
     _template.html
     git-github-terminal.html
@@ -56,14 +69,27 @@ DevDocs/
     php-sessoes-cookies-tokens.html
     php-strings.html
     php-superglobais.html
+    go-concorrencia.html
+    go-context.html
+    go-erros.html
+    go-ficheiros-io.html
+    go-http.html
+    go-interfaces.html
+    go-json.html
+    go-modulos.html
+    go-primeiros-passos.html
+    go-slices-maps.html
+    go-testing.html
+    go-time.html
+    go-tipos-valores.html
   scripts/
     validate-docs.js
     validate-docs.ps1
 ```
 
-Documentações listadas no hub (`data/docs-manifest.data.js`): Git (1) e PHP (14), incluindo Fase 1 (`php-erros-excecoes`, `php-json`, `php-composer-autoload`) e Fase 2 (`php-datetime`, `php-ficheiros-io`, `php-regex`). A **Fase 3** do plano PHP atualizou sobretudo `php-banco-dados`, `php-sessoes-cookies-tokens`, `php-superglobais`, `php-headers-http` e `php-strings` (conteúdo nos respetivos `data/*.data.js`).
+Documentações listadas no hub (`data/docs-manifest.data.js`): Git (1), PHP (14) e **Go (13)** — Fases 1–2 como antes; Fase 3: `go-concorrencia`, `go-context`, `go-ficheiros-io`, `go-http`, `go-time`. O PHP inclui Fase 1 (`php-erros-excecoes`, `php-json`, `php-composer-autoload`), Fase 2 (`php-datetime`, `php-ficheiros-io`, `php-regex`) e **Fase 3** (`php-banco-dados`, `php-sessoes-cookies-tokens`, `php-superglobais`, `php-headers-http`, `php-strings`).
 
-**Go:** ainda não há entradas `go-*` no manifesto. Roadmap e checklist em `codex/GO_DOCS_IMPROVEMENT_PLAN.md`. Após a primeira leva de guias, atualizar a árvore acima com `docs/go-*.html` e `data/go-*.data.js` para não divergir da realidade.
+Roadmap das próximas guias Go: `codex/GO_DOCS_IMPROVEMENT_PLAN.md`. Manter a árvore de ficheiros desta secção alinhada ao manifesto quando adicionar slugs novos.
 
 ## Fluxo principal da aplicacao
 

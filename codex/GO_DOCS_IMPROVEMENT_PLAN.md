@@ -12,8 +12,8 @@ Documento de referência para introduzir o eixo **Go** neste repositório, no me
 
 | Aspeto | Situação |
 |--------|----------|
-| Guias `go-*` no manifesto | **Nenhuma** (eixo a criar) |
-| `codeLanguage` nos data files | Usar `go` nos exemplos (alinhar ao que o renderer e realces esperam) |
+| Guias `go-*` no manifesto | **13** — Fases 1–3 conforme `codex/STRUCTURE.md` e manifesto |
+| `codeLanguage` nos data files | `go` nos snippets Go; `shell` ou `plain` onde aplicável |
 | Modelo de trabalho | Copiar `docs/_template.html` e `data/_template.data.js`; ver `codex/STRUCTURE.md` e `codex/EXAMPLES.md` |
 
 ## Convenções de slug (proposta)
@@ -101,36 +101,36 @@ Títulos no hub podem misturar **“Go:”** + descrição em português, como n
 
 ### Fase 0 — Preparação
 
-- [ ] Ler `data/_template.data.js`, `docs/_template.html`, `codex/EXAMPLES.md`.  
-- [ ] Fixar lista final de slugs P1 (evitar renomes em massa).  
-- [ ] Definir se o hub agrupa Go num subtítulo visual (só texto no `docs-manifest` vs ordem alfabética misturada com PHP).
+- [x] Ler `data/_template.data.js`, `docs/_template.html`, `codex/EXAMPLES.md`.  
+- [x] Fixar lista final de slugs P1 (evitar renomes em massa).  
+- [x] Hub: entradas Go após PHP no `docs-manifest` (agrupamento por ordem de lista).
 
 ### Fase 1 — P1 (base + erros)
 
-- [ ] `go-primeiros-passos`: HTML + data + manifesto.  
-- [ ] `go-modulos`: HTML + data + manifesto.  
-- [ ] `go-tipos-valores`: HTML + data + manifesto.  
-- [ ] `go-erros`: HTML + data + manifesto.  
-- [ ] Referências cruzadas mínimas entre os quatro.  
-- [ ] `.\scripts\validate-docs.ps1` sem erros.
+- [x] `go-primeiros-passos`: HTML + data + manifesto.  
+- [x] `go-modulos`: HTML + data + manifesto.  
+- [x] `go-tipos-valores`: HTML + data + manifesto.  
+- [x] `go-erros`: HTML + data + manifesto.  
+- [x] Referências cruzadas mínimas entre os quatro (callouts `quickStart` e descrições).  
+- [x] `.\scripts\validate-docs.ps1` sem erros.
 
 ### Fase 2 — P2 (interfaces, coleções, JSON, testes)
 
-- [ ] `go-interfaces`, `go-slices-maps`, `go-json`, `go-testing`.  
-- [ ] Ligações a P1 (por exemplo testes a importar padrões de erros).  
-- [ ] Validar novamente.
+- [x] `go-interfaces`, `go-slices-maps`, `go-json`, `go-testing`.  
+- [x] Ligações a P1 (`quickStart`/callouts: módulos, tipos, erros; JSON e httptest remetem a erros e JSON).  
+- [x] Validar novamente.
 
 ### Fase 3 — P3 (concorrência, context, HTTP, ficheiros, tempo)
 
-- [ ] Ordem sugerida: `go-context` antes ou em paralelo a `go-http` e `go-concorrencia`.  
-- [ ] `go-ficheiros-io`, `go-time` (se existir slug dedicado).  
-- [ ] Revisão de `quickStart` nos guias mais longos.
+- [x] Ordem sugerida: `go-context`, `go-concorrencia`, `go-http`, `go-ficheiros-io`, `go-time` no manifesto e árvore.  
+- [x] `go-ficheiros-io`, `go-time` com slugs dedicados.  
+- [x] `quickStart` reforçado em `go-http` (cliente httptest + callout de timeouts), `go-context` (timeout), `go-time` (UTC).
 
 ### Fase 4 — Polimento transversal
 
 - [ ] Tags e sinónimos na busca (`goroutine`, `module`, `defer`, etc.).  
 - [ ] Última passagem de callouts (segurança HTTP, paths).  
-- [ ] Atualizar `codex/STRUCTURE.md` com a lista real de ficheiros `go-*` após inclusão no manifesto.
+- [x] Atualizar `codex/STRUCTURE.md` com a lista real de ficheiros `go-*` após inclusão no manifesto (feito com a Fase 1).
 
 ## Checklist rápido por novo guia
 

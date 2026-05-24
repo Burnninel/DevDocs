@@ -124,5 +124,109 @@ window.DOCS_MANIFEST = {
 			href: "./docs/php-superglobais.html",
 			actionLabel: "Abrir documentação",
 		},
+		{
+			id: "go-primeiros-passos",
+			title: "Go: Primeiros passos",
+			description:
+				"Guia prático para package main, imports, fmt, go run, go build, go fmt e go doc.",
+			href: "./docs/go-primeiros-passos.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-modulos",
+			title: "Go: Módulos",
+			description:
+				"Guia prático para go mod init, go.mod, go.sum, go get, go mod tidy e visão geral do MVS.",
+			href: "./docs/go-modulos.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-tipos-valores",
+			title: "Go: Tipos e valores",
+			description:
+				"Guia prático para zero values, ponteiros, structs, composição e nomes exportados.",
+			href: "./docs/go-tipos-valores.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-erros",
+			title: "Go: Erros",
+			description:
+				"Guia prático para error, errors.New, fmt.Errorf com %w, errors.Is, errors.As, defer e panic.",
+			href: "./docs/go-erros.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-interfaces",
+			title: "Go: Interfaces",
+			description:
+				"Guia prático para satisfação implícita, interfaces pequenas, io.Reader, io.Writer e any.",
+			href: "./docs/go-interfaces.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-json",
+			title: "Go: JSON",
+			description:
+				"Guia prático para json.Marshal e Unmarshal, tags, omitempty, json.RawMessage e erros de decode.",
+			href: "./docs/go-json.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-slices-maps",
+			title: "Go: Slices e maps",
+			description:
+				"Guia prático para arrays, slices, append, backing array, maps e idiom vírgula-ok.",
+			href: "./docs/go-slices-maps.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-testing",
+			title: "Go: Testes",
+			description:
+				"Guia prático para testing, table-driven tests, t.Helper, -run e httptest.",
+			href: "./docs/go-testing.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-concorrencia",
+			title: "Go: Concorrência",
+			description:
+				"Guia prático para goroutines, WaitGroup, Mutex, canais e select, com notas sobre leaks e cancelamento.",
+			href: "./docs/go-concorrencia.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-context",
+			title: "Go: Context",
+			description:
+				"Guia prático para context.Context: cancelamento, prazos, WithValue e pedidos HTTP.",
+			href: "./docs/go-context.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-ficheiros-io",
+			title: "Go: Ficheiros e I/O",
+			description:
+				"Guia prático para os.ReadFile, WriteFile, Open, filepath, defer e io.Copy.",
+			href: "./docs/go-ficheiros-io.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-http",
+			title: "Go: HTTP",
+			description:
+				"Guia prático para net/http: servidor com timeouts, cliente, Request.Context e JSON.",
+			href: "./docs/go-http.html",
+			actionLabel: "Abrir documentação",
+		},
+		{
+			id: "go-time",
+			title: "Go: Tempo (time)",
+			description:
+				"Guia prático para UTC, RFC3339, Parse, Duration, Since e relógio monotónico.",
+			href: "./docs/go-time.html",
+			actionLabel: "Abrir documentação",
+		},
 	],
 };
