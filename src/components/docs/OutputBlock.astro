@@ -1,0 +1,24 @@
+---
+interface Props {
+	output: string;
+	label?: string;
+}
+const { output, label = "Saída" } = Astro.props;
+---
+
+<div
+	class="not-prose overflow-hidden rounded-2xl"
+	style="background: color-mix(in oklab, var(--color-surface-1) 70%, transparent)"
+>
+	<div
+		class="flex items-center gap-2 px-4 py-2 font-mono text-[0.68rem] tracking-widest text-faint uppercase"
+	>
+		<span class="size-1.5 rounded-full" style="background: var(--color-tone-good)"></span>
+		{label}
+	</div>
+	<div class="scroll-x">
+		<pre
+			class="m-0 px-4 pt-0 pb-4 font-mono text-[0.8rem] leading-relaxed text-muted"
+			style="width: max-content; min-width: 100%">{output}</pre>
+	</div>
+</div>

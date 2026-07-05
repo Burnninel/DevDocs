@@ -1,0 +1,48 @@
+---
+import { formatInline } from "@/lib/format";
+import type { ContentBlock } from "@/content.config";
+
+type Block = Extract<ContentBlock, { type: "tech-list" }>;
+interface Props {
+	block: Block;
+}
+const { block } = Astro.props;
+const termHeader = block.termHeader ?? "Constante ou opção";
+const descHeader = block.descriptionHeader ?? "Descrição";
+---
+
+<section class="not-prose glass overflow-hidden rounded-2xl">
+	{
+		block.title && (
+			<h4 class="px-5 pt-5 font-mono text-xs tracking-widest text-accent uppercase">
+				{block.title}
+			</h4>
+		)
+	}
+	<div class="scroll-x">
+		<dl class="min-w-[34rem] px-5 pt-4 pb-2">
+			<div
+				class="grid grid-cols-[minmax(9rem,14rem)_1fr] gap-x-6 pb-2 font-mono text-[0.68rem] tracking-widest text-faint uppercase"
+			>
+				<span>{termHeader}</span>
+				<span>{descHeader}</span>
+			</div>
+			{
+				block.items.map((item) => (
+					<div
+						class="grid grid-cols-[minmax(9rem,14rem)_1fr] items-baseline gap-x-6 py-2"
+						style="background: linear-gradient(var(--color-hairline), var(--color-hairline)) no-repeat top / 100% 1px"
+					>
+						<dt class="wrap-anywhere font-mono text-[0.8rem] text-accent-strong">
+							{item.term}
+						</dt>
+						<dd
+							class="wrap-anywhere text-sm leading-relaxed text-ink-soft"
+							set:html={formatInline(item.description)}
+						/>
+					</div>
+				))
+			}
+		</dl>
+	</div>
+</section>

@@ -1,0 +1,238 @@
+id: go-json
+title: "Go: JSON"
+subtitle: Guia prático para json.Marshal e json.Unmarshal, tags em structs, omitempty, json.RawMessage e falhas de decode.
+searchPlaceholder: Buscar Marshal, Unmarshal, omitempty, RawMessage ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Objeto Go para JSON e volta
+  kicker: encoding/json
+  description: "Structs com campos exportados (maiúscula) mapeiam para chaves JSON. Combine com `Go: Tipos e valores` no hub."
+  steps:
+    - Módulo com `go mod init`.
+    - Cole o exemplo em `main.go` e `go run .`.
+  codeLanguage: go
+  code: |-
+    package main
+
+    import (
+    	"encoding/json"
+    	"fmt"
+    )
+
+    type User struct {
+    	Name string `json:"name"`
+    	Age  int    `json:"age"`
+    }
+
+    func main() {
+    	u := User{Name: "Ana", Age: 31}
+    	b, err := json.Marshal(u)
+    	if err != nil {
+    		panic(err)
+    	}
+    	fmt.Println(string(b))
+
+    	var out User
+    	if err := json.Unmarshal(b, &out); err != nil {
+    		panic(err)
+    	}
+    	fmt.Println(out.Name, out.Age)
+    }
+  callout:
+    type: hint
+    label: "Erros:"
+    text: "o padrão `(T, error)` em `Marshal` e `Unmarshal` alinha com `Go: Erros` no hub."
+sections:
+  - id: marshal-unmarshal
+    name: Marshal e Unmarshal
+    layout: single
+    entries:
+      - title: MarshalIndent para depuração
+        kicker: JSON legível
+        description: "`json.Marshal` produz bytes compactos. `json.MarshalIndent` adiciona prefixo e indentação úteis em logs ou respostas de desenvolvimento."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          )
+
+          func main() {
+          	m := map[string]any{"ok": true, "n": 1}
+          	b, err := json.MarshalIndent(m, "", "  ")
+          	if err != nil {
+          		panic(err)
+          	}
+          	fmt.Println(string(b))
+          }
+        output: |-
+          {
+            "n": 1,
+            "ok": true
+          }
+        tags:
+          - go
+          - json
+          - MarshalIndent
+          - map
+      - title: Decoder com DisallowUnknownFields
+        kicker: Rejeitar chaves extra
+        description: Por omissão `json.Unmarshal` ignora chaves desconhecidas. Para APIs estritas, use `json.NewDecoder` com `DisallowUnknownFields(true)` antes de `Decode`.
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"bytes"
+          	"encoding/json"
+          	"fmt"
+          )
+
+          func main() {
+          	raw := []byte(`{"name":"Ana","extra":1}`)
+          	dec := json.NewDecoder(bytes.NewReader(raw))
+          	dec.DisallowUnknownFields()
+          	var v struct {
+          		Name string `json:"name"`
+          	}
+          	err := dec.Decode(&v)
+          	fmt.Println(err)
+          }
+        output: 'json: unknown field "extra"'
+        tags:
+          - go
+          - json
+          - Decoder
+          - validacao
+          - api
+  - id: tags-struct
+    name: Tags e omitempty
+    layout: single
+    entries:
+      - title: Renomear chaves e omitir vazios
+        kicker: Struct tags
+        description: 'A tag `json:"nome"` define o nome da chave. `omitempty` omite o campo quando está no zero value (atenção: slice nil omite, slice vazia `[]` não é zero value para omitempty da mesma forma — consulte a documentação oficial para matizes).'
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          )
+
+          type Event struct {
+          	ID     string `json:"id"`
+          	Detail string `json:"detail,omitempty"`
+          }
+
+          func main() {
+          	b, _ := json.Marshal(Event{ID: "1"})
+          	fmt.Println(string(b))
+          }
+        output: '{"id":"1"}'
+        tags:
+          - go
+          - json
+          - omitempty
+          - tag
+          - struct
+      - title: json.RawMessage para adiar decode
+        kicker: Payload heterogéneo
+        description: "`json.RawMessage` é um alias de `[]byte` que implementa `UnmarshalJSON` para guardar JSON bruto. Útil quando o formato interno depende de um campo discriminador."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          )
+
+          type Envelope struct {
+          	Type string          `json:"type"`
+          	Data json.RawMessage `json:"data"`
+          }
+
+          func main() {
+          	raw := []byte(`{"type":"ping","data":{"seq":1}}`)
+          	var env Envelope
+          	if err := json.Unmarshal(raw, &env); err != nil {
+          		panic(err)
+          	}
+          	fmt.Println(env.Type, string(env.Data))
+          }
+        output: ping {"seq":1}
+        tags:
+          - go
+          - json
+          - RawMessage
+          - decode
+  - id: erros-json
+    name: Erros comuns no decode
+    layout: single
+    entries:
+      - title: Tipos incompatíveis
+        kicker: string vs número
+        description: JSON trata números de forma fluida; structs com `int` falham se o JSON trouxer string. Ajuste o tipo (`json.Number`, `string`, ou struct custom) ou normalize o payload antes.
+        descriptionTone: warn
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          )
+
+          func main() {
+          	var v struct {
+          		N int `json:"n"`
+          	}
+          	err := json.Unmarshal([]byte(`{"n":"5"}`), &v)
+          	fmt.Println(err)
+          }
+        output: "json: cannot unmarshal string into Go struct field .N of type int"
+        tags:
+          - go
+          - json
+          - erro
+          - tipo
+          - unmarshal
+      - title: Tratar erro de Unmarshal
+        kicker: Não ignorar err
+        description: "Em handlers HTTP, devolva 400 com mensagem genérica e registe o erro interno. O mesmo espírito de `Go: Erros` aplica-se aqui."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          )
+
+          func parse(in []byte) error {
+          	var m map[string]int
+          	if err := json.Unmarshal(in, &m); err != nil {
+          		return fmt.Errorf("parse payload: %w", err)
+          	}
+          	return nil
+          }
+
+          func main() {
+          	err := parse([]byte(`{`))
+          	fmt.Println(err)
+          }
+        output: "parse payload: unexpected end of JSON input"
+        tags:
+          - go
+          - json
+          - wrap
+          - erro
+          - handler
+tech: go
+order: 20
+cardDescription: Guia prático para json.Marshal e Unmarshal, tags, omitempty, json.RawMessage e erros de decode.

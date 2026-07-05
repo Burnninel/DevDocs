@@ -1,0 +1,58 @@
+---
+import type { GetStaticPaths } from "astro";
+import { Icon } from "astro-icon/components";
+import SiteLayout from "@/layouts/SiteLayout.astro";
+import Hero from "@/components/home/Hero.astro";
+import DocCard from "@/components/home/DocCard.astro";
+import { getDocsGroupedByTech } from "@/lib/docs";
+import { withBase } from "@/lib/paths";
+
+export const getStaticPaths = (async () => {
+	const groups = await getDocsGroupedByTech();
+	return groups.map(({ tech, meta, docs }) => ({
+		params: { tech },
+		props: { tech, meta, docs },
+	}));
+}) satisfies GetStaticPaths;
+
+const { meta, docs } = Astro.props;
+const totalSections = docs.reduce((n, d) => n + d.data.sections.length, 0);
+---
+
+<SiteLayout title={meta.label} description={meta.tagline}>
+	<div class="mx-auto max-w-7xl px-5">
+		<a
+			href={withBase("/")}
+			class="mt-8 inline-flex items-center gap-1.5 font-mono text-xs text-faint transition-colors duration-[--dur-fast] hover:text-accent"
+			data-reveal
+		>
+			<Icon name="lucide:arrow-left" class="size-3.5" /> DevDocs
+		</a>
+	</div>
+
+	<Hero
+		kicker={`${docs.length} ${docs.length === 1 ? "guia" : "guias"} · ${totalSections} seções`}
+		title={meta.label}
+		lead={meta.tagline}
+	>
+		<span slot="title" class="flex items-center gap-4">
+			<span
+				class="grid size-14 shrink-0 place-items-center rounded-2xl sm:size-20"
+				style="background: var(--accent-soft)"
+			>
+				<Icon
+					name={meta.icon}
+					class="size-8 sm:size-11"
+					style="color: var(--color-accent-strong)"
+				/>
+			</span>
+			{meta.label}
+		</span>
+	</Hero>
+
+	<div class="mx-auto max-w-7xl px-5 pb-24">
+		<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+			{docs.map((entry, i) => <DocCard entry={entry} index={i} />)}
+		</div>
+	</div>
+</SiteLayout>

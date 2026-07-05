@@ -1,0 +1,42 @@
+---
+import { Icon } from "astro-icon/components";
+import { formatInline } from "@/lib/format";
+import type { Callout } from "@/content.config";
+
+interface Props {
+	callout: Callout;
+}
+const { callout } = Astro.props;
+
+const TONE: Record<Callout["type"], { color: string; icon: string }> = {
+	hint: { color: "var(--color-tone-hint)", icon: "lucide:lightbulb" },
+	warn: { color: "var(--color-tone-warn)", icon: "lucide:triangle-alert" },
+	danger: { color: "var(--color-tone-danger)", icon: "lucide:octagon-alert" },
+};
+const tone = TONE[callout.type] ?? TONE.hint;
+---
+
+<aside
+	class="not-prose relative flex gap-3 rounded-2xl px-4 py-3.5"
+	style={`background: color-mix(in oklab, ${tone.color} 10%, var(--color-surface-1)); --tone: ${tone.color}`}
+	role="note"
+>
+	<Icon
+		name={tone.icon}
+		class="mt-0.5 size-5 shrink-0"
+		style="color: var(--tone)"
+	/>
+	<p class="wrap-anywhere text-sm leading-relaxed text-ink-soft">
+		{
+			callout.label && (
+				<strong
+					class="font-semibold"
+					style="color: var(--tone)"
+					set:html={formatInline(callout.label)}
+				/>
+			)
+		}
+		{" "}
+		<span set:html={formatInline(callout.text)} />
+	</p>
+</aside>

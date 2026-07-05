@@ -1,0 +1,48 @@
+---
+interface Props {
+	sections: { id: string; name: string }[];
+	class?: string;
+}
+const { sections, class: className = "" } = Astro.props;
+---
+
+<nav
+	class:list={["section-nav", className]}
+	aria-label="Seções da documentação"
+	data-pagefind-ignore
+>
+	<p class="mb-3 hidden px-3 font-mono text-[0.68rem] tracking-widest text-faint uppercase lg:block">
+		Seções
+	</p>
+	<ul class="flex gap-1.5 lg:flex-col">
+		{
+			sections.map((section, i) => (
+				<li class="shrink-0">
+					<a
+						href={`#${section.id}`}
+						data-section-link={section.id}
+						data-active={i === 0 ? "" : undefined}
+						class="section-link block rounded-xl px-3 py-2 text-sm whitespace-nowrap transition-colors duration-[--dur-fast]"
+					>
+						{section.name}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</nav>
+
+<style>
+	.section-link {
+		color: var(--color-muted);
+	}
+	.section-link:hover {
+		color: var(--color-ink);
+		background: color-mix(in oklab, var(--color-surface-2) 55%, transparent);
+	}
+	.section-link[data-active] {
+		color: var(--color-accent-strong);
+		background: var(--accent-soft);
+		font-weight: 500;
+	}
+</style>

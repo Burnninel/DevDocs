@@ -1,0 +1,24 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import Navbar from "@/components/shared/Navbar.astro";
+import Footer from "@/components/shared/Footer.astro";
+import DocProgress from "@/components/docs/DocProgress.astro";
+
+interface Props {
+	title: string;
+	description?: string;
+}
+const { title, description } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} zone="reading">
+	<Navbar />
+	<DocProgress />
+	<div class="pt-[--nav-h]">
+		<slot />
+	</div>
+	<Footer />
+	<script>
+		import "@/scripts/doc-reader";
+	</script>
+</BaseLayout>

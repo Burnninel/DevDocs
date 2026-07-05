@@ -1,0 +1,33 @@
+---
+import { Icon } from "astro-icon/components";
+import SiteLayout from "@/layouts/SiteLayout.astro";
+import { withBase } from "@/lib/paths";
+---
+
+<SiteLayout title="Página não encontrada">
+	<main
+		class="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-6 text-center"
+	>
+		<p class="font-mono text-sm tracking-widest text-accent uppercase">
+			erro 404
+		</p>
+		<h1 class="mt-4 font-display text-7xl font-semibold text-ink sm:text-8xl">
+			null
+		</h1>
+		<p class="mt-6 max-w-md text-lg text-muted">
+			Essa referência não existe — como uma chave de array que você jurava ter
+			definido. Volte e tente pela busca.
+		</p>
+		<a
+			href={withBase("/")}
+			class="group mt-10 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 font-medium text-ink transition-colors duration-[--dur-fast]"
+			style="background: var(--accent-soft)"
+		>
+			<Icon
+				name="lucide:arrow-left"
+				class="size-4 transition-transform duration-[--dur-fast] group-hover:-translate-x-0.5"
+			/>
+			Voltar ao início
+		</a>
+	</main>
+</SiteLayout>

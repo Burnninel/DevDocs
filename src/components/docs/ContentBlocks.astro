@@ -1,0 +1,39 @@
+---
+import type { ContentBlock } from "@/content.config";
+import ReferenceCard from "./blocks/ReferenceCard.astro";
+import TechList from "./blocks/TechList.astro";
+import ContextBlock from "./blocks/ContextBlock.astro";
+import ComparisonBlock from "./blocks/ComparisonBlock.astro";
+import ChecklistBlock from "./blocks/ChecklistBlock.astro";
+import FlowSteps from "./blocks/FlowSteps.astro";
+
+interface Props {
+	blocks?: ContentBlock[];
+}
+const { blocks = [] } = Astro.props;
+---
+
+{
+	blocks.length > 0 && (
+		<div class="grid gap-4">
+			{blocks.map((block) => {
+				switch (block.type) {
+					case "reference-card":
+						return <ReferenceCard block={block} />;
+					case "tech-list":
+						return <TechList block={block} />;
+					case "context-block":
+						return <ContextBlock block={block} />;
+					case "comparison-block":
+						return <ComparisonBlock block={block} />;
+					case "checklist-block":
+						return <ChecklistBlock block={block} />;
+					case "flow-steps":
+						return <FlowSteps block={block} />;
+					default:
+						return null;
+				}
+			})}
+		</div>
+	)
+}

@@ -1,0 +1,182 @@
+id: go-ficheiros-io
+title: "Go: Ficheiros e I/O"
+subtitle: "Guia prático para os e io: ler e gravar ficheiros, filepath.Join, os.Open com defer e erros."
+searchPlaceholder: Buscar ReadFile, WriteFile, Open, filepath ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Gravar e ler com os
+  kicker: Ficheiro temporário seguro
+  description: "Use `filepath.Join` para compor caminhos portáveis no disco. Trate `(T, error)` como em `Go: Erros` no hub."
+  steps:
+    - Módulo com `go mod init`.
+    - Cole o exemplo em `main.go` e `go run .`.
+  codeLanguage: go
+  code: |-
+    package main
+
+    import (
+    	"fmt"
+    	"os"
+    	"path/filepath"
+    )
+
+    func main() {
+    	dir := os.TempDir()
+    	path := filepath.Join(dir, "devdocs-demo.txt")
+    	if err := os.WriteFile(path, []byte("ola"), 0o600); err != nil {
+    		panic(err)
+    	}
+    	defer os.Remove(path)
+    	b, err := os.ReadFile(path)
+    	if err != nil {
+    		panic(err)
+    	}
+    	fmt.Println(string(b))
+    }
+  output: ola
+  callout:
+    type: hint
+    label: "Permissões:"
+    text: em Unix, `0o600` limita leitura ao dono; em Windows o significado dos bits group/other difere, mas o hábito ajuda portabilidade.
+sections:
+  - id: open-defer
+    name: Open, ReadFile e defer
+    layout: single
+    entries:
+      - title: os.Open com defer Close
+        kicker: Streams e ficheiros reais
+        description: "`os.ReadFile` lê o ficheiro completo (ideal para ficheiros pequenos). Para controlar leituras parciais ou ficheiros grandes, `os.Open` com `Read`/`io.Copy` mantém controlo de memória."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"io"
+          	"os"
+          )
+
+          func main() {
+          	f, err := os.CreateTemp("", "devdocs-")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer os.Remove(f.Name())
+          	defer f.Close()
+          	if _, err := f.WriteString("abc"); err != nil {
+          		panic(err)
+          	}
+          	if _, err := f.Seek(0, io.SeekStart); err != nil {
+          		panic(err)
+          	}
+          	buf := make([]byte, 4)
+          	n, err := f.Read(buf)
+          	if err != nil && err != io.EOF {
+          		panic(err)
+          	}
+          	fmt.Println(n, string(buf[:n]))
+          }
+        output: 3 abc
+        tags:
+          - go
+          - os.Open
+          - defer
+          - Read
+          - ficheiro
+      - title: os.ReadFile em poucas linhas
+        kicker: API conveniente
+        description: Desde Go 1.16, `os.ReadFile` substitui o padrão `ioutil.ReadFile`. Devolve `[]byte` completo ou erro; combine com `os.WriteFile` para round-trip simples.
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"os"
+          )
+
+          func main() {
+          	f, err := os.CreateTemp("", "read-")
+          	if err != nil {
+          		panic(err)
+          	}
+          	path := f.Name()
+          	_ = f.Close()
+          	defer os.Remove(path)
+          	if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+          		panic(err)
+          	}
+          	b, err := os.ReadFile(path)
+          	if err != nil {
+          		panic(err)
+          	}
+          	fmt.Println(string(b))
+          }
+        output: x
+        tags:
+          - go
+          - ReadFile
+          - WriteFile
+          - os
+          - ficheiro
+  - id: filepath-io-copy
+    name: Caminhos e io.Copy
+    layout: single
+    entries:
+      - title: path.Join para URLs e segmentos lógicos
+        kicker: Separador sempre /
+        description: O pacote `path` (não `filepath`) junta segmentos com `/` — adequado a rotas HTTP. Para caminhos no disco do SO, use `filepath.Join` (ver `quickStart`).
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"path"
+          )
+
+          func main() {
+          	fmt.Println(path.Join("api", "v1", "users"))
+          }
+        output: api/v1/users
+        tags:
+          - go
+          - path
+          - Join
+          - url
+          - rota
+      - title: io.Copy entre Reader e Writer
+        kicker: Reutilizar buffers internos
+        description: "`io.Copy(dst, src)` move bytes até `EOF` ou erro. Combina com ficheiros, `bytes.Buffer` ou `http.ResponseWriter` (ver `Go: HTTP`)."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"bytes"
+          	"fmt"
+          	"io"
+          	"strings"
+          )
+
+          func main() {
+          	r := strings.NewReader("abc")
+          	var buf bytes.Buffer
+          	n, err := io.Copy(&buf, r)
+          	if err != nil {
+          		panic(err)
+          	}
+          	fmt.Println(n, buf.String())
+          }
+        output: 3 abc
+        tags:
+          - go
+          - io.Copy
+          - Reader
+          - Writer
+          - buffer
+tech: go
+order: 25
+cardDescription: Guia prático para os.ReadFile, WriteFile, Open, filepath, defer e io.Copy.

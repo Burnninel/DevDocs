@@ -1,0 +1,419 @@
+id: php-headers-http
+title: "PHP: Headers HTTP com header()"
+subtitle: Guia prático para enviar headers corretos em APIs PHP, com foco em CORS, cache e respostas JSON consistentes.
+searchPlaceholder: Buscar header, cors, cache, json ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Execução local com servidor embutido e curl
+  description: Como headers HTTP fazem sentido em resposta web, o ideal é testar com `php -S` e inspecionar com `curl -i`.
+  steps:
+    - Verifique se o PHP está disponível com `php --version`.
+    - Crie um arquivo, por exemplo `api.php`, e cole um exemplo desta página.
+    - Suba servidor local com `php -S localhost:8000 api.php`.
+    - Em outro terminal, veja headers e body com `curl -i http://localhost:8000`.
+  codeLanguage: shell
+  code: |-
+    php --version
+    php -S localhost:8000 api.php
+    curl -i http://localhost:8000
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "corpo JSON e flags em `PHP: JSON`; erros de API sem vazar stack em `PHP: Erros e exceções`. Se testar só com `php arquivo.php`, não verá o comportamento HTTP completo dos headers."
+sections:
+  - id: o-que-sao-headers-http
+    name: O que são Headers HTTP
+    layout: single
+    entries:
+      - title: Headers são metadados da comunicação HTTP
+        kicker: Eles controlam como cliente e servidor se entendem
+        description: Headers HTTP carregam instruções sobre tipo de conteúdo, cache, autenticação, CORS e status de resposta. Use quando você precisa controlar como navegador, frontend ou outra API deve interpretar a resposta. Eles existem para tornar a integração previsível e segura.
+        descriptionTone: default
+        code: |-
+          <?php
+          // Exemplo de resposta HTTP vista pelo cliente
+          HTTP/1.1 200 OK
+          Content-Type: application/json; charset=utf-8
+          Cache-Control: no-store
+          X-Request-Id: req-123
+
+          {"ok":true,"mensagem":"Resposta entregue"}
+        codeLanguage: http
+        tags:
+          - php
+          - http
+          - headers
+          - conceito
+          - api
+          - resposta
+        callout:
+          type: hint
+          label: "Leitura rápida:"
+          text: o body carrega os dados; os headers dizem como esses dados devem ser tratados.
+  - id: funcao-header-php
+    name: Função header() no PHP
+    layout: single
+    entries:
+      - title: Como funciona header() na prática
+        kicker: Enviar instruções de resposta antes do body
+        description: "`header()` adiciona ou altera headers da resposta HTTP. Use no início da execução da rota para definir tipo de conteúdo, status, cache e CORS. O porquê é simples: esses metadados precisam chegar junto com a resposta para o cliente decidir o comportamento correto."
+        descriptionTone: default
+        code: |-
+          <?php
+          header("Content-Type: application/json; charset=utf-8"); // Define formato de resposta
+          header("X-Request-Id: req-789"); // Inclui rastreio para observabilidade
+          http_response_code(200); // Define status HTTP de forma explícita
+
+          echo json_encode([
+              "ok" => true,
+              "mensagem" => "Header enviado com sucesso",
+          ]);
+        output: '{"ok":true,"mensagem":"Header enviado com sucesso"}'
+        tags:
+          - php
+          - header
+          - http_response_code
+          - json
+          - api
+          - metadados
+      - title: "Regra obrigatória: headers antes de qualquer saída"
+        kicker: Se já houve echo/HTML, header pode falhar
+        description: Headers devem ser enviados antes de qualquer saída (`echo`, espaço fora de `<?php ?>`, HTML ou warning). Use essa regra sempre para evitar erro `Cannot modify header information`. Isso é crítico porque header enviado fora de ordem quebra CORS, status e cache.
+        descriptionTone: warn
+        code: |-
+          <?php
+          echo "Começou"; // Saída enviada cedo demais
+          header("Content-Type: application/json"); // Erro: header já não pode ser alterado
+
+          echo json_encode(["ok" => true]);
+        tags:
+          - php
+          - header
+          - headers-already-sent
+          - erro
+          - saida
+          - ordem
+        callout:
+          type: danger
+          label: "Perigo:"
+          text: esse erro costuma aparecer por espaços/linhas antes de `<?php` ou por `echo` de debug esquecido.
+  - id: tipos-comuns-headers
+    name: Tipos comuns de headers
+    layout: single
+    entries:
+      - title: Headers mais usados em APIs e integrações
+        kicker: Cada header resolve um problema de protocolo
+        description: Use `Content-Type` para formato de resposta, `Authorization` no request para autenticação, `Accept` para negociar formato, `Location` para redirecionamento e `Cache-Control` para política de cache. Saber quando usar cada um evita integração quebrada ou comportamento inesperado.
+        descriptionTone: default
+        code: |-
+          <?php
+          header("Content-Type: application/json; charset=utf-8"); // Informa tipo e charset do body
+          header("Cache-Control: no-store, no-cache, must-revalidate"); // Evita cache em dados sensíveis
+          header("X-Request-Id: req-456"); // Facilita rastreio em logs
+
+          http_response_code(201); // Exemplo de criação de recurso
+          header("Location: /api/pedidos/123"); // Aponta URL do recurso criado
+
+          echo json_encode(["id" => 123, "status" => "criado"]);
+        output: '{"id":123,"status":"criado"}'
+        tags:
+          - php
+          - headers
+          - content-type
+          - cache-control
+          - location
+          - api
+  - id: headers-cors
+    name: Headers para controle de CORS
+    layout: single
+    entries:
+      - title: CORS prático para frontend em outro domínio
+        kicker: Liberar só origens confiáveis e métodos necessários
+        description: "CORS define se um frontend de outra origem pode chamar sua API no navegador. Use quando frontend e backend estão em domínios/portas diferentes. O motivo é segurança: navegador bloqueia por padrão, então você precisa liberar de forma explícita e controlada."
+        descriptionTone: default
+        code: |-
+          <?php
+          $originPermitida = "https://app.exemplo.com";
+          $originRecebida = $_SERVER["HTTP_ORIGIN"] ?? "";
+
+          if ($originRecebida === $originPermitida) {
+              header("Access-Control-Allow-Origin: " . $originRecebida); // Libera só origem conhecida
+              header("Vary: Origin"); // Evita cache incorreto para origens diferentes
+              header("Access-Control-Allow-Credentials: true"); // Permite cookies/token com credenciais
+          }
+
+          header("Content-Type: application/json; charset=utf-8");
+          echo json_encode(["ok" => true, "mensagem" => "CORS aplicado"]);
+        output: '{"ok":true,"mensagem":"CORS aplicado"}'
+        tags:
+          - php
+          - cors
+          - access-control-allow-origin
+          - vary-origin
+          - credentials
+          - api
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: "não combine `Access-Control-Allow-Origin: *` com `Access-Control-Allow-Credentials: true`; navegadores bloqueiam essa combinação."
+      - title: Preflight OPTIONS com métodos e headers permitidos
+        kicker: Sem resposta correta de preflight, a chamada real nem acontece
+        description: "Quando a requisição é não simples (ex.: `Authorization`, `PUT`, `DELETE`), o navegador envia `OPTIONS` antes. Use `Access-Control-Allow-Methods` e `Access-Control-Allow-Headers` para declarar o que sua API aceita. Isso evita bloqueio no browser antes mesmo do endpoint rodar."
+        descriptionTone: default
+        code: |-
+          <?php
+          header("Access-Control-Allow-Origin: https://app.exemplo.com");
+          header("Vary: Origin");
+          header("Access-Control-Allow-Credentials: true");
+          header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); // Métodos aceitos
+          header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Request-Id"); // Headers de request aceitos
+
+          if (($_SERVER["REQUEST_METHOD"] ?? "GET") === "OPTIONS") {
+              http_response_code(204); // Responde preflight sem body
+              exit;
+          }
+
+          header("Content-Type: application/json; charset=utf-8");
+          echo json_encode(["ok" => true]);
+        output: '{"ok":true}'
+        tags:
+          - php
+          - cors
+          - options
+          - access-control-allow-methods
+          - access-control-allow-headers
+          - preflight
+  - id: headers-cache
+    name: Headers de controle de cache
+    layout: single
+    entries:
+      - title: Definir política de cache por tipo de dado
+        kicker: Performance quando pode cachear, segurança quando não pode
+        description: Use `Cache-Control` para controlar se a resposta pode ser armazenada e por quanto tempo. Em dados sensíveis (token, perfil, sessão), prefira `no-store`. Em recursos estáveis (catálogo público), use `public, max-age=...` para reduzir latência e carga no backend.
+        descriptionTone: default
+        code: |-
+          <?php
+          $rota = $_GET["rota"] ?? "perfil";
+
+          if ($rota === "perfil") {
+              header("Cache-Control: no-store, no-cache, must-revalidate"); // Protege dado sensível
+          } else {
+              header("Cache-Control: public, max-age=300"); // Permite cache por 5 minutos
+          }
+
+          header("Content-Type: application/json; charset=utf-8");
+          echo json_encode(["rota" => $rota, "ok" => true]);
+        output: '{"rota":"perfil","ok":true}'
+        tags:
+          - php
+          - cache-control
+          - cache
+          - api
+          - performance
+          - seguranca
+  - id: headers-resposta-api
+    name: Headers de resposta em APIs (JSON, status, etc.)
+    layout: single
+    entries:
+      - title: "Resposta API consistente: status + Content-Type + body JSON"
+        kicker: Contrato claro para frontend e integrações externas
+        description: Em API, use status code correto, `Content-Type` explícito e estrutura JSON previsível. Faça isso sempre para facilitar tratamento de erro no frontend e em integrações. Sem esse padrão, cliente precisa adivinhar resultado e surgem bugs de parsing e fallback.
+        descriptionTone: default
+        contentBlocks:
+          - type: flow-steps
+            title: Ordem recomendada
+            steps:
+              - Defina `Content-Type` e política de cache antes do body.
+              - Valide entrada e decida o status HTTP.
+              - Monte um JSON previsível para sucesso ou erro.
+              - Finalize cedo com `exit` quando a rota já tiver respondido.
+        code: |-
+          <?php
+          $usuarioId = (int) ($_GET["id"] ?? 0);
+
+          header("Content-Type: application/json; charset=utf-8");
+          header("Cache-Control: no-store");
+
+          if ($usuarioId <= 0) {
+              http_response_code(422); // Erro de validação
+              echo json_encode([
+                  "ok" => false,
+                  "erro" => "id inválido",
+              ]);
+              exit;
+          }
+
+          http_response_code(200); // Sucesso
+
+          echo json_encode([
+              "ok" => true,
+              "data" => ["id" => $usuarioId, "nome" => "Ana"],
+          ]);
+        output: '{"ok":false,"erro":"id inválido"}'
+        tags:
+          - php
+          - api
+          - json
+          - status-code
+          - content-type
+          - resposta
+        callout:
+          type: hint
+          label: "Padrão útil:"
+          text: mantenha o mesmo formato para sucesso/erro (`ok`, `data`, `erro`) para reduzir ifs no consumidor da API.
+      - title: Montar o body JSON com encode seguro
+        kicker: Flags, Unicode e erros de serialização
+        description: "Depois de definir status e `Content-Type`, use `json_encode` com critério: `JSON_UNESCAPED_UNICODE` para acentos legíveis, `JSON_THROW_ON_ERROR` para falhar com `JsonException` em vez de `false` silencioso. Para contrato de decode, validação de chaves e armadilhas com `null`, abra no hub a documentação `PHP: JSON (encode e decode)`."
+        descriptionTone: default
+        code: |-
+          <?php
+          $payload = ["ok" => true, "mensagem" => "Pedido criado"];
+
+          try {
+              echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+          } catch (JsonException $e) {
+              http_response_code(500);
+              header("Content-Type: application/json; charset=utf-8");
+              echo json_encode(["ok" => false, "erro" => "Falha ao serializar"]);
+          }
+        output: '{"ok":true,"mensagem":"Pedido criado"}'
+        tags:
+          - php
+          - json_encode
+          - json
+          - api
+          - unicode
+          - jsonexception
+        callout:
+          type: hint
+          label: "Cruzamento:"
+          text: "a doc `PHP: JSON` aprofunda decode, profundidade e `json_last_error`; esta página foca em headers e ordem de saída."
+  - id: exemplo-pratico-completo
+    name: Exemplo prático completo (API simulada)
+    layout: single
+    entries:
+      - title: API simulada com CORS, preflight, cache e JSON
+        kicker: Fluxo completo pronto para adaptar no projeto
+        description: "Este exemplo junta os pontos essenciais: CORS com origem controlada, preflight `OPTIONS`, cache adequado, status corretos e resposta JSON. Use como base para endpoints reais, porque ele já cobre o que normalmente quebra em integração frontend + API."
+        descriptionTone: default
+        code: |-
+          <?php
+          $originPermitida = "https://app.exemplo.com";
+          $originRecebida = $_SERVER["HTTP_ORIGIN"] ?? "";
+
+          if ($originRecebida === $originPermitida) {
+              header("Access-Control-Allow-Origin: " . $originRecebida); // Libera só origem confiável
+              header("Vary: Origin"); // Garante cache correto por origem
+              header("Access-Control-Allow-Credentials: true"); // Permite credenciais quando necessário
+          }
+
+          header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); // Métodos liberados para browser
+          header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Request-Id"); // Headers de request aceitos
+
+          if (($_SERVER["REQUEST_METHOD"] ?? "GET") === "OPTIONS") {
+              http_response_code(204); // Responde preflight sem body
+              exit;
+          }
+
+          header("Content-Type: application/json; charset=utf-8");
+          header("Cache-Control: no-store"); // Evita cache de resposta dinâmica
+
+          $rota = parse_url($_SERVER["REQUEST_URI"] ?? "/", PHP_URL_PATH);
+
+          if ($rota === "/api/health") {
+              http_response_code(200);
+              echo json_encode(["ok" => true, "service" => "up"]); // Endpoint simples de health check
+              exit;
+          }
+
+          if ($rota === "/api/usuarios" && ($_SERVER["REQUEST_METHOD"] ?? "GET") === "GET") {
+              http_response_code(200);
+              echo json_encode([
+                  "ok" => true,
+                  "data" => [
+                      ["id" => 1, "nome" => "Ana"],
+                      ["id" => 2, "nome" => "Bruno"],
+                  ],
+              ]);
+              exit;
+          }
+
+          http_response_code(404);
+          echo json_encode(["ok" => false, "erro" => "Rota não encontrada"]);
+        output: '{"ok":true,"service":"up"}'
+        tags:
+          - php
+          - api
+          - cors
+          - cache-control
+          - json
+          - exemplo-pratico
+  - id: boas-praticas
+    name: Boas práticas
+    layout: single
+    entries:
+      - title: Centralizar e padronizar envio de headers
+        kicker: Evitar inconsistência entre endpoints
+        description: "Centralize headers comuns em funções para não repetir regra em cada rota. Use quando sua API tem vários endpoints e times diferentes mexendo no código. O ganho é consistência: menos erro de CORS/cache e manutenção mais rápida."
+        descriptionTone: default
+        code: |-
+          <?php
+          function responderJson(int $status, array $payload): void
+          {
+              header("Content-Type: application/json; charset=utf-8"); // Padrão de conteúdo
+              header("Cache-Control: no-store"); // Padrão para resposta dinâmica
+              http_response_code($status); // Padrão de status
+
+              echo json_encode($payload);
+          }
+
+          responderJson(200, ["ok" => true, "mensagem" => "Resposta padronizada"]);
+        output: '{"ok":true,"mensagem":"Resposta padronizada"}'
+        tags:
+          - php
+          - boas-praticas
+          - header
+          - padrao
+          - api
+          - manutencao
+        callout:
+          type: hint
+          label: "Checklist rápido:"
+          text: headers antes da saída, CORS explícito por origem, `Cache-Control` adequado ao dado e status HTTP coerente com o resultado.
+  - id: erros-comuns
+    name: Erros comuns
+    layout: single
+    entries:
+      - title: Falhas frequentes com header() em APIs PHP
+        kicker: Erros pequenos que causam grandes sintomas no frontend
+        description: "Erros comuns incluem enviar output antes de `header()`, liberar CORS de forma insegura, esquecer `Vary: Origin` e usar cache agressivo em dados sensíveis. Conhecer esses pontos evita bug intermitente, falha de autenticação e resposta incorreta em produção."
+        descriptionTone: warn
+        code: |-
+          <?php
+          // 1) Saída antes de header()
+          echo "debug"; // Erro: já iniciou o body
+          header("Content-Type: application/json"); // Pode gerar "Cannot modify header information"
+
+          // 2) CORS inseguro com credenciais
+          header("Access-Control-Allow-Origin: *");
+          header("Access-Control-Allow-Credentials: true"); // Combinação inválida para navegador
+
+          // 3) Cache inadequado para dado sensível
+          header("Cache-Control: public, max-age=3600"); // Evite em dados de sessão/perfil
+        tags:
+          - php
+          - erros-comuns
+          - header
+          - cors
+          - cache-control
+          - api
+        callout:
+          type: danger
+          label: "Perigo:"
+          text: problemas de header nem sempre aparecem no backend; muitas vezes o sintoma surge só no navegador ou no consumidor da API.
+tech: php
+order: 6
+cardDescription: Guia prático para usar header() em APIs PHP com CORS, cache, status HTTP e respostas JSON consistentes.

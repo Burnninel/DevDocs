@@ -1,0 +1,50 @@
+---
+import { Icon } from "astro-icon/components";
+import { formatInline } from "@/lib/format";
+import type { ContentBlock } from "@/content.config";
+
+type Block = Extract<ContentBlock, { type: "context-block" }>;
+interface Props {
+	block: Block;
+}
+const { block } = Astro.props;
+
+type Variant = NonNullable<Block["variant"]>;
+const VARIANT: Record<Variant, { color: string; icon: string }> = {
+	"good-practice": { color: "var(--color-tone-good)", icon: "lucide:circle-check" },
+	"common-error": { color: "var(--color-tone-danger)", icon: "lucide:circle-x" },
+	attention: { color: "var(--color-tone-warn)", icon: "lucide:triangle-alert" },
+	tip: { color: "var(--color-tone-hint)", icon: "lucide:lightbulb" },
+};
+const v = VARIANT[block.variant ?? "tip"] ?? VARIANT.tip;
+---
+
+<aside
+	class="not-prose flex gap-3 rounded-2xl px-4 py-3.5"
+	style={`background: color-mix(in oklab, ${v.color} 9%, var(--color-surface-1)); --tone: ${v.color}`}
+	role="note"
+>
+	<Icon name={v.icon} class="mt-0.5 size-5 shrink-0" style="color: var(--tone)" />
+	<div class="text-sm leading-relaxed text-ink-soft">
+		{
+			block.title && (
+				<div class="mb-0.5 font-semibold" style="color: var(--tone)">
+					{block.title}
+				</div>
+			)
+		}
+		<p class="wrap-anywhere">
+			{
+				block.label && (
+					<strong
+						class="font-semibold"
+						style="color: var(--tone)"
+						set:html={formatInline(block.label)}
+					/>
+				)
+			}
+			{" "}
+			{block.text && <span set:html={formatInline(block.text)} />}
+		</p>
+	</div>
+</aside>
