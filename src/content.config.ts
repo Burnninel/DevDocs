@@ -99,6 +99,8 @@ const entrySchema = z.object({
 	tags: z.array(z.string()).default([]),
 	callout: calloutSchema.optional(),
 	contentBlocks: z.array(contentBlockSchema).optional(),
+	/** Permite executar este código no navegador (php-wasm). Opt-in/opt-out por entry. */
+	runnable: z.boolean().optional(),
 });
 export type DocEntry = z.infer<typeof entrySchema>;
 
@@ -137,6 +139,8 @@ const docs = defineCollection({
 		shortcutHint: z.string().optional(),
 		codeLanguage: z.string().optional(),
 		defaultSectionLayout: z.enum(["single", "two"]).optional(),
+		/** Valor padrão de `runnable` para as entries desta doc (sobrescrevível por entry). */
+		defaultRunnable: z.boolean().optional(),
 		quickStart: quickStartSchema.optional(),
 		sections: z.array(sectionSchema),
 		// derivados na migração:

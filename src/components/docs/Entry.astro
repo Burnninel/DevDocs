@@ -38,7 +38,7 @@ const isWarn = entry.descriptionTone === "warn";
 	{
 		entry.description && (
 			<p
-				class="wrap-anywhere max-w-[--reading-measure] leading-relaxed"
+				class="wrap-anywhere max-w-[var(--reading-measure)] leading-relaxed"
 				class:list={[isWarn ? "text-tone-warn/90" : "text-ink-soft"]}
 				set:html={formatInline(entry.description)}
 			/>

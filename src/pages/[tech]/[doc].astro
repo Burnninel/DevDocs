@@ -28,15 +28,15 @@ const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
 	>
 		<!-- Navegação de seções: barra sticky no mobile, sidebar no desktop -->
 		<aside
-			class="sticky top-[--nav-h] z-30 -mx-5 self-start px-5 py-3 lg:top-[calc(var(--nav-h)+1.5rem)] lg:mx-0 lg:px-0 lg:py-0"
+			class="sticky top-[var(--nav-h)] z-30 -mx-5 min-w-0 self-start px-5 py-3 lg:top-[calc(var(--nav-h)+1.5rem)] lg:mx-0 lg:px-0 lg:py-0"
 		>
-			<div class="glass scroll-x rounded-2xl p-2 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+			<div class="glass-outline scroll-x rounded-2xl p-2 lg:overflow-visible lg:p-4">
 				<SectionNav sections={navSections} />
 			</div>
 		</aside>
 
 		<main class="min-w-0">
-			<span data-doc-top class="block scroll-mt-[--nav-h]"></span>
+			<span data-doc-top class="block scroll-mt-[var(--nav-h)]"></span>
 			<Breadcrumb tech={doc.tech} docTitle={doc.title} />
 
 			<header class="mt-5 mb-8">
@@ -48,7 +48,7 @@ const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
 				</h1>
 				{
 					doc.subtitle && (
-						<p class="mt-4 max-w-[--reading-measure] text-lg text-muted">
+						<p class="mt-4 max-w-[var(--reading-measure)] text-lg text-muted">
 							{doc.subtitle}
 						</p>
 					)

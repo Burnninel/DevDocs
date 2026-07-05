@@ -28,7 +28,7 @@ const lang = normalizeLang(qs.codeLanguage);
 		{
 			qs.description && (
 				<p
-					class="wrap-anywhere max-w-[--reading-measure] text-muted"
+					class="wrap-anywhere max-w-[var(--reading-measure)] text-muted"
 					set:html={formatInline(qs.description)}
 				/>
 			)

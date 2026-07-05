@@ -23,7 +23,7 @@ const totalSections = docs.reduce((n, d) => n + d.data.sections.length, 0);
 	<div class="mx-auto max-w-7xl px-5">
 		<a
 			href={withBase("/")}
-			class="mt-8 inline-flex items-center gap-1.5 font-mono text-xs text-faint transition-colors duration-[--dur-fast] hover:text-accent"
+			class="mt-8 inline-flex items-center gap-1.5 font-mono text-xs text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent"
 			data-reveal
 		>
 			<Icon name="lucide:arrow-left" class="size-3.5" /> DevDocs

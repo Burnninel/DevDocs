@@ -17,12 +17,12 @@ const { sections, class: className = "" } = Astro.props;
 	<ul class="flex gap-1.5 lg:flex-col">
 		{
 			sections.map((section, i) => (
-				<li class="shrink-0">
+				<li class="shrink-0 lg:min-w-0">
 					<a
 						href={`#${section.id}`}
 						data-section-link={section.id}
 						data-active={i === 0 ? "" : undefined}
-						class="section-link block rounded-xl px-3 py-2 text-sm whitespace-nowrap transition-colors duration-[--dur-fast]"
+						class="section-link block rounded-xl px-3 py-2 text-sm whitespace-nowrap transition-colors duration-[var(--dur-fast)] lg:whitespace-normal"
 					>
 						{section.name}
 					</a>
@@ -38,7 +38,7 @@ const { sections, class: className = "" } = Astro.props;
 	}
 	.section-link:hover {
 		color: var(--color-ink);
-		background: color-mix(in oklab, var(--color-surface-2) 55%, transparent);
+		background: color-mix(in oklab, white 10%, transparent);
 	}
 	.section-link[data-active] {
 		color: var(--color-accent-strong);

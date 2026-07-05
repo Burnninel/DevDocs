@@ -109,6 +109,21 @@
 			color-mix(in oklab, white 5%, transparent);
 	}
 
+	/*
+	 * Variante "bolha de vidro": sem cor de preenchimento, contorno inteiro
+	 * simulado por sombra (nunca border) + leve profundidade. Para chrome de
+	 * navegação (ex.: sidebar de seções) que deve ficar "solto", não em card.
+	 */
+	.glass-outline {
+		background: transparent;
+		backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+		-webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+		box-shadow:
+			inset 0 1px 0 0 color-mix(in oklab, white 6%, transparent),
+			0 0 0 1px color-mix(in oklab, white 5%, transparent),
+			0 24px 48px -28px rgba(0, 0, 0, 0.55);
+	}
+
 	/* Contenção de overflow: código/tabelas rolam dentro de si mesmos. */
 	.scroll-x {
 		overflow-x: auto;
