@@ -3,6 +3,7 @@ import { formatInline, resolveEntryCode } from "@/lib/format";
 import type { DocEntry as DocEntryType } from "@/content.config";
 import CodeBlock from "./CodeBlock.astro";
 import OutputBlock from "./OutputBlock.astro";
+import RunnableCode from "./RunnableCode.astro";
 import Callout from "./Callout.astro";
 import ContentBlocks from "./ContentBlocks.astro";
 
@@ -10,8 +11,10 @@ interface Props {
 	entry: DocEntryType;
 	/** Linguagem padrão da doc, se a entry não definir a própria. */
 	fallbackLang?: string;
+	/** Valor padrão de runner para entries desta doc. */
+	defaultRunnable?: boolean;
 }
-const { entry, fallbackLang } = Astro.props;
+const { entry, fallbackLang, defaultRunnable = false } = Astro.props;
 
 const { code, output, lang } = resolveEntryCode({
 	code: entry.code,
@@ -19,6 +22,9 @@ const { code, output, lang } = resolveEntryCode({
 	codeLanguage: entry.codeLanguage ?? fallbackLang,
 });
 const isWarn = entry.descriptionTone === "warn";
+const isRunnable = Boolean(
+	code && lang === "php" && (entry.runnable ?? defaultRunnable),
+);
 ---
 
 <article class="doc-entry grid gap-5">
@@ -45,8 +51,14 @@ const isWarn = entry.descriptionTone === "warn";
 		)
 	}
 
-	{code && <CodeBlock code={code} lang={lang} />}
-	{output && <OutputBlock output={output} />}
+	{
+		code && isRunnable ? (
+			<RunnableCode code={code} output={output} lang={lang} />
+		) : (
+			code && <CodeBlock code={code} lang={lang} />
+		)
+	}
+	{output && !isRunnable && <OutputBlock output={output} />}
 
 	<ContentBlocks blocks={entry.contentBlocks} />
 
@@ -56,8 +68,10 @@ const isWarn = entry.descriptionTone === "warn";
 		entry.tags && entry.tags.length > 0 && (
 			<ul class="flex flex-wrap gap-1.5 pt-1" data-pagefind-ignore>
 				{entry.tags.map((tag) => (
-					<li class="rounded-full px-2 py-0.5 font-mono text-[0.68rem] text-faint"
-						style="background: color-mix(in oklab, var(--color-surface-2) 60%, transparent)">
+					<li
+						class="rounded-full px-2 py-0.5 font-mono text-[0.68rem] text-faint"
+						style="background: color-mix(in oklab, var(--color-surface-2) 60%, transparent)"
+					>
 						{tag}
 					</li>
 				))}

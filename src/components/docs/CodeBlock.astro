@@ -14,36 +14,45 @@ const shownLabel = label ?? (lang === "text" ? "código" : lang);
 ---
 
 <figure
-	class:list={["not-prose group relative overflow-hidden rounded-2xl", className]}
-	style="background: var(--color-surface-0)"
+	class:list={[
+		"not-prose group relative overflow-hidden rounded-2xl",
+		className,
+	]}
+	style="--code-body-padding: 1.25rem 1.5rem 1.9rem; background: var(--color-surface-0)"
 	data-code-block
 >
 	<figcaption
-		class="flex items-center justify-between px-4 py-2 text-[0.72rem]"
+		class="flex items-center justify-between px-6 py-3 text-[0.72rem]"
 		style="background: color-mix(in oklab, var(--color-surface-2) 60%, transparent)"
 	>
-		<span class="font-mono tracking-wide text-faint uppercase">{shownLabel}</span>
-		<button
-			type="button"
-			class="flex items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent"
-			data-copy
-			aria-label="Copiar código"
+		<span class="font-mono tracking-wide text-faint uppercase"
+			>{shownLabel}</span
 		>
-			<Icon name="lucide:copy" class="size-3.5" data-copy-idle />
-			<Icon name="lucide:check" class="hidden size-3.5" data-copy-done />
-			<span data-copy-label>copiar</span>
-		</button>
+		<div class="flex flex-wrap items-center justify-end gap-1.5">
+			<slot name="actions" />
+			<button
+				type="button"
+				class="flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent"
+				data-copy
+				aria-label="Copiar código"
+			>
+				<Icon name="lucide:copy" class="size-3.5" data-copy-idle />
+				<Icon name="lucide:check" class="hidden size-3.5" data-copy-done />
+				<span data-copy-label>copiar</span>
+			</button>
+		</div>
 	</figcaption>
-	<div class="scroll-x code-surface text-sm">
+	<div class="scroll-x code-surface text-sm" data-code-surface>
 		<Code code={code} lang={lang as any} theme="github-dark-default" />
 	</div>
+	<slot name="after" />
 </figure>
 
 <style is:global>
 	/* Funde o fundo do Shiki com a superfície matte do tema. */
 	.code-surface pre.astro-code {
 		margin: 0;
-		padding: 1rem 1.15rem;
+		padding: var(--code-body-padding) !important;
 		background: transparent !important;
 		font-family: var(--font-mono);
 		font-size: 0.85rem;

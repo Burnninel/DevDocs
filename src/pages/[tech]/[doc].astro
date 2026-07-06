@@ -30,7 +30,9 @@ const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
 		<aside
 			class="sticky top-[var(--nav-h)] z-30 -mx-5 min-w-0 self-start px-5 py-3 lg:top-[calc(var(--nav-h)+1.5rem)] lg:mx-0 lg:px-0 lg:py-0"
 		>
-			<div class="glass-outline scroll-x rounded-2xl p-2 lg:overflow-visible lg:p-4">
+			<div
+				class="glass-outline scroll-x rounded-2xl p-2 lg:overflow-visible lg:p-4"
+			>
 				<SectionNav sections={navSections} />
 			</div>
 		</aside>
@@ -55,7 +57,13 @@ const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
 				}
 			</header>
 
-			{doc.quickStart && <div class="mb-10"><QuickStart quickStart={doc.quickStart} /></div>}
+			{
+				doc.quickStart && (
+					<div class="mb-10">
+						<QuickStart quickStart={doc.quickStart} />
+					</div>
+				)
+			}
 
 			<div class="doc-panels" data-pagefind-body>
 				{
@@ -73,7 +81,11 @@ const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
 							</h2>
 							<div class="grid gap-12">
 								{section.entries.map((e) => (
-									<Entry entry={e} fallbackLang={doc.codeLanguage} />
+									<Entry
+										entry={e}
+										fallbackLang={doc.codeLanguage}
+										defaultRunnable={doc.defaultRunnable}
+									/>
 								))}
 							</div>
 						</section>

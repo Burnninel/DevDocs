@@ -1,0 +1,226 @@
+---
+import { Icon } from "astro-icon/components";
+import CodeBlock from "./CodeBlock.astro";
+import OutputBlock from "./OutputBlock.astro";
+
+interface Props {
+	code: string;
+	output?: string;
+	lang?: string;
+}
+
+const { code, output = "", lang = "php" } = Astro.props;
+const editorRows = Math.min(24, Math.max(4, code.split("\n").length));
+---
+
+<div class="not-prose grid gap-3" data-php-sandbox>
+	<CodeBlock code={code} lang={lang}>
+		<div
+			slot="actions"
+			data-sandbox-controls
+			data-pagefind-ignore
+			hidden
+			class="flex flex-wrap items-center justify-end gap-1.5"
+		>
+			<p class="sr-only" data-sandbox-status aria-live="polite">
+				Pronto para executar.
+			</p>
+			<button
+				type="button"
+				data-sandbox-edit
+				aria-pressed="false"
+				class="sandbox-action sandbox-toggle inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent disabled:cursor-wait disabled:text-faint"
+				style="background: color-mix(in oklab, var(--color-surface-3) 44%, transparent)"
+			>
+				<Icon
+					name="lucide:square-terminal"
+					class="size-3.5"
+					aria-hidden="true"
+				/>
+				<span data-sandbox-edit-label>Sandbox</span>
+			</button>
+			<button
+				type="button"
+				data-sandbox-run
+				class="sandbox-action inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent disabled:cursor-wait disabled:text-faint"
+				style="background: color-mix(in oklab, var(--color-surface-3) 44%, transparent)"
+			>
+				<Icon name="lucide:play" class="size-3.5" aria-hidden="true" />
+				<span data-sandbox-run-label>Executar</span>
+			</button>
+		</div>
+
+		<div
+			slot="after"
+			data-sandbox-editor
+			data-pagefind-ignore
+			hidden
+			class="sandbox-editor-shell"
+		>
+			<div class="sandbox-editor-frame">
+				<pre
+					data-sandbox-editor-highlight
+					aria-hidden="true"
+					class="sandbox-editor-highlight">
+				</pre>
+				<textarea
+					data-sandbox-editor-input
+					rows={editorRows}
+					wrap="off"
+					spellcheck="false"
+					autocomplete="off"
+					autocapitalize="off"
+					class="sandbox-editor-input"
+					style="tab-size: 2">{code}</textarea
+				>
+			</div>
+		</div>
+	</CodeBlock>
+
+	<div
+		data-sandbox-result
+		data-pagefind-ignore
+		hidden
+		aria-live="polite"
+		class="overflow-hidden rounded-2xl"
+		style="background: color-mix(in oklab, var(--color-surface-1) 74%, transparent)"
+	>
+		<div
+			class="flex flex-col gap-1 px-4 py-2 font-mono text-[0.68rem] tracking-widest uppercase sm:flex-row sm:items-center sm:justify-between"
+		>
+			<span class="flex items-center gap-2 text-faint">
+				<span
+					data-sandbox-result-dot
+					class="size-1.5 rounded-full"
+					style="background: var(--color-tone-info)"
+					aria-hidden="true"></span>
+				<span data-sandbox-result-label>Saída real</span>
+			</span>
+			<span class="text-faint" data-sandbox-result-meta></span>
+		</div>
+		<div class="scroll-x">
+			<pre
+				data-sandbox-result-output
+				class="m-0 px-4 pt-0 pb-4 font-mono text-[0.8rem] leading-relaxed text-muted"
+				style="width: max-content; min-width: 100%">
+			</pre>
+		</div>
+	</div>
+
+	{
+		output && (
+			<details data-sandbox-expected class="not-prose group">
+				<summary class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-xs text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent">
+					<Icon
+						name="lucide:chevron-right"
+						class="size-3.5 transition-transform duration-[var(--dur-fast)] group-open:rotate-90"
+						aria-hidden="true"
+					/>
+					Saída esperada
+				</summary>
+				<div class="mt-2">
+					<OutputBlock output={output} label="Saída esperada" />
+				</div>
+			</details>
+		)
+	}
+</div>
+
+<style is:global>
+	.sandbox-action {
+		font-size: 0.72rem;
+		line-height: 1rem;
+	}
+
+	.sandbox-toggle[aria-pressed="true"] {
+		color: var(--color-accent);
+		background: var(--accent-soft) !important;
+	}
+
+	details[data-sandbox-expected] > summary {
+		list-style: none;
+	}
+
+	details[data-sandbox-expected] > summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.sandbox-editor-shell {
+		background: var(--color-surface-0);
+	}
+
+	.sandbox-editor-frame {
+		position: relative;
+		overflow: hidden;
+	}
+
+	.sandbox-editor-highlight,
+	.sandbox-editor-input {
+		margin: 0;
+		padding: var(--code-body-padding);
+		font-family: var(--font-mono);
+		font-size: 0.85rem;
+		font-feature-settings: "liga" 0;
+		line-height: 1.6;
+		tab-size: 2;
+		white-space: pre;
+	}
+
+	.sandbox-editor-highlight {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		width: max-content;
+		min-width: 100%;
+		min-height: 100%;
+		color: var(--color-ink-soft);
+	}
+
+	.sandbox-editor-input {
+		position: relative;
+		z-index: 1;
+		display: block;
+		width: 100%;
+		min-width: 100%;
+		height: var(--sandbox-editor-height, auto);
+		min-height: var(--sandbox-editor-height, auto);
+		resize: vertical;
+		overflow: auto;
+		border: 0;
+		background: transparent;
+		color: transparent;
+		caret-color: var(--color-accent-strong);
+		outline: none;
+	}
+
+	.sandbox-editor-input::selection {
+		background: color-mix(in oklab, var(--color-accent) 34%, transparent);
+		color: transparent;
+	}
+
+	.sandbox-token-keyword,
+	.sandbox-token-tag {
+		color: var(--color-syntax-keyword);
+	}
+
+	.sandbox-token-function {
+		color: var(--color-syntax-function);
+	}
+
+	.sandbox-token-variable {
+		color: var(--color-syntax-variable);
+	}
+
+	.sandbox-token-string {
+		color: var(--color-syntax-string);
+	}
+
+	.sandbox-token-number {
+		color: var(--color-syntax-number);
+	}
+
+	.sandbox-token-comment {
+		color: var(--color-syntax-comment);
+		font-style: italic;
+	}
+</style>

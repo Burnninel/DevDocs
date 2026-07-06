@@ -32,6 +32,14 @@
 	--color-tone-good: #86bd8f; /* verde (boa prática) */
 	--color-tone-info: #7ba7cc; /* azul (info) */
 
+	/* ---- Sintaxe do editor da sandbox de PHP (overlay de destaque) ---- */
+	--color-syntax-keyword: #ff7b72;
+	--color-syntax-function: #d2a8ff;
+	--color-syntax-variable: #ffa657;
+	--color-syntax-string: #a5d6ff;
+	--color-syntax-number: #79c0ff;
+	--color-syntax-comment: #8b949e;
+
 	/* ---- Tipografia (self-hosted, com personalidade) ---- */
 	--font-display: "Space Grotesk Variable", "Space Grotesk", system-ui,
 		sans-serif;

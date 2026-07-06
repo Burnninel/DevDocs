@@ -4,6 +4,7 @@ subtitle: Guia prático e mais completo para criar, transformar, buscar, ordenar
 searchPlaceholder: Buscar função, comando ou palavra...
 shortcutHint: "Atalho: pressione / para focar a busca."
 codeLanguage: php
+defaultRunnable: true
 defaultSectionLayout: single
 quickStart:
   title: Como testar os exemplos desta documentação

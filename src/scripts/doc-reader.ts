@@ -31,8 +31,9 @@ function setupDocReader(): void {
 		document.querySelectorAll<HTMLElement>("[data-section-link]"),
 	);
 	const ids = panels.map((p) => p.dataset.sectionPanel ?? "");
-	const progressBar =
-		document.querySelector<HTMLElement>("[data-progress-bar]");
+	const progressBar = document.querySelector<HTMLElement>(
+		"[data-progress-bar]",
+	);
 	const scrollAnchor =
 		document.querySelector<HTMLElement>("[data-doc-top]") ?? null;
 
@@ -99,7 +100,9 @@ function setupDocReader(): void {
 	for (const link of [
 		...navLinks,
 		...Array.from(
-			document.querySelectorAll<HTMLElement>("[data-pager-prev],[data-pager-next]"),
+			document.querySelectorAll<HTMLElement>(
+				"[data-pager-prev],[data-pager-next]",
+			),
 		),
 	]) {
 		link.addEventListener("click", (event) => {
@@ -117,7 +120,15 @@ function setupDocReader(): void {
 	)) {
 		btn.addEventListener("click", async () => {
 			const block = btn.closest("[data-code-block]");
-			const code = block?.querySelector("pre")?.textContent ?? "";
+			const editor = block?.querySelector<HTMLTextAreaElement>(
+				"[data-sandbox-editor-input]",
+			);
+			const editorWrap = editor?.closest<HTMLElement>("[data-sandbox-editor]");
+			const code =
+				editor && editorWrap && !editorWrap.hidden
+					? editor.value
+					: (block?.querySelector("[data-code-surface] pre")?.textContent ??
+						"");
 			try {
 				await navigator.clipboard.writeText(code);
 				flashCopied(btn);
@@ -148,8 +159,7 @@ function setupDocReader(): void {
 		window.addEventListener(
 			"scroll",
 			() => {
-				const bar =
-					document.querySelector<HTMLElement>("[data-progress-bar]");
+				const bar = document.querySelector<HTMLElement>("[data-progress-bar]");
 				if (!bar) return;
 				const doc = document.documentElement;
 				const max = doc.scrollHeight - doc.clientHeight;
