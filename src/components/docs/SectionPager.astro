@@ -1,12 +1,20 @@
 ---
 import { Icon } from "astro-icon/components";
+
+interface Props {
+	hidden?: boolean;
+}
+
+const { hidden = false } = Astro.props;
 ---
 
 {/* Preenchido/atualizado pelo doc-reader conforme a seção ativa. */}
 <nav
 	class="mt-4 grid gap-3 sm:grid-cols-2"
 	aria-label="Navegação entre seções"
+	data-reader-pager
 	data-pagefind-ignore
+	hidden={hidden}
 >
 	<button
 		type="button"

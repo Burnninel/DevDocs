@@ -1,0 +1,73 @@
+---
+import { Icon } from "astro-icon/components";
+
+const modes = [
+	{ id: "panels", label: "Seções", icon: "lucide:list" },
+	{ id: "narrative", label: "Página única", icon: "lucide:align-justify" },
+] as const;
+---
+
+<div
+	class="reader-mode-toggle"
+	role="group"
+	aria-label="Modo de leitura"
+	data-reader-mode-toggle
+	data-pagefind-ignore
+>
+	{
+		modes.map((mode) => (
+			<button
+				type="button"
+				class="reader-mode-btn"
+				data-reader-mode-option={mode.id}
+				aria-pressed="false"
+				aria-label={mode.label}
+				title={mode.label}
+			>
+				<Icon name={mode.icon} class="size-3.5" aria-hidden="true" />
+			</button>
+		))
+	}
+</div>
+
+<style>
+	.reader-mode-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: 0.25rem;
+		border-radius: var(--radius-md);
+		background: color-mix(
+			in oklab,
+			var(--color-surface-1) 78%,
+			transparent
+		);
+		box-shadow: inset 0 1px 0 0 color-mix(in oklab, white 5%, transparent);
+	}
+
+	.reader-mode-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		min-height: 2rem;
+		padding: 0;
+		border-radius: calc(var(--radius-md) - 0.25rem);
+		color: var(--color-muted);
+		background: transparent;
+		transition:
+			background var(--dur-fast) var(--ease-out),
+			color var(--dur-fast) var(--ease-out);
+		cursor: pointer;
+	}
+
+	.reader-mode-btn:hover {
+		color: var(--color-ink);
+		background: color-mix(in oklab, white 7%, transparent);
+	}
+
+	.reader-mode-btn[data-active] {
+		color: var(--color-accent-strong);
+		background: var(--accent-soft);
+	}
+</style>

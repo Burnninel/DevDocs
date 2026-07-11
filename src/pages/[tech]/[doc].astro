@@ -4,6 +4,7 @@ import DocLayout from "@/layouts/DocLayout.astro";
 import Breadcrumb from "@/components/docs/Breadcrumb.astro";
 import SectionNav from "@/components/docs/SectionNav.astro";
 import SectionPager from "@/components/docs/SectionPager.astro";
+import ReaderModeToggle from "@/components/docs/ReaderModeToggle.astro";
 import QuickStart from "@/components/docs/QuickStart.astro";
 import Entry from "@/components/docs/Entry.astro";
 import { getAllDocs, TECH_META, techAccentVars } from "@/lib/docs";
@@ -45,28 +46,25 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 			<Breadcrumb tech={doc.tech} docTitle={doc.title} />
 
 			<header class="mt-5 mb-8">
-				<h1
-					class="font-display text-4xl font-semibold text-ink sm:text-5xl"
-					data-pagefind-meta="title"
-				>
-					{doc.title}
-				</h1>
-				{
-					doc.subtitle && (
-						<p class="mt-4 max-w-[var(--reading-measure)] text-lg text-muted">
-							{doc.subtitle}
-						</p>
-					)
-				}
-			</header>
-
-			{
-				doc.quickStart && (
-					<div class="mb-10">
-						<QuickStart quickStart={doc.quickStart} />
+				<div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+					<div class="min-w-0">
+						<h1
+							class="font-display text-4xl font-semibold text-ink sm:text-5xl"
+							data-pagefind-meta="title"
+						>
+							{doc.title}
+						</h1>
+						{
+							doc.subtitle && (
+								<p class="mt-4 max-w-[var(--reading-measure)] text-lg text-muted">
+									{doc.subtitle}
+								</p>
+							)
+						}
 					</div>
-				)
-			}
+					<ReaderModeToggle />
+				</div>
+			</header>
 
 			<div
 				class:list={["doc-panels", isNarrative && "doc-panels-narrative"]}
@@ -86,6 +84,13 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 							>
 								{section.name}
 							</h2>
+							{
+								i === 0 && doc.quickStart && (
+									<div class="mb-10">
+										<QuickStart quickStart={doc.quickStart} />
+									</div>
+								)
+							}
 							<div class="grid gap-12">
 								{section.entries.map((e) => (
 									<Entry
@@ -100,7 +105,7 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 				}
 			</div>
 
-			{!isNarrative && <SectionPager />}
+			<SectionPager hidden={isNarrative} />
 		</main>
 	</div>
 </DocLayout>
