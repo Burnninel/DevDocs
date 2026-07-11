@@ -1,0 +1,350 @@
+id: arquitetura-clean-code
+title: "Arquitetura: Clean Code"
+subtitle: Regras transversais de legibilidade — nomes, tamanho de função, comentários e tratamento de erro — que valem em qualquer linguagem. Vistas como a refatoração de uma única função, do jeito confuso ao jeito limpo.
+searchPlaceholder: Buscar nomes, funções pequenas, comentários, erros ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+readerLayout: narrative
+quickStart:
+  title: Legibilidade é para quem lê depois
+  kicker: Inclusive você, em seis meses
+  description: "Clean Code não é estilo pessoal — é um conjunto de hábitos que reduzem o tempo que a próxima pessoa (ou você) leva para entender o código antes de mudar algo. Em vez de cinco regras soltas com exemplos desconexos, esta página parte de **uma única função confusa** — confirmar um pedido — e mostra como cada regra a transforma, um hábito de cada vez, até chegar na versão legível."
+  steps:
+    - "Veja a função confusa primeiro — ela concentra todos os problemas de uma vez."
+    - "Explore o mapa da refatoração — cada regra corresponde a uma peça do código final."
+    - "Desça por cada regra: o que ela ataca especificamente e como aplicá-la."
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "`Arquitetura: Clean Architecture` trata separação em camadas; esta página trata legibilidade dentro de uma função ou classe, o nível mais próximo do dia a dia."
+sections:
+  - id: visao-geral
+    name: Visão geral
+    entries:
+      - title: Uma função só, todos os problemas juntos
+        kicker: Funciona — e é exatamente por isso que ninguém para para consertar
+        description: "A função abaixo confirma um pedido e funciona sem erro. Mas ela acumula, ao mesmo tempo, todos os problemas que esta página trata: nomes que exigem adivinhação, mais de uma responsabilidade, um comentário que só repete o código, um erro engolido em silêncio e um efeito colateral escondido atrás de um nome que promete só uma leitura. Nenhum desses problemas, sozinho, quebraria o sistema hoje — juntos, eles tornam a próxima mudança mais lenta e mais arriscada do que precisava ser."
+        descriptionTone: warn
+        code: |-
+          <?php
+          // Faz tudo: valida, calcula, loga e "tenta" salvar sem garantir nada.
+          function proc($p, $d)
+          {
+              // verifica pedido
+              if ($p["t"] > 0) {
+                  $p["st"] = "ok";
+                  try {
+                      $d->save($p);
+                  } catch (Exception $e) {
+                      // ignora erro de banco
+                  }
+                  return true;
+              }
+              return false;
+          }
+        callout:
+          type: warn
+          label: "O custo escondido:"
+          text: "seis meses depois, ninguém lembra o que `$p[\"t\"]` ou `$p[\"st\"]` significam, e o `catch` vazio esconde falhas de banco que deveriam ter sido vistas há muito tempo. Cada regra desta página resolve um pedaço específico dessa confusão."
+        tags:
+          - arquitetura
+          - clean-code
+          - legibilidade
+          - divida-tecnica
+  - id: mapa
+    name: O mapa da refatoração
+    entries:
+      - title: Cada regra ataca uma parte específica da confusão
+        kicker: Clique numa regra para ver a peça correspondente do código limpo
+        description: "A versão legível da mesma função não nasce de uma reescrita mágica — nasce de aplicar um hábito de cada vez. O diagrama abaixo liga cada regra desta página à parte do código que ela corrige. As seções seguintes detalham cada uma, sempre com o antes e o depois."
+        descriptionTone: default
+        contentBlocks:
+          - type: architecture-explorer
+            title: Explorador Clean Code
+            description: A mesma função, decomposta em cinco hábitos independentes que juntos formam a versão legível.
+            shape: stack
+            hint: "Clique numa regra para destacá-la no diagrama e no card de responsabilidade."
+            layers:
+              - id: nomes
+                name: Nomes que revelam intenção
+                role: "`proc($p, $d)` vira `confirmarPedido(Pedido $pedido, PedidoRepositorio $repositorio)`."
+                knows: o que cada parâmetro e variável representa, sem precisar de comentário
+                avoids: abreviação que só faz sentido para quem escreveu
+              - id: funcoes
+                name: Funções pequenas, uma responsabilidade
+                role: "`proc()` vira duas: `pedidoValido()` e `confirmarPedido()`."
+                knows: uma única ação, nomeável sem usar "e"
+                avoids: validar e salvar na mesma chamada
+              - id: comentarios
+                name: Comentário que vale a pena
+                role: "`// verifica pedido` some — o nome novo já diz isso."
+                knows: só o que o código não consegue expressar sozinho
+                avoids: repetir em português o que a linha de código já diz
+              - id: erros
+                name: Erro nunca é escondido
+                role: "O `catch` vazio vira uma exceção que sobe até alguém decidir o que fazer."
+                knows: que uma falha aconteceu, sempre
+                avoids: silenciar a falha para "não travar a tela"
+              - id: efeitos
+                name: Sem efeito colateral escondido
+                role: "`confirmarPedido()` não devolve `bool` escondendo se salvou ou não — ele salva, ponto."
+                knows: exatamente o que o nome promete, nada a mais
+                avoids: misturar pergunta (validar) com comando (salvar) na mesma função
+        tags:
+          - arquitetura
+          - clean-code
+          - visao-geral
+          - refatoracao
+  - id: nomes
+    name: Nomes que revelam intenção
+    entries:
+      - title: Um nome bom elimina a necessidade de comentário
+        kicker: Evite abreviação que só faz sentido pra quem escreveu
+        description: "Um nome deveria responder sozinho por que a variável existe, o que a função faz e o que ela devolve. Compare `$p[\"t\"]` com `$pedido->total` — o segundo não precisa de nenhuma explicação ao lado. Se você sente necessidade de um comentário para explicar o que um nome significa, o nome perdeu; a correção é renomear, não comentar."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              final class RelatorioMensal
+              {
+                  public function gerarParaCliente(int $clienteId, DateTimeImmutable $mes): string
+                  {
+                      return "relatório de {$clienteId} em {$mes->format('m/Y')}";
+                  }
+              }
+          - language: go
+            code: |-
+              func GerarRelatorioParaCliente(clienteID int, mes time.Time) string {
+              	return fmt.Sprintf("relatório de %d em %s", clienteID, mes.Format("01/2006"))
+              }
+        contentBlocks:
+          - type: comparison-block
+            title: Antes e depois
+            columns:
+              - title: Exige mapeamento mental
+                items:
+                  - "`gerarPCli($id, $m)` — o que são \"P\" e \"Cli\"?"
+                  - "`$tmp2`, `$flag`, `$data1` — nome que não sobrevive a uma leitura rápida."
+              - title: Revela intenção
+                items:
+                  - "`gerarParaCliente($clienteId, $mes)` — dá para adivinhar a assinatura sem abrir a função."
+                  - "`$pedidosPendentes`, `$valorComDesconto` — o nome já é a documentação."
+        tags:
+          - arquitetura
+          - clean-code
+          - nomes
+          - legibilidade
+  - id: funcoes-pequenas
+    name: Funções pequenas, uma responsabilidade
+    entries:
+      - title: "Se o nome precisa de \"e\" para descrever o que faz, são duas funções"
+        kicker: Tamanho pequeno é consequência, não o objetivo
+        description: "Uma função que valida e salva, ou que calcula e formata, esconde duas responsabilidades atrás de uma assinatura só. Separar por responsabilidade também separa por motivo de teste — cada função pequena vira um assert direto, sem precisar simular um cenário que não tem nada a ver com o que está sendo testado."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              function pedidoValido(Pedido $pedido): bool
+              {
+                  return $pedido->total > 0 && count($pedido->itens) > 0;
+              }
+
+              function salvarPedido(PedidoRepositorio $repositorio, Pedido $pedido): void
+              {
+                  $repositorio->salvar($pedido);
+              }
+          - language: go
+            code: |-
+              func PedidoValido(p Pedido) bool {
+              	return p.Total > 0 && len(p.Itens) > 0
+              }
+
+              func SalvarPedido(r PedidoRepositorio, p Pedido) error {
+              	return r.Salvar(&p)
+              }
+        contentBlocks:
+          - type: checklist-block
+            title: Como saber se o tamanho está certo
+            items:
+              - "Você consegue nomear a função sem usar \"e\" para juntar duas ações."
+              - A função cabe numa tela sem rolar para entender o que ela faz.
+              - Um teste da função não precisa simular um cenário que não tem nada a ver com o nome dela.
+        tags:
+          - arquitetura
+          - clean-code
+          - funcoes
+          - responsabilidade-unica
+  - id: comentarios
+    name: Comentários que valem a pena
+    entries:
+      - title: Comentário explica o porquê, não repete o quê
+        kicker: Um comentário que só parafraseia o código é ruído que pode virar mentira
+        description: "Um comentário acima de `$contador++;` dizendo \"incrementa contador\" não ajuda ninguém — e ainda corre o risco de ficar desatualizado depois de uma mudança, porque nada obriga o comentário a acompanhar o código. Um comentário vale a pena quando explica uma decisão que o código sozinho não mostra: por que um valor existe, um contorno para um bug de terceiro, uma regra de negócio sem correspondência óbvia no código."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              // Limite vem da política de reembolso do contrato; não é arbitrário.
+              private const JANELA_REEMBOLSO_DIAS = 30;
+          - language: go
+            code: |-
+              // Limite vem da política de reembolso do contrato; não é arbitrário.
+              const janelaReembolsoDias = 30
+        tags:
+          - arquitetura
+          - clean-code
+          - comentarios
+          - documentacao
+        callout:
+          type: hint
+          label: "Teste rápido:"
+          text: se remover o comentário não deixaria ninguém confuso, o comentário não precisava existir.
+  - id: erros
+    name: Erro nunca é escondido
+    entries:
+      - title: PHP deixa subir, Go retorna explícito — os dois pedem honestidade
+        kicker: Um catch vazio e um err ignorado são o mesmo problema em roupas diferentes
+        description: "PHP e Go tratam erro de formas opostas — exceção que sobe sozinha até alguém pegar, versus retorno explícito que obriga a olhar. Mas a regra de fundo é igual nos dois: o chamador decide o que fazer com a falha; a função nunca finge que deu certo quando não deu. Voltando à função confusa da visão geral, o `catch (Exception $e) {}` vazio era exatamente esse problema — a falha de banco continuava acontecendo, só que em silêncio."
+        descriptionTone: warn
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              function buscarPedido(PedidoRepositorio $repositorio, int $id): Pedido
+              {
+                  $pedido = $repositorio->buscar($id);
+                  if ($pedido === null) {
+                      throw new RuntimeException("Pedido {$id} não encontrado");
+                  }
+                  return $pedido;
+              }
+          - language: go
+            code: |-
+              func BuscarPedido(r PedidoRepositorio, id int) (*Pedido, error) {
+              	pedido, err := r.Buscar(id)
+              	if err != nil {
+              		return nil, fmt.Errorf("buscar pedido %d: %w", id, err)
+              	}
+              	if pedido == nil {
+              		return nil, fmt.Errorf("pedido %d não encontrado", id)
+              	}
+              	return pedido, nil
+              }
+        tags:
+          - arquitetura
+          - clean-code
+          - erros
+          - excecoes
+          - error-handling
+        callout:
+          type: danger
+          label: "O pior dos dois mundos:"
+          text: "um `catch (Exception $e) {}` vazio em PHP e um `if err != nil { }` vazio em Go fazem a mesma coisa — escondem que algo falhou. Isso é sempre pior do que deixar o erro estourar, porque a falha continua acontecendo, só que em silêncio, mais longe da causa."
+  - id: efeitos-colaterais
+    name: Sem efeito colateral escondido
+    entries:
+      - title: O nome promete exatamente o que a função faz
+        kicker: "Uma função \"verificar\" que também grava é uma armadilha"
+        description: "Separe funções que respondem uma pergunta (não mudam nada) de funções que executam um comando (mudam algo). A função confusa original devolvia `true`/`false` **e** salvava no banco ao mesmo tempo — quem chamasse `proc()` só para checar uma condição acabaria gravando no banco sem perceber. A versão limpa separa: uma função pergunta, outra executa."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              function pedidoValido(Pedido $pedido): bool
+              {
+                  return $pedido->total > 0;
+              }
+
+              function marcarComoValidado(Pedido $pedido): void
+              {
+                  $pedido->status = "validado";
+              }
+          - language: go
+            code: |-
+              func PedidoValido(p Pedido) bool {
+              	return p.Total > 0
+              }
+
+              func MarcarComoValidado(p *Pedido) {
+              	p.Status = "validado"
+              }
+        contentBlocks:
+          - type: comparison-block
+            title: Antes e depois
+            columns:
+              - title: Efeito colateral escondido
+                items:
+                  - "`pedidoValido()` também grava um log ou muda o status por baixo."
+                  - Quem chama só para checar uma condição acaba mudando estado sem saber.
+              - title: Pergunta e comando separados
+                items:
+                  - "`pedidoValido()` só responde; `marcarComoValidado()` só muda estado."
+                  - O nome de cada função já avisa se é seguro chamar mais de uma vez.
+        tags:
+          - arquitetura
+          - clean-code
+          - efeitos-colaterais
+          - command-query-separation
+  - id: decisao
+    name: Quando usar e erros comuns
+    entries:
+      - title: Quanto rigor vale a pena em cada momento
+        kicker: Clean Code custa tempo de escrita — gaste onde o código vai durar
+        description: Use este mapa para calibrar o esforço sem transformar um protótipo descartável no mesmo padrão de um módulo que vai viver anos.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Código que vai durar meses ou anos, mexido por mais gente: vale o rigor total desta página."
+              - "Protótipo descartável para validar uma ideia em horas: nomes claros já bastam; o resto pode esperar."
+              - "Função com mais de um motivo de mudança: é sinal de dividir, não de comentar para explicar."
+              - "Erro engolido em silêncio: nunca compensa, nem em protótipo — só esconde o problema para depois."
+          - type: checklist-block
+            title: Boas práticas
+            items:
+              - Renomeie antes de comentar; comente só o que o nome não consegue dizer.
+              - "Leia a função em voz alta — se precisar de \"e\" para resumir, separe."
+              - Erro tratado significa decisão explícita do chamador, nunca silêncio.
+        tags:
+          - arquitetura
+          - clean-code
+          - decisao
+          - boas-praticas
+      - title: Onde a legibilidade escorrega
+        kicker: Os desvios mais frequentes, mesmo em quem já conhece as regras
+        description: Estes padrões aparecem mesmo em times que já leram sobre Clean Code — geralmente sob pressão de prazo.
+        descriptionTone: warn
+        contentBlocks:
+          - type: context-block
+            title: Comentário compensando nome ruim
+            variant: common-error
+            label: "Evite:"
+            text: "escrever um parágrafo de comentário explicando o que `processar($d, $f)` faz, em vez de renomear para algo como `aplicarDescontoNoPedido($pedido, $percentual)`. O comentário é curativo; o nome é a cura."
+          - type: context-block
+            title: "Função \"e mais\""
+            variant: common-error
+            label: "Evite:"
+            text: "uma função `validarESalvarPedido()` que ninguém consegue testar só a validação sem também gravar no banco. Separe: uma função valida, outra salva, e quem orquestra decide a ordem."
+          - type: context-block
+            title: "Silenciar erro para \"não travar\""
+            variant: common-error
+            label: "Evite:"
+            text: "um `catch` vazio ou um `err` descartado com `_ = err` para a tela não quebrar. Isso troca uma falha visível por uma inconsistência silenciosa, que aparece muito depois e muito mais difícil de rastrear."
+        tags:
+          - arquitetura
+          - clean-code
+          - erros-comuns
+          - legibilidade
+tech: arquitetura
+order: 5
+cardDescription: Nomes, tamanho de função, comentários e tratamento de erro vistos como a refatoração de uma única função confusa, com explorador interativo das cinco regras.

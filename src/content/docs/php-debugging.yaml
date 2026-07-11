@@ -285,6 +285,10 @@ sections:
           - objeto
           - print_r
           - var_dump
+        callout:
+          type: hint
+          label: "Object id:"
+          text: "o `#1` em `object(ClienteDTO)#1` é o identificador interno do objeto (handle) e varia conforme quantos objetos já foram criados na execução; trate-o como ilustrativo, não como valor fixo."
   - id: debug-apis-json
     name: Debug em APIs (JSON)
     layout: single

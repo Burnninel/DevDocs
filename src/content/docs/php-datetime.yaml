@@ -12,7 +12,7 @@ quickStart:
   steps:
     - Execute `php --version`.
     - Crie `datas.php` e cole um exemplo desta página.
-    - Corra com `php datas.php`.
+    - Rode com `php datas.php`.
   codeLanguage: shell
   code: |-
     php --version
@@ -28,12 +28,10 @@ sections:
     entries:
       - title: Prefira DateTimeImmutable em código novo
         kicker: Métodos que parecem só ler podem mudar DateTime
-        description: "`DateTime` é mutável: `modify`, `setTimezone` e outros alteram o mesmo objeto. `DateTimeImmutable` devolve **novas** instâncias, o que reduz bugs quando a mesma data é partilhada entre funções. Ambos implementam `DateTimeInterface`."
+        description: "`DateTime` é mutável: `modify`, `setTimezone` e outros alteram o mesmo objeto. `DateTimeImmutable` retorna **novas** instâncias, o que reduz bugs quando a mesma data é compartilhada entre funções. Ambos implementam `DateTimeInterface`."
         descriptionTone: default
         code: |-
           <?php
-          use DateTime;
-          use DateTimeImmutable;
 
           $mut = new DateTime("2026-05-01 10:00:00", new DateTimeZone("Europe/Lisbon"));
           $mut->modify("+1 day");
@@ -65,7 +63,6 @@ sections:
         descriptionTone: default
         code: |-
           <?php
-          use DateTimeImmutable;
 
           $fixoUtc = new DateTimeImmutable("2026-05-09 14:30:00", new DateTimeZone("UTC"));
           echo $fixoUtc->format(DateTimeInterface::ATOM) . PHP_EOL;
@@ -91,11 +88,10 @@ sections:
     entries:
       - title: setTimezone para exibir; UTC para armazenar
         kicker: Base de dados e APIs costumam usar instante em UTC
-        description: Guarde instantes em UTC (ou timestamp Unix) e converta para o fuso do utilizador só na apresentação. `setTimezone` em `DateTimeImmutable` devolve novo objeto com o mesmo instante civil representado no novo fuso.
+        description: Guarde instantes em UTC (ou timestamp Unix) e converta para o fuso do usuário só na apresentação. `setTimezone` em `DateTimeImmutable` retorna novo objeto com o mesmo instante civil representado no novo fuso.
         descriptionTone: default
         code: |-
           <?php
-          use DateTimeImmutable;
 
           $utc = new DateTimeImmutable("2026-07-15 18:00:00", new DateTimeZone("UTC"));
           $lisboa = $utc->setTimezone(new DateTimeZone("Europe/Lisbon"));
@@ -121,12 +117,10 @@ sections:
     entries:
       - title: DateInterval e diff()
         kicker: Somar meses é diferente de somar 30 dias
-        description: "`add` e `sub` recebem `DateInterval` construído com prefixo `P` (período) e `T` (tempo do dia). `diff` calcula diferença entre dois instantes e devolve `DateInterval` com sinal acessível via `format` e propriedades."
+        description: "`add` e `sub` recebem `DateInterval` construído com prefixo `P` (período) e `T` (tempo do dia). `diff` calcula diferença entre dois instantes e retorna `DateInterval` com sinal acessível via `format` e propriedades."
         descriptionTone: default
         code: |-
           <?php
-          use DateInterval;
-          use DateTimeImmutable;
 
           $inicio = new DateTimeImmutable("2026-05-01");
           $fim = $inicio->add(new DateInterval("P10D"));
@@ -155,7 +149,6 @@ sections:
         descriptionTone: default
         code: |-
           <?php
-          use DateTimeImmutable;
 
           $a = new DateTimeImmutable("2026-01-10");
           $b = new DateTimeImmutable("2026-06-01");
@@ -164,7 +157,7 @@ sections:
           echo "Δ segundos: " . ($b->getTimestamp() - $a->getTimestamp()) . PHP_EOL;
         output: |-
           a antes de b
-          Δ segundos: 12182400
+          Δ segundos: 12268800
         tags:
           - php
           - comparar
@@ -180,7 +173,6 @@ sections:
         descriptionTone: default
         code: |-
           <?php
-          use DateTimeImmutable;
 
           function paraApi(DateTimeImmutable $instante): string
           {
@@ -202,11 +194,10 @@ sections:
     entries:
       - title: Modificar sem guardar o retorno em Immutable
         kicker: $dt->modify(...) sem reassinar variável
-        description: Outro erro é usar `DateTime` partilhado e `modify` em loop, alterando o mesmo objeto para todos os iterados. Com imutável, reatribua ou encadeie o resultado.
+        description: Outro erro é usar `DateTime` compartilhado e `modify` em loop, alterando o mesmo objeto para todos os iterados. Com imutável, reatribua ou encadeie o resultado.
         descriptionTone: warn
         code: |-
           <?php
-          use DateTimeImmutable;
 
           $base = new DateTimeImmutable("2026-05-01");
           // Errado: descarta o novo valor

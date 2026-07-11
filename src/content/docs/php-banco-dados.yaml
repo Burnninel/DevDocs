@@ -24,15 +24,16 @@ quickStart:
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(120) NOT NULL,
         email VARCHAR(160) NOT NULL UNIQUE,
-        status VARCHAR(20) NOT NULL DEFAULT 'ativo'
+        status VARCHAR(20) NOT NULL DEFAULT 'ativo',
+        pontos INT NOT NULL DEFAULT 0
     );
   callout:
     type: hint
     label: "Dica:"
-    text: "use `charset=utf8mb4` no DSN para evitar problema com acentuação e caracteres especiais. A secção **8. Transações** cobre `beginTransaction`, `commit` e `rollBack`; erros com PDO combinam com `PHP: Erros e exceções` no hub."
+    text: "use `charset=utf8mb4` no DSN para evitar problema com acentuação e caracteres especiais. A seção **Transações** cobre `beginTransaction`, `commit` e `rollBack`; erros com PDO combinam com `PHP: Erros e exceções` no hub."
 sections:
   - id: o-que-e-pdo
-    name: 1. O que é PDO
+    name: O que é PDO
     layout: single
     entries:
       - title: PDO é a forma mais prática de falar com o banco no PHP
@@ -56,7 +57,7 @@ sections:
           - base
           - crud
   - id: como-conectar
-    name: 2. Como conectar no banco
+    name: Como conectar no banco
     layout: single
     entries:
       - title: Conexão simples com DSN, usuário, senha e try/catch
@@ -125,7 +126,7 @@ sections:
           - organizacao
           - boas-praticas
   - id: consultar-dados
-    name: 3. Como consultar dados
+    name: Como consultar dados
     layout: single
     entries:
       - title: Buscar um único registro com prepare, execute e fetch
@@ -153,7 +154,7 @@ sections:
           - pdo
       - title: Listar várias linhas com fetchAll
         kicker: Bom para listas pequenas e telas simples
-        description: "`fetchAll()` devolve todas as linhas em um array. Funciona bem para listas pequenas. Em tabelas grandes, o ideal é paginar."
+        description: "`fetchAll()` retorna todas as linhas em um array. Funciona bem para listas pequenas. Em tabelas grandes, o ideal é paginar."
         code: |-
           <?php
           $pdo = DatabaseConnection::make();
@@ -182,7 +183,7 @@ sections:
           label: "Atenção:"
           text: evite `fetchAll()` em tabelas muito grandes sem paginação.
   - id: criar-registros
-    name: 4. Como criar registros
+    name: Como criar registros
     layout: single
     entries:
       - title: Inserir usuário com INSERT e placeholders
@@ -210,7 +211,7 @@ sections:
           - crud
           - usuarios
   - id: alterar-registros
-    name: 5. Como alterar registros
+    name: Como alterar registros
     layout: single
     entries:
       - title: Atualizar dados com UPDATE
@@ -238,7 +239,7 @@ sections:
           - usuarios
           - rowcount
   - id: deletar-registros
-    name: 6. Como deletar registros
+    name: Como deletar registros
     layout: single
     entries:
       - title: Remover um registro com DELETE
@@ -261,7 +262,7 @@ sections:
           - usuarios
           - rowcount
   - id: prepared-statements
-    name: 7. Prepared Statements e SQL Injection
+    name: Prepared Statements e SQL Injection
     layout: single
     entries:
       - title: O que é SQL Injection e por que prepare resolve isso
@@ -368,7 +369,7 @@ sections:
           - pdo
           - prepared-statements
   - id: transacoes-pdo
-    name: 8. Transações (BEGIN, COMMIT, ROLLBACK)
+    name: Transações (BEGIN, COMMIT, ROLLBACK)
     layout: single
     entries:
       - title: beginTransaction, commit e rollBack no PDO
@@ -379,23 +380,23 @@ sections:
           <?php
           $pdo = DatabaseConnection::make();
 
-          // $pdo: conexão; $deId/$paraId: contas; $pontos: quantidade (não usada neste SQL mínimo de exemplo)
+          // $pdo: conexão; $deId/$paraId: contas; $pontos: quantidade transferida
           function transferirPontos(PDO $pdo, int $deId, int $paraId, int $pontos): void
           {
               $pdo->beginTransaction();
 
               try {
-                  $u1 = $pdo->prepare("UPDATE usuarios SET status = status WHERE id = :id");
-                  $u1->execute([":id" => $deId]);
+                  $debito = $pdo->prepare("UPDATE usuarios SET pontos = pontos - :pontos WHERE id = :id");
+                  $debito->execute([":pontos" => $pontos, ":id" => $deId]);
 
-                  if ($u1->rowCount() === 0) {
+                  if ($debito->rowCount() === 0) {
                       throw new RuntimeException("Origem inexistente");
                   }
 
-                  $u2 = $pdo->prepare("UPDATE usuarios SET status = status WHERE id = :id");
-                  $u2->execute([":id" => $paraId]);
+                  $credito = $pdo->prepare("UPDATE usuarios SET pontos = pontos + :pontos WHERE id = :id");
+                  $credito->execute([":pontos" => $pontos, ":id" => $paraId]);
 
-                  if ($u2->rowCount() === 0) {
+                  if ($credito->rowCount() === 0) {
                       throw new RuntimeException("Destino inexistente");
                   }
 
@@ -451,7 +452,7 @@ sections:
           label: "Cruzamento:"
           text: "erros de SQL dentro de transação combinam com `PHP: Erros e exceções` para não expor detalhes ao cliente da API."
   - id: tratamento-erros
-    name: 9. Tratamento de erros
+    name: Tratamento de erros
     layout: single
     entries:
       - title: Usar try/catch com mensagem segura
@@ -487,7 +488,7 @@ sections:
           label: "Ambiente:"
           text: detalhe técnico no log faz sentido em desenvolvimento; mensagem simples faz sentido para usuário final.
   - id: boas-praticas
-    name: 10. Boas práticas
+    name: Boas práticas
     layout: single
     entries:
       - title: Checklist curto para acesso ao banco com PDO
@@ -516,7 +517,7 @@ sections:
           - repository
           - service
   - id: constantes-opcoes-pdo
-    name: 11. Constantes e opções comuns do PDO
+    name: Constantes e opções comuns do PDO
     layout: single
     entries:
       - title: Constantes mais usadas no dia a dia
@@ -553,7 +554,7 @@ sections:
           - fetch-assoc
           - errmode
   - id: visao-geral-arquivos
-    name: 12. Exemplo simples mais completo
+    name: Exemplo simples mais completo
     layout: single
     entries:
       - title: Como config, conexão, model, service e controller se conectam

@@ -11,7 +11,7 @@ quickStart:
   description: Instale Go a partir do site oficial (golang.org/dl). Este guia assume Go 1.21 ou superior no PATH.
   steps:
     - Confirme com `go version`.
-    - Crie uma pasta e um ficheiro `main.go` com `package main` e `func main()`.
+    - Crie uma pasta e um arquivo `main.go` com `package main` e `func main()`.
     - Dentro da pasta, execute `go mod init exemplo.local/hello` (ajuste o caminho do módulo).
     - Execute `go run .` e confirme a saída no terminal.
   codeLanguage: shell
@@ -22,7 +22,7 @@ quickStart:
   callout:
     type: hint
     label: "Documentação relacionada:"
-    text: "para entender `go mod init` e o ficheiro `go.mod`, abra `Go: Módulos` no hub."
+    text: "para entender `go mod init` e o arquivo `go.mod`, abra `Go: Módulos` no hub."
 sections:
   - id: pacotes-e-main
     name: Pacotes e ponto de entrada
@@ -96,7 +96,7 @@ sections:
           - formatacao
       - title: Sprintf para construir string
         kicker: Sem escrever direto no stdout
-        description: "`fmt.Sprintf` devolve uma `string` formatada; útil para mensagens, testes ou montar valores antes de enviar por HTTP (combine depois com `Go: JSON` quando existir)."
+        description: "`fmt.Sprintf` retorna uma `string` formatada; útil para mensagens, testes ou montar valores antes de enviar por HTTP (combine depois com `Go: JSON` quando existir)."
         descriptionTone: default
         code: |-
           package main
@@ -119,7 +119,7 @@ sections:
     entries:
       - title: go run e go build
         kicker: Executar ou gerar binário
-        description: "`go run .` compila e executa o pacote na pasta atual. `go build` gera um executável com o nome da pasta (ou `-o caminho` para definir o ficheiro). Ambos respeitam o `go.mod` do módulo."
+        description: "`go run .` compila e executa o pacote na pasta atual. `go build` gera um executável com o nome da pasta (ou `-o caminho` para definir o arquivo). Ambos respeitam o `go.mod` do módulo."
         descriptionTone: default
         code: |-
           # Na pasta do módulo (com go.mod e main.go):
@@ -139,7 +139,7 @@ sections:
           text: sem `go.mod` na pasta ou acima, comandos como `go run` pedem `go mod init` primeiro.
       - title: go fmt e legibilidade
         kicker: Formato oficial
-        description: "`go fmt ./...` aplica o estilo canónico ao código. Equipas costumam exigir fmt antes de commit; o formatter remove debates de estilo."
+        description: "`go fmt ./...` aplica o estilo canônico ao código. Equipes costumam exigir fmt antes de commit; o formatter remove debates de estilo."
         descriptionTone: default
         code: |-
           # Formatar todos os pacotes sob o módulo atual:
@@ -161,6 +161,36 @@ sections:
           - go doc
           - documentacao
           - stdlib
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para começar um pacote novo
+        kicker: O que lembrar antes de rodar go run
+        description: Use este resumo para não esquecer o básico entre `package main`, saída formatada e os comandos do terminal.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`package main` + `func main` para gerar executável."
+              - "Import só do que for realmente usado; import não utilizado é erro de compilação."
+              - "`Println` para saída rápida com quebra de linha automática."
+              - "`Printf` com verbos (`%s`, `%d`, `%v`) para formatar; inclua `\\n` você mesmo."
+              - "`Sprintf` quando precisa da string pronta, não de imprimir direto."
+              - "`go run .` para testar rápido; `go build` para gerar binário."
+              - "`go fmt ./...` antes de commit; `go doc pacote.Simbolo` para ler docs no terminal."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: confundir `Println` com `Printf` custa tempo de depuração bobo — `Println` já quebra linha sozinho, `Printf` não. Import declarado e não usado impede a compilação até ser removido.
+        tags:
+          - go
+          - fmt
+          - go run
+          - decisao
+          - boas-praticas
 tech: go
 order: 15
 cardDescription: Guia prático para package main, imports, fmt, go run, go build, go fmt e go doc.

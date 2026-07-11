@@ -46,9 +46,7 @@ sections:
 
           print_r($nomes);
           print_r($usuario);
-
-          /*
-          Saída:
+        output: |-
           Bruno
           ana@email.com
           Array
@@ -63,7 +61,6 @@ sections:
               [email] => ana@email.com
               [ativo] => 1
           )
-          */
         tags:
           - php
           - array
@@ -104,9 +101,7 @@ sections:
 
           $empresa["times"][0]["lider"] = "Carla"; // Atualiza valor aninhado
           print_r($empresa["times"][0]);
-
-          /*
-          Saída:
+        output: |-
           DevDocs
           Sao Paulo - SP
           Bruno
@@ -116,7 +111,6 @@ sections:
               [nome] => Plataforma
               [lider] => Carla
           )
-          */
         tags:
           - php
           - array
@@ -148,9 +142,7 @@ sections:
 
           print_r($frutas);
           print_r($usuario);
-
-          /*
-          Saída:
+        output: |-
           maçã
           laranja
           tech lead
@@ -167,7 +159,6 @@ sections:
               [cargo] => tech lead
               [time] => plataforma
           )
-          */
         tags:
           - php
           - array
@@ -193,9 +184,7 @@ sections:
           print_r($itens);
           echo "Primeiro removido: $primeiro" . PHP_EOL;
           echo "Último removido: $ultimo" . PHP_EOL;
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => a
@@ -203,7 +192,6 @@ sections:
           )
           Primeiro removido: inicio
           Último removido: d
-          */
         tags:
           - php
           - array_push
@@ -228,13 +216,10 @@ sections:
           foreach ($notas as $nome => $nota) {
               echo "$nome tirou $nota" . PHP_EOL;
           }
-
-          /*
-          Saída:
+        output: |-
           Ana tirou 9
           Bruno tirou 7
           Carla tirou 10
-          */
         tags:
           - php
           - foreach
@@ -256,16 +241,13 @@ sections:
           unset($preco); // Quebra a referência
 
           print_r($precos);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => 110
               [1] => 275
               [2] => 440
           )
-          */
         tags:
           - php
           - foreach
@@ -289,9 +271,7 @@ sections:
           echo "Quantidade: " . count($ids) . PHP_EOL;
           print_r($ids);
           print_r(array_values($ids));
-
-          /*
-          Saída:
+        output: |-
           Quantidade: 2
           Array
           (
@@ -303,7 +283,6 @@ sections:
               [0] => 10
               [1] => 30
           )
-          */
         tags:
           - php
           - count
@@ -326,9 +305,7 @@ sections:
 
           print_r($pares);
           print_r(array_values($pares)); // Reindexa o resultado
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [1] => 2
@@ -341,7 +318,6 @@ sections:
               [1] => 4
               [2] => 6
           )
-          */
         tags:
           - php
           - array_filter
@@ -362,16 +338,13 @@ sections:
           );
 
           print_r($precosFormatados);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => R$ 10,00
               [1] => R$ 25,00
               [2] => R$ 39,90
           )
-          */
         tags:
           - php
           - array_map
@@ -397,11 +370,8 @@ sections:
           );
 
           echo "Total: R$ $total" . PHP_EOL;
-
-          /*
-          Saída:
+        output: |-
           Total: R$ 550
-          */
         tags:
           - php
           - array_reduce
@@ -426,9 +396,7 @@ sections:
 
           print_r($nomes);
           print_r($emailsPorId);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => Ana
@@ -441,7 +409,6 @@ sections:
               [2] => bruno@email.com
               [3] => carla@email.com
           )
-          */
         tags:
           - php
           - array_column
@@ -464,13 +431,10 @@ sections:
           var_dump(in_array("editor", $perfis, true)); // true: encontrou valor
           var_dump(in_array(1, ["1", "2", "3"], true)); // false: tipos diferentes
           var_dump(in_array(1, ["1", "2", "3"], false)); // true: comparação frouxa
-
-          /*
-          Saída:
+        output: |-
           bool(true)
           bool(false)
           bool(true)
-          */
         tags:
           - php
           - in_array
@@ -491,12 +455,9 @@ sections:
 
           var_dump(array_key_exists("porta", $config)); // true: chave existe
           var_dump(isset($config["porta"])); // false: valor é null
-
-          /*
-          Saída:
+        output: |-
           bool(true)
           bool(false)
-          */
         tags:
           - php
           - array_key_exists
@@ -520,11 +481,8 @@ sections:
           if ($indice !== false) { // 0 também é resultado válido
               echo "Encontrado no índice: $indice" . PHP_EOL;
           }
-
-          /*
-          Saída:
+        output: |-
           Encontrado no índice: 0
-          */
         tags:
           - php
           - array_search
@@ -553,9 +511,7 @@ sections:
 
           rsort($notas);
           print_r($notas);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => 6
@@ -570,7 +526,6 @@ sections:
               [2] => 7
               [3] => 6
           )
-          */
         tags:
           - php
           - sort
@@ -595,9 +550,7 @@ sections:
 
           ksort($ranking);
           print_r($ranking);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [carla] => 140
@@ -610,7 +563,6 @@ sections:
               [bruno] => 95
               [carla] => 140
           )
-          */
         tags:
           - php
           - asort
@@ -634,9 +586,7 @@ sections:
           usort($produtos, fn($a, $b) => $a["preco"] <=> $b["preco"]);
 
           print_r($produtos);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => Array
@@ -655,7 +605,6 @@ sections:
                       [preco] => 899
                   )
           )
-          */
         tags:
           - php
           - usort
@@ -678,9 +627,7 @@ sections:
           uasort($ranking, fn($a, $b) => $b["pontos"] <=> $a["pontos"]);
 
           print_r($ranking);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [carla] => Array
@@ -696,7 +643,6 @@ sections:
                       [pontos] => 95
                   )
           )
-          */
         tags:
           - php
           - uasort
@@ -724,9 +670,7 @@ sections:
 
           print_r(array_merge($c1, $c2)); // Em conflito, vence o da direita
           print_r($c1 + $c2); // Em conflito, preserva o da esquerda
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => php
@@ -746,7 +690,6 @@ sections:
               [cargo] => dev
               [time] => plataforma
           )
-          */
         tags:
           - php
           - array_merge
@@ -785,9 +728,7 @@ sections:
 
           print_r($simples["db"]);
           print_r($profundo["db"]);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [porta] => 5432
@@ -805,7 +746,6 @@ sections:
                       [persistente] => 1
                   )
           )
-          */
         tags:
           - php
           - array_replace
@@ -831,9 +771,7 @@ sections:
 
           $nomes = array_merge(...$grupos);
           print_r($nomes);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => ana
@@ -842,7 +780,6 @@ sections:
               [3] => diego
               [4] => erika
           )
-          */
         tags:
           - php
           - flatten
@@ -860,9 +797,7 @@ sections:
 
           print_r($tecnologias);
           echo implode(" | ", $tecnologias) . PHP_EOL; // Array -> string
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => php
@@ -871,7 +806,6 @@ sections:
               [3] => rust
           )
           php | js | go | rust
-          */
         tags:
           - php
           - explode
@@ -893,9 +827,7 @@ sections:
 
           print_r($removidas);
           print_r($mantidas);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [2] => publicar
@@ -905,7 +837,6 @@ sections:
               [0] => ler
               [1] => editar
           )
-          */
         tags:
           - php
           - array_diff
@@ -931,9 +862,7 @@ sections:
 
           print_r(array_keys($config)); // Só chaves
           print_r(array_values($config)); // Só valores
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => host
@@ -946,7 +875,6 @@ sections:
               [1] => 3306
               [2] => app
           )
-          */
         tags:
           - php
           - array_keys
@@ -979,9 +907,7 @@ sections:
 
           print_r(array_keys($somenteEmA));
           print_r(array_keys($chavesEmComum));
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => email
@@ -992,7 +918,6 @@ sections:
               [1] => nome
               [2] => ativo
           )
-          */
         tags:
           - php
           - array_diff_key
@@ -1010,16 +935,13 @@ sections:
           $tagsUnicas = array_values(array_unique($tags)); // Remove duplicados e reindexa
 
           print_r($tagsUnicas);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => php
               [1] => js
               [2] => go
           )
-          */
         tags:
           - php
           - array_unique
@@ -1037,9 +959,7 @@ sections:
           $lotes = array_chunk($usuarios, 2); // Divide em blocos de 2
 
           print_r($lotes);
-
-          /*
-          Saída:
+        output: |-
           Array
           (
               [0] => Array
@@ -1057,7 +977,6 @@ sections:
                       [0] => Erika
                   )
           )
-          */
         tags:
           - php
           - array_chunk

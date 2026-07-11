@@ -1,0 +1,239 @@
+id: php-cli
+title: "PHP: CLI"
+subtitle: Guia prático para scripts de terminal com $argv, getopt, STDIN, saída formatada e códigos de saída.
+searchPlaceholder: Buscar argv, getopt, stdin, exit, terminal ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+defaultSectionLayout: single
+quickStart:
+  title: Como testar scripts CLI
+  kicker: Rodar PHP pelo terminal
+  description: Scripts CLI rodam com `php arquivo.php`. Argumentos depois do nome do arquivo ficam disponíveis em `$argv`.
+  steps:
+    - Crie um arquivo `script.php`.
+    - Rode `php script.php Ana --verbose`.
+    - Use `echo $?` no Linux/macOS ou `$LASTEXITCODE` no PowerShell para ver o código de saída.
+  codeLanguage: shell
+  code: |-
+    php script.php Ana --verbose
+    php -r "echo PHP_VERSION . PHP_EOL;"
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "`PHP: Fundamentos` cobre fluxo e funções; `PHP: Arquivos e I/O` ajuda quando o script lê ou grava no disco."
+sections:
+  - id: argumentos
+    name: Argumentos posicionais
+    layout: single
+    entries:
+      - title: Ler argumentos com $argv e $argc
+        kicker: O básico de scripts no terminal
+        description: Em CLI, `$argv` contém o nome do script e os argumentos posicionais. `$argc` informa a quantidade total de itens em `$argv`.
+        descriptionTone: default
+        code: |-
+          <?php
+          $nome = $argv[1] ?? "Visitante";
+
+          echo "Script: {$argv[0]}" . PHP_EOL;
+          echo "Olá, $nome" . PHP_EOL;
+          echo "Total de argumentos: $argc" . PHP_EOL;
+        codeLanguage: php
+        tags:
+          - php
+          - cli
+          - argv
+          - argc
+          - argumento
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: sempre valide se um argumento existe antes de acessar `$argv[1]`, `$argv[2]` etc.
+      - title: Criar help curto para uso correto
+        kicker: Falhar com mensagem útil
+        description: Scripts CLI devem explicar como são chamados quando falta argumento obrigatório. Isso economiza tempo em automações e CI.
+        descriptionTone: default
+        code: |-
+          <?php
+          if (($argv[1] ?? null) === null) {
+              fwrite(STDERR, "Uso: php backup.php <diretorio>" . PHP_EOL);
+              exit(1);
+          }
+
+          echo "Backup de: {$argv[1]}" . PHP_EOL;
+        tags:
+          - php
+          - cli
+          - stderr
+          - exit
+          - help
+  - id: opcoes
+    name: Opções nomeadas
+    layout: single
+    entries:
+      - title: getopt para flags simples
+        kicker: -v, --dry-run e --limit
+        description: "`getopt` lê opções curtas e longas. Use flags booleanas para ligar comportamento e opções com valor para limites, caminhos e formatos."
+        descriptionTone: default
+        code: |-
+          <?php
+          $opcoes = getopt("v", ["dry-run", "limit:"]);
+
+          $verbose = array_key_exists("v", $opcoes);
+          $dryRun = array_key_exists("dry-run", $opcoes);
+          $limit = isset($opcoes["limit"]) ? (int) $opcoes["limit"] : 10;
+
+          echo "verbose=" . ($verbose ? "sim" : "não") . PHP_EOL;
+          echo "dry-run=" . ($dryRun ? "sim" : "não") . PHP_EOL;
+          echo "limit=$limit" . PHP_EOL;
+        tags:
+          - php
+          - cli
+          - getopt
+          - flag
+          - dry-run
+      - title: Separar parsing de execução
+        kicker: Testável e previsível
+        description: Transforme opções de terminal em uma estrutura simples antes de executar a regra. Isso deixa o parsing isolado e a regra mais fácil de testar.
+        descriptionTone: default
+        code: |-
+          <?php
+          function lerConfig(array $opcoes): array
+          {
+              return [
+                  "dryRun" => array_key_exists("dry-run", $opcoes),
+                  "limit" => isset($opcoes["limit"]) ? max(1, (int) $opcoes["limit"]) : 10,
+              ];
+          }
+
+          $config = lerConfig(getopt("", ["dry-run", "limit:"]));
+          print_r($config);
+        tags:
+          - php
+          - cli
+          - config
+          - parsing
+          - teste
+  - id: entrada-saida
+    name: Entrada e saída
+    layout: single
+    entries:
+      - title: Ler STDIN linha a linha
+        kicker: Pipe e entrada manual
+        description: Use `STDIN` quando o script deve receber dados por pipe ou digitação. Para arquivos grandes, leia linha a linha em vez de carregar tudo na memória.
+        descriptionTone: default
+        code: |-
+          <?php
+          while (($linha = fgets(STDIN)) !== false) {
+              $linha = trim($linha);
+              if ($linha === "") {
+                  continue;
+              }
+
+              echo strtoupper($linha) . PHP_EOL;
+          }
+        tags:
+          - php
+          - cli
+          - stdin
+          - pipe
+          - fgets
+      - title: Separar saída normal de erro
+        kicker: STDOUT para resultado, STDERR para problema
+        description: "`echo` escreve em STDOUT. Para erros, escreva em `STDERR`; assim scripts podem redirecionar resultado e erro separadamente."
+        descriptionTone: default
+        code: |-
+          <?php
+          $ok = false;
+
+          if (!$ok) {
+              fwrite(STDERR, "Falha ao processar entrada" . PHP_EOL);
+              exit(1);
+          }
+
+          echo "Processado" . PHP_EOL;
+        tags:
+          - php
+          - cli
+          - stdout
+          - stderr
+          - erro
+  - id: automacao
+    name: Automação e códigos de saída
+    layout: single
+    entries:
+      - title: Usar exit codes para CI e scripts
+        kicker: 0 sucesso, diferente de 0 falha
+        description: Códigos de saída permitem que shell, CI e agendadores saibam se o script funcionou. Use `0` para sucesso e `1` ou códigos específicos para falhas.
+        descriptionTone: default
+        code: |-
+          <?php
+          $arquivoExiste = file_exists(__DIR__ . "/entrada.csv");
+
+          if (!$arquivoExiste) {
+              fwrite(STDERR, "entrada.csv não encontrado" . PHP_EOL);
+              exit(2);
+          }
+
+          echo "OK" . PHP_EOL;
+          exit(0);
+        tags:
+          - php
+          - cli
+          - exit
+          - ci
+          - automacao
+      - title: Compor comandos seguros
+        kicker: Evitar shell injection
+        description: Se precisar chamar comando externo, prefira APIs específicas. Quando `exec` for inevitável, escape argumentos com `escapeshellarg` e nunca concatene entrada crua. O formato do escape varia por sistema (aspas simples no Unix, aspas duplas no Windows), então não dependa do texto exato do resultado.
+        descriptionTone: warn
+        code: |-
+          <?php
+          $arquivo = "relatorio final.txt";
+          $cmd = "wc -l " . escapeshellarg($arquivo);
+
+          echo $cmd . PHP_EOL;
+        tags:
+          - php
+          - cli
+          - exec
+          - escapeshellarg
+          - seguranca
+        callout:
+          type: danger
+          label: "Perigo:"
+          text: nunca monte comando de shell com dados vindos de usuário sem validação e escape. Em automação, isso vira falha de segurança rapidamente.
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Checklist de script CLI confiável
+        kicker: Antes de colocar em cron, CI ou produção
+        description: Scripts pequenos também precisam de contrato claro de entrada, saída e falha.
+        descriptionTone: default
+        contentBlocks:
+          - type: checklist-block
+            title: Antes de rodar em automação
+            items:
+              - "Valide argumentos obrigatórios e mostre uso correto."
+              - "Use `getopt` para flags e opções nomeadas."
+              - "Escreva resultado em STDOUT e erro em STDERR."
+              - "Retorne código de saída diferente de zero em falhas."
+              - "Não carregue arquivos grandes inteiros se leitura linha a linha basta."
+              - "Escape argumentos se precisar chamar comando externo."
+          - type: reference-card
+            title: Mapa rápido
+            items:
+              - "`$argv` para argumentos posicionais."
+              - "`getopt` para flags e opções."
+              - "`STDIN` para pipe ou entrada manual."
+              - "`STDERR` para mensagens de erro."
+              - "`exit(0)` para sucesso; `exit(1+)` para falha."
+        tags:
+          - php
+          - cli
+          - decisao
+          - automacao
+          - checklist
+tech: php
+order: 14.5
+cardDescription: Scripts PHP de terminal com argumentos, flags, STDIN/STDERR, exit codes e automação segura.

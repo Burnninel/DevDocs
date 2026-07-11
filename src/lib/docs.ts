@@ -42,10 +42,16 @@ export const TECH_META: Record<Tech, TechMeta> = {
 		tagline: "Componentes, reatividade e composição — em breve.",
 		icon: "simple-icons:vuedotjs",
 	},
+	arquitetura: {
+		label: "Arquitetura",
+		short: "Arq",
+		tagline: "Padrões, camadas e decisões de estrutura — independentes de linguagem.",
+		icon: "lucide:layers",
+	},
 };
 
 /** Ordem de exibição das tecnologias na home. */
-export const TECH_ORDER: Tech[] = ["php", "go", "git", "vue"];
+export const TECH_ORDER: Tech[] = ["php", "go", "arquitetura", "git", "vue"];
 
 function byOrder(a: DocEntry, b: DocEntry): number {
 	return (a.data.order ?? 0) - (b.data.order ?? 0);

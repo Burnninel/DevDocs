@@ -138,12 +138,32 @@
 	}
 
 	/*
-	 * Troca de seção: com JS (.reader-js) só a seção ativa aparece. Sem JS,
-	 * todas ficam visíveis — melhor para acessibilidade e para a indexação
-	 * estática do Pagefind (que roda sobre o HTML sem JS executado).
+	 * Troca de seção (modo `panels`): com JS (.reader-js) só a seção ativa
+	 * aparece. Sem JS, todas ficam visíveis — melhor para acessibilidade e para
+	 * a indexação estática do Pagefind (que roda sobre o HTML sem JS executado).
+	 * O modo `narrative` (docs de arquitetura) nunca esconde: as seções viram
+	 * capítulos empilhados numa página só.
 	 */
-	.reader-js [data-section-panel]:not(.is-active) {
+	.reader-js [data-reader-mode="panels"] [data-section-panel]:not(.is-active) {
 		display: none;
+	}
+
+	/*
+	 * Leitura em narrativa: capítulos empilhados, separados por respiro + um
+	 * filete sutilíssimo (nunca borda de card). A barra lateral vira índice com
+	 * scroll-spy (ver `scripts/doc-reader.ts`).
+	 */
+	.doc-panels-narrative > [data-section-panel] {
+		scroll-margin-top: calc(var(--nav-h) + 1.5rem);
+		padding-top: 3.5rem;
+		margin-top: 3.5rem;
+		border-top: 1px solid
+			color-mix(in oklab, var(--color-hairline) 70%, transparent);
+	}
+	.doc-panels-narrative > [data-section-panel]:first-child {
+		padding-top: 0;
+		margin-top: 0;
+		border-top: none;
 	}
 
 	/*

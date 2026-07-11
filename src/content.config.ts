@@ -75,6 +75,54 @@ const flowStepsBlock = z.object({
 	steps: z.array(z.string()),
 });
 
+/**
+ * Explorador de arquitetura interativo (só docs de `tech: arquitetura`): funde
+ * um diagrama de camadas, a árvore de pastas/arquivos e cards de
+ * responsabilidade numa peça só. Cada camada tem um `id` que liga as três
+ * vistas — clicar numa camada destaca a pasta e o card relacionados (ver
+ * `scripts/arch-explorer.ts`). Puramente aditivo: nenhuma doc antiga usa.
+ */
+const architectureExplorerBlock = z.object({
+	type: z.literal("architecture-explorer"),
+	title: z.string().optional(),
+	description: z.string().optional(),
+	/** Estilo do diagrama: pilha de camadas (padrão) ou círculos concêntricos. */
+	shape: z.enum(["stack", "concentric"]).default("stack"),
+	/** Dica curta sobre a interação; default no componente se ausente. */
+	hint: z.string().optional(),
+	/** Camadas/peças — fonte da verdade que liga diagrama, árvore e cards. */
+	layers: z
+		.array(
+			z.object({
+				id: z.string(),
+				name: z.string(),
+				/** Uma linha: a responsabilidade da camada. */
+				role: z.string(),
+				/** Frase extra opcional no card. */
+				detail: z.string().optional(),
+				/** "Depende de / conhece". */
+				knows: z.string().optional(),
+				/** "Não conhece / não importa". */
+				avoids: z.string().optional(),
+			}),
+		)
+		.min(1),
+	/** Árvore de projeto; cada nó pode referenciar uma `layers[].id`. */
+	tree: z
+		.array(
+			z.object({
+				label: z.string(),
+				depth: z.number().default(0),
+				kind: z.enum(["dir", "file"]).default("file"),
+				/** Liga o nó a uma camada (mesmo `id` de `layers`). */
+				layer: z.string().optional(),
+				/** Comentário inline, exibido esmaecido. */
+				note: z.string().optional(),
+			}),
+		)
+		.optional(),
+});
+
 const contentBlockSchema = z.discriminatedUnion("type", [
 	referenceCardBlock,
 	techListBlock,
@@ -82,6 +130,7 @@ const contentBlockSchema = z.discriminatedUnion("type", [
 	comparisonBlock,
 	contextBlock,
 	flowStepsBlock,
+	architectureExplorerBlock,
 ]);
 export type ContentBlock = z.infer<typeof contentBlockSchema>;
 
@@ -95,6 +144,21 @@ const entrySchema = z.object({
 	code: z.string().optional(),
 	codeLanguage: z.string().optional(),
 	output: z.string().optional(),
+	/**
+	 * Mesmo trecho em várias linguagens, renderizado em abas (ex.: PHP e Go num
+	 * doc conceitual de arquitetura). Aditivo: docs que não usam ficam iguais.
+	 * Quando presente, tem prioridade sobre `code`/`output` na renderização.
+	 */
+	codeVariants: z
+		.array(
+			z.object({
+				language: z.string(),
+				label: z.string().optional(),
+				code: z.string(),
+				output: z.string().optional(),
+			}),
+		)
+		.optional(),
 	span: z.literal("full").optional(),
 	tags: z.array(z.string()).default([]),
 	callout: calloutSchema.optional(),
@@ -123,8 +187,12 @@ const quickStartSchema = z.object({
 });
 export type QuickStart = z.infer<typeof quickStartSchema>;
 
-/** Tecnologias suportadas. `vue` fica pronto para conteúdo futuro. */
-export const TECHS = ["git", "php", "go", "vue"] as const;
+/**
+ * Tecnologias suportadas. `vue` fica pronto para conteúdo futuro.
+ * `arquitetura` é uma categoria conceitual (independente de linguagem): MVC,
+ * Clean Architecture, SOLID, etc., com exemplos em PHP e Go no mesmo doc.
+ */
+export const TECHS = ["git", "php", "go", "vue", "arquitetura"] as const;
 export type Tech = (typeof TECHS)[number];
 
 const docs = defineCollection({
@@ -139,6 +207,14 @@ const docs = defineCollection({
 		shortcutHint: z.string().optional(),
 		codeLanguage: z.string().optional(),
 		defaultSectionLayout: z.enum(["single", "two"]).optional(),
+		/**
+		 * Modo de leitura da doc. `panels` (padrão): cada seção é um painel
+		 * trocável pela barra lateral (referência de sintaxe). `narrative`: todas
+		 * as seções ficam empilhadas numa página única e a barra vira índice de
+		 * capítulos com scroll-spy (docs conceituais de arquitetura). Aditivo:
+		 * docs sem o campo seguem em `panels`.
+		 */
+		readerLayout: z.enum(["panels", "narrative"]).optional(),
 		/** Valor padrão de `runnable` para as entries desta doc (sobrescrevível por entry). */
 		defaultRunnable: z.boolean().optional(),
 		quickStart: quickStartSchema.optional(),

@@ -1,0 +1,457 @@
+id: go-banco-dados
+title: "Go: Banco de Dados"
+subtitle: "Guia prático para database/sql: conectar, consultar, alterar dados, transações e erros com segurança."
+searchPlaceholder: Buscar sql.Open, Query, Exec, transação ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: MySQL local e driver do Go
+  description: "Os exemplos assumem um MySQL local com a mesma tabela `usuarios` de `PHP: Conexão e Manipulação de Banco de Dados` no hub, e o driver `github.com/go-sql-driver/mysql`."
+  steps:
+    - "Módulo com `go mod init` (ver `Go: Módulos`)."
+    - "Instale o driver com `go get github.com/go-sql-driver/mysql`."
+    - "Crie o banco e a tabela `usuarios` (mesmo SQL de `PHP: Conexão e Manipulação de Banco de Dados`)."
+    - "Cole um exemplo em `main.go` e execute `go run .`."
+  codeLanguage: shell
+  code: |-
+    go get github.com/go-sql-driver/mysql
+    go run .
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "erros seguem o padrão de `Go: Erros`; para montar uma API sobre esses dados, veja `Go: API JSON` no hub."
+sections:
+  - id: conectar
+    name: Conectar e configurar o pool
+    layout: single
+    entries:
+      - title: sql.Open e Ping
+        kicker: Open só valida a DSN, não conecta de verdade
+        description: "`sql.Open` monta o `*sql.DB` (um pool, não uma conexão única) e valida só o formato da DSN. O driver entra via import em branco (`_`). Use `db.Ping()` para confirmar que o banco responde."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"database/sql"
+          	"fmt"
+
+          	_ "github.com/go-sql-driver/mysql"
+          )
+
+          func main() {
+          	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/devdocs_go_db?parseTime=true&charset=utf8mb4")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer db.Close()
+
+          	if err := db.Ping(); err != nil {
+          		panic(err)
+          	}
+          	fmt.Println("conectado")
+          }
+        output: conectado
+        tags:
+          - go
+          - database/sql
+          - sql.Open
+          - Ping
+          - mysql
+        callout:
+          type: hint
+          label: "Import em branco:"
+          text: "`_ \"github.com/go-sql-driver/mysql\"` registra o driver pelo efeito colateral do `init()`; o código só usa o nome `\"mysql\"` em `sql.Open`."
+      - title: Configurar o pool de conexões
+        kicker: SetMaxOpenConns, SetMaxIdleConns, SetConnMaxLifetime
+        description: "`*sql.DB` já é um pool. Ajustar os limites evita esgotar conexões do banco sob carga e evita manter conexão ociosa tempo demais atrás de um load balancer."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"database/sql"
+          	"fmt"
+          	"time"
+
+          	_ "github.com/go-sql-driver/mysql"
+          )
+
+          func abrirPool() *sql.DB {
+          	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/devdocs_go_db?parseTime=true")
+          	if err != nil {
+          		panic(err)
+          	}
+          	db.SetMaxOpenConns(10)
+          	db.SetMaxIdleConns(5)
+          	db.SetConnMaxLifetime(5 * time.Minute)
+          	return db
+          }
+
+          func main() {
+          	db := abrirPool()
+          	defer db.Close()
+          	fmt.Println("pool configurado")
+          }
+        output: pool configurado
+        tags:
+          - go
+          - pool
+          - SetMaxOpenConns
+          - SetConnMaxLifetime
+          - performance
+  - id: consultar
+    name: Consultar dados
+    layout: single
+    entries:
+      - title: QueryRow e Scan para uma linha
+        kicker: sql.ErrNoRows quando não encontra
+        description: "`QueryRow` sempre retorna um `*Row`; o erro só aparece no `Scan`. Quando nenhuma linha bate, `Scan` retorna `sql.ErrNoRows` — trate esse caso separado de erro de conexão ou SQL."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"database/sql"
+          	"errors"
+          	"fmt"
+
+          	_ "github.com/go-sql-driver/mysql"
+          )
+
+          func main() {
+          	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/devdocs_go_db?parseTime=true")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer db.Close()
+
+          	var nome, email string
+          	err = db.QueryRow("SELECT nome, email FROM usuarios WHERE id = ?", 7).Scan(&nome, &email)
+          	if errors.Is(err, sql.ErrNoRows) {
+          		fmt.Println("usuário não encontrado")
+          		return
+          	}
+          	if err != nil {
+          		panic(err)
+          	}
+          	fmt.Println(nome, email)
+          }
+        output: Ana Silva ana@email.com
+        tags:
+          - go
+          - QueryRow
+          - Scan
+          - sql.ErrNoRows
+          - consulta
+      - title: Query e rows.Next() para várias linhas
+        kicker: Sempre defer rows.Close()
+        description: "`Query` retorna `*sql.Rows`; percorra com `rows.Next()` e leia cada linha com `Scan`. Feche com `defer rows.Close()` logo após checar o erro — sem isso a conexão do pool fica presa."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"database/sql"
+          	"fmt"
+
+          	_ "github.com/go-sql-driver/mysql"
+          )
+
+          func main() {
+          	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/devdocs_go_db?parseTime=true")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer db.Close()
+
+          	rows, err := db.Query("SELECT id, nome FROM usuarios WHERE status = ? ORDER BY id DESC LIMIT 5", "ativo")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer rows.Close()
+
+          	for rows.Next() {
+          		var id int
+          		var nome string
+          		if err := rows.Scan(&id, &nome); err != nil {
+          			panic(err)
+          		}
+          		fmt.Println(id, "-", nome)
+          	}
+          	if err := rows.Err(); err != nil {
+          		panic(err)
+          	}
+          }
+        output: |-
+          9 - Carla Lima
+          8 - Bruno Costa
+          7 - Ana Silva
+        tags:
+          - go
+          - Query
+          - rows.Next
+          - Scan
+          - consulta
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: "`rows.Err()` depois do loop captura erro que aconteceu durante a iteração (conexão caiu, por exemplo) — não só no `Query` inicial."
+  - id: alterar
+    name: Alterar dados
+    layout: single
+    entries:
+      - title: Exec para INSERT com LastInsertId
+        kicker: Placeholder ? sempre, nunca concatenar
+        description: "`Exec` roda comandos que não retornam linhas. `LastInsertId()` retorna o id gerado quando o driver suporta (MySQL suporta). Use `?` como placeholder posicional; o driver separa estrutura de dado."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"database/sql"
+          	"fmt"
+
+          	_ "github.com/go-sql-driver/mysql"
+          )
+
+          func main() {
+          	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/devdocs_go_db?parseTime=true")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer db.Close()
+
+          	res, err := db.Exec(
+          		"INSERT INTO usuarios (nome, email, status) VALUES (?, ?, ?)",
+          		"Ana Silva", "ana@email.com", "ativo",
+          	)
+          	if err != nil {
+          		panic(err)
+          	}
+          	id, err := res.LastInsertId()
+          	if err != nil {
+          		panic(err)
+          	}
+          	fmt.Println("novo id:", id)
+          }
+        output: "novo id: 10"
+        tags:
+          - go
+          - Exec
+          - INSERT
+          - LastInsertId
+          - placeholder
+      - title: Exec para UPDATE/DELETE com RowsAffected
+        kicker: Confirmar quantas linhas mudaram
+        description: "`RowsAffected()` diz quantas linhas o `UPDATE` ou `DELETE` alterou. Retorno `0` costuma indicar que o filtro (`WHERE`) não encontrou nada, não necessariamente um erro."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"database/sql"
+          	"fmt"
+
+          	_ "github.com/go-sql-driver/mysql"
+          )
+
+          func main() {
+          	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/devdocs_go_db?parseTime=true")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer db.Close()
+
+          	res, err := db.Exec("UPDATE usuarios SET status = ? WHERE id = ?", "inativo", 10)
+          	if err != nil {
+          		panic(err)
+          	}
+          	n, err := res.RowsAffected()
+          	if err != nil {
+          		panic(err)
+          	}
+          	fmt.Println("linhas afetadas:", n)
+          }
+        output: "linhas afetadas: 1"
+        tags:
+          - go
+          - Exec
+          - UPDATE
+          - RowsAffected
+          - DELETE
+      - title: Por que o placeholder ? evita SQL injection
+        kicker: Nunca monte SQL com fmt.Sprintf usando entrada externa
+        description: "SQL injection acontece quando um valor vindo de fora entra direto na string da query e muda a lógica do SQL. O placeholder `?` mantém a estrutura fixa; o driver envia o valor separado e o banco nunca o interpreta como comando."
+        descriptionTone: warn
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	id := "7 OR 1=1" // valor vindo de fora, por exemplo query string
+
+          	// ERRADO: concatenação deixa o valor decidir a query
+          	sqlErrado := fmt.Sprintf("SELECT id, nome FROM usuarios WHERE id = %s", id)
+
+          	// CERTO: placeholder mantém a estrutura fixa
+          	sqlCerto := "SELECT id, nome FROM usuarios WHERE id = ?"
+
+          	fmt.Println(sqlErrado)
+          	fmt.Println(sqlCerto)
+          }
+        output: |-
+          SELECT id, nome FROM usuarios WHERE id = 7 OR 1=1
+          SELECT id, nome FROM usuarios WHERE id = ?
+        tags:
+          - go
+          - sql-injection
+          - placeholder
+          - seguranca
+        callout:
+          type: danger
+          label: "Perigo:"
+          text: nunca use fmt.Sprintf/concatenação para montar SQL com valor vindo de request, formulário ou variável de ambiente. Passe sempre o valor como argumento de Query/Exec/QueryRow.
+  - id: transacoes-erros
+    name: Transações e erros
+    layout: single
+    entries:
+      - title: Begin, Commit e Rollback com defer
+        kicker: Retorno nomeado facilita o rollback em qualquer saída
+        description: "Use transação quando duas ou mais escritas precisam ser atômicas. O padrão idiomático usa retorno nomeado (`err`) e `defer` para decidir `Rollback` ou `Commit` num único lugar, sem repetir `tx.Rollback()` em cada `if`."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"database/sql"
+          	"fmt"
+
+          	_ "github.com/go-sql-driver/mysql"
+          )
+
+          func transferirPontos(db *sql.DB, deID, paraID int) (err error) {
+          	tx, err := db.Begin()
+          	if err != nil {
+          		return err
+          	}
+          	defer func() {
+          		if err != nil {
+          			tx.Rollback()
+          			return
+          		}
+          		err = tx.Commit()
+          	}()
+
+          	if _, err = tx.Exec("UPDATE usuarios SET status = status WHERE id = ?", deID); err != nil {
+          		return err
+          	}
+          	if _, err = tx.Exec("UPDATE usuarios SET status = status WHERE id = ?", paraID); err != nil {
+          		return err
+          	}
+          	return nil
+          }
+
+          func main() {
+          	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/devdocs_go_db?parseTime=true")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer db.Close()
+
+          	if err := transferirPontos(db, 7, 8); err != nil {
+          		fmt.Println("rollback:", err)
+          		return
+          	}
+          	fmt.Println("transação concluída")
+          }
+        output: transação concluída
+        tags:
+          - go
+          - Begin
+          - Commit
+          - Rollback
+          - transacao
+        callout:
+          type: hint
+          label: "Padrão:"
+          text: "`Begin` → vários `Exec` na mesma `tx` → `defer` decide `Rollback` (se `err != nil`) ou `Commit`. Evite transação longa: abra perto da escrita e feche rápido."
+      - title: sql.ErrNoRows não é erro de sistema
+        kicker: Separar "não encontrado" de falha real
+        description: "`sql.ErrNoRows` é o sinal de que a consulta funcionou mas não achou linha — normalmente vira 404, não 500. `fmt.Errorf` com `%w` preserva o erro original para `errors.Is`/`errors.As` mais acima na pilha (ver `Go: Erros`)."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"database/sql"
+          	"errors"
+          	"fmt"
+
+          	_ "github.com/go-sql-driver/mysql"
+          )
+
+          func buscarNome(db *sql.DB, id int) (string, error) {
+          	var nome string
+          	err := db.QueryRow("SELECT nome FROM usuarios WHERE id = ?", id).Scan(&nome)
+          	if errors.Is(err, sql.ErrNoRows) {
+          		return "", fmt.Errorf("usuário %d não encontrado", id)
+          	}
+          	if err != nil {
+          		return "", fmt.Errorf("buscar usuário %d: %w", id, err)
+          	}
+          	return nome, nil
+          }
+
+          func main() {
+          	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/devdocs_go_db?parseTime=true")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer db.Close()
+
+          	_, err = buscarNome(db, 999)
+          	fmt.Println(err)
+          }
+        output: usuário 999 não encontrado
+        tags:
+          - go
+          - sql.ErrNoRows
+          - errors.Is
+          - fmt.Errorf
+          - erro
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para database/sql
+        kicker: Conectar, consultar, alterar e transação
+        description: Use este resumo para lembrar a API certa sem reler a documentação do pacote toda vez.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`sql.Open` só valida a DSN; use `db.Ping()` para confirmar a conexão de verdade."
+              - "`QueryRow` + `Scan` para uma linha; trate `sql.ErrNoRows` separado de erro real."
+              - "`Query` + `rows.Next()`/`Scan` + `defer rows.Close()` para várias linhas."
+              - "`Exec` para INSERT/UPDATE/DELETE; `LastInsertId`/`RowsAffected` conforme o caso."
+              - "Placeholder `?` sempre — nunca concatene valor externo na query."
+              - "`Begin`/`Commit`/`Rollback` com `defer` e retorno nomeado para cobrir toda saída de erro."
+              - "`SetMaxOpenConns`/`SetConnMaxLifetime` para não esgotar conexões do banco sob carga."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: esquecer `defer rows.Close()` depois de `Query`. A conexão do pool fica presa até o coletor de lixo liberar, e sob carga isso esgota o pool antes de qualquer erro óbvio aparecer.
+        tags:
+          - go
+          - sql
+          - decisao
+          - boas-praticas
+tech: go
+order: 25.5
+cardDescription: "Guia prático para database/sql: conectar, Query/QueryRow, Exec, transações e sql.ErrNoRows."

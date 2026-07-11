@@ -1,0 +1,445 @@
+id: php-fundamentos
+title: "PHP: Fundamentos"
+subtitle: "Guia prático para começar bem em PHP: variáveis, tipos, operadores, controle de fluxo, loops, funções e escopo."
+searchPlaceholder: Buscar variável, tipo, if, match, loop, função ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+defaultRunnable: true
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: PHP CLI e arquivo único
+  description: Os exemplos são autocontidos e rodam no terminal ou no sandbox. Para testar localmente, basta ter o PHP CLI instalado.
+  steps:
+    - Verifique a versão com `php --version`.
+    - Crie um arquivo `fundamentos.php`.
+    - Cole um exemplo por vez.
+    - Rode com `php fundamentos.php`.
+  codeLanguage: shell
+  code: |-
+    php --version
+    php fundamentos.php
+  callout:
+    type: hint
+    label: "Dica:"
+    text: use `declare(strict_types=1);` no topo de arquivos novos quando quiser tipos de parâmetro e retorno mais previsíveis.
+sections:
+  - id: base
+    name: Base da linguagem
+    layout: single
+    entries:
+      - title: Abrir PHP e imprimir valores
+        kicker: "<?php, echo e PHP_EOL"
+        description: Um script PHP começa com `<?php`. Para imprimir texto no terminal, use `echo`; `PHP_EOL` adiciona uma quebra de linha portátil entre sistemas.
+        descriptionTone: default
+        code: |-
+          <?php
+          echo "Olá, PHP" . PHP_EOL;
+          echo "DevDocs" . PHP_EOL;
+        output: |-
+          Olá, PHP
+          DevDocs
+        tags:
+          - php
+          - echo
+          - php_eol
+          - base
+          - imprimir
+      - title: Variáveis e interpolação de string
+        kicker: $nome, aspas duplas e concatenação
+        description: Variáveis começam com `$`. Aspas duplas interpolam variáveis simples; o operador `.` concatena strings explicitamente.
+        descriptionTone: default
+        code: |-
+          <?php
+          $nome = "Ana";
+          $curso = "PHP";
+
+          echo "Olá, $nome" . PHP_EOL;
+          echo "Curso: " . $curso . PHP_EOL;
+        output: |-
+          Olá, Ana
+          Curso: PHP
+        tags:
+          - php
+          - variavel
+          - string
+          - interpolacao
+          - concatenacao
+      - title: Constantes para valores que não mudam
+        kicker: const dentro do código
+        description: Use `const` para valores fixos conhecidos em tempo de código. Em projetos maiores, constantes ajudam a nomear limites, status e opções sem repetir strings soltas.
+        descriptionTone: default
+        code: |-
+          <?php
+          const LIMITE_TENTATIVAS = 3;
+
+          echo "Tentativas: " . LIMITE_TENTATIVAS . PHP_EOL;
+        output: "Tentativas: 3"
+        tags:
+          - php
+          - const
+          - constante
+          - configuracao
+          - base
+  - id: tipos-operadores
+    name: Tipos e operadores
+    layout: single
+    entries:
+      - title: Tipos escalares mais usados
+        kicker: string, int, float, bool e null
+        description: PHP é dinâmico, mas os valores ainda têm tipo. Saber o tipo real evita comparar número com string sem querer, especialmente em validações e entrada de usuário.
+        descriptionTone: default
+        code: |-
+          <?php
+          $nome = "Ana";
+          $idade = 30;
+          $saldo = 19.90;
+          $ativo = true;
+          $apelido = null;
+
+          var_dump($nome, $idade, $saldo, $ativo, $apelido);
+        output: |-
+          string(3) "Ana"
+          int(30)
+          float(19.9)
+          bool(true)
+          NULL
+        tags:
+          - php
+          - tipos
+          - string
+          - int
+          - float
+          - bool
+          - "null"
+      - title: Operadores aritméticos e atribuição composta
+        kicker: +, -, *, /, %, **, +=
+        description: Operadores aritméticos retornam novos valores. Atribuições compostas como `+=` e `*=` atualizam a variável original de forma mais direta.
+        descriptionTone: default
+        code: |-
+          <?php
+          $total = 10 + 5;
+          $total *= 2;
+
+          echo $total . PHP_EOL;
+          echo (17 % 5) . PHP_EOL;
+          echo (2 ** 3) . PHP_EOL;
+        output: |-
+          30
+          2
+          8
+        tags:
+          - php
+          - operadores
+          - aritmetica
+          - modulo
+          - potencia
+      - title: Comparação estrita evita surpresa de tipo
+        kicker: === e !== como padrão seguro
+        description: "`==` tenta converter tipos antes de comparar. Em validações, prefira `===` e `!==` para comparar valor e tipo ao mesmo tempo."
+        descriptionTone: warn
+        code: |-
+          <?php
+          var_dump("10" == 10);
+          var_dump("10" === 10);
+          var_dump("10" !== 10);
+        output: |-
+          bool(true)
+          bool(false)
+          bool(true)
+        tags:
+          - php
+          - comparacao
+          - estrito
+          - igualdade
+          - tipos
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: comparação frouxa é uma das fontes mais comuns de bugs discretos em PHP; use comparação estrita por padrão.
+      - title: Coalescência nula para fallback simples
+        kicker: ?? para valor ausente ou null
+        description: Use `??` quando uma chave ou variável pode não existir. Ele retorna o valor da esquerda se existir e não for `null`; caso contrário, usa o fallback.
+        descriptionTone: default
+        code: |-
+          <?php
+          $dados = ["nome" => "Ana"];
+
+          $nome = $dados["nome"] ?? "Visitante";
+          $email = $dados["email"] ?? "sem email";
+
+          echo $nome . PHP_EOL;
+          echo $email . PHP_EOL;
+        output: |-
+          Ana
+          sem email
+        tags:
+          - php
+          - "null"
+          - coalescencia
+          - fallback
+          - chave
+  - id: controle-fluxo
+    name: Controle de fluxo
+    layout: single
+    entries:
+      - title: if, elseif e else
+        kicker: Escolher caminho por condição
+        description: Use `if` quando a decisão depende de uma condição booleana. Ordene os casos do mais específico para o mais geral para evitar caminhos inalcançáveis.
+        descriptionTone: default
+        code: |-
+          <?php
+          $nota = 8;
+
+          if ($nota >= 9) {
+              echo "Excelente" . PHP_EOL;
+          } elseif ($nota >= 7) {
+              echo "Aprovado" . PHP_EOL;
+          } else {
+              echo "Revisar conteúdo" . PHP_EOL;
+          }
+        output: Aprovado
+        tags:
+          - php
+          - if
+          - else
+          - elseif
+          - condicao
+      - title: match para decisão por valor
+        kicker: Alternativa expressiva ao switch
+        description: "`match` compara de forma estrita e retorna um valor. Ele é ótimo quando uma entrada precisa virar rótulo, status, mensagem ou configuração."
+        descriptionTone: default
+        code: |-
+          <?php
+          $status = 404;
+
+          $mensagem = match ($status) {
+              200 => "OK",
+              400 => "Requisição inválida",
+              404 => "Não encontrado",
+              default => "Erro inesperado",
+          };
+
+          echo $mensagem . PHP_EOL;
+        output: Não encontrado
+        tags:
+          - php
+          - match
+          - switch
+          - status
+          - decisao
+      - title: switch para vários comandos por caso
+        kicker: Útil quando cada caso executa mais de uma ação
+        description: "`switch` ainda é útil quando cada caso precisa executar comandos, não apenas retornar um valor. Use `break` para impedir queda para o próximo caso."
+        descriptionTone: default
+        code: |-
+          <?php
+          $perfil = "editor";
+
+          switch ($perfil) {
+              case "admin":
+                  echo "Acesso total" . PHP_EOL;
+                  break;
+              case "editor":
+                  echo "Pode publicar" . PHP_EOL;
+                  break;
+              default:
+                  echo "Leitura" . PHP_EOL;
+          }
+        output: Pode publicar
+        tags:
+          - php
+          - switch
+          - break
+          - caso
+          - permissao
+  - id: repeticao
+    name: Repetição
+    layout: single
+    entries:
+      - title: for quando existe contador claro
+        kicker: Índice, limite e incremento no mesmo lugar
+        description: Use `for` quando a repetição depende de um contador ou de um número conhecido de passos. O cabeçalho deixa inicialização, condição e incremento visíveis.
+        descriptionTone: default
+        code: |-
+          <?php
+          for ($i = 1; $i <= 3; $i++) {
+              echo "Item $i" . PHP_EOL;
+          }
+        output: |-
+          Item 1
+          Item 2
+          Item 3
+        tags:
+          - php
+          - for
+          - loop
+          - contador
+          - repeticao
+      - title: foreach para percorrer arrays
+        kicker: Lista simples ou chave e valor
+        description: "`foreach` é a forma idiomática de percorrer arrays no PHP. Capture `$chave => $valor` quando a chave também importa."
+        descriptionTone: default
+        code: |-
+          <?php
+          $notas = ["Ana" => 9, "Bruno" => 7];
+
+          foreach ($notas as $nome => $nota) {
+              echo "$nome: $nota" . PHP_EOL;
+          }
+        output: |-
+          Ana: 9
+          Bruno: 7
+        tags:
+          - php
+          - foreach
+          - array
+          - chave
+          - valor
+      - title: while para repetir até condição mudar
+        kicker: Quando o limite não é um contador fixo
+        description: Use `while` quando a repetição depende de uma condição que muda dentro do bloco, como leitura de filas, tentativas ou processamento incremental.
+        descriptionTone: default
+        code: |-
+          <?php
+          $tentativas = 0;
+
+          while ($tentativas < 3) {
+              $tentativas++;
+              echo "Tentativa $tentativas" . PHP_EOL;
+          }
+        output: |-
+          Tentativa 1
+          Tentativa 2
+          Tentativa 3
+        tags:
+          - php
+          - while
+          - loop
+          - tentativa
+          - repeticao
+  - id: funcoes
+    name: Funções
+    layout: single
+    entries:
+      - title: Declarar função com parâmetros e retorno
+        kicker: Entrada clara, saída clara
+        description: Funções agrupam regra e dão nome a uma intenção. Tipar parâmetros e retorno deixa erros aparecerem mais cedo e melhora leitura em projetos maiores.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          function calcularTotal(float $valor, float $frete): float
+          {
+              return $valor + $frete;
+          }
+
+          echo calcularTotal(120.0, 15.5) . PHP_EOL;
+        output: "135.5"
+        tags:
+          - php
+          - funcao
+          - parametro
+          - retorno
+          - strict_types
+      - title: Parâmetros opcionais e nomeados
+        kicker: Defaults antes de opções raras
+        description: Parâmetros com valor padrão simplificam chamadas comuns. Argumentos nomeados deixam explícito qual opção está sendo alterada.
+        descriptionTone: default
+        code: |-
+          <?php
+          function formatarMoeda(float $valor, string $prefixo = "R$"): string
+          {
+              return $prefixo . " " . number_format($valor, 2, ",", ".");
+          }
+
+          echo formatarMoeda(19.9) . PHP_EOL;
+          echo formatarMoeda(valor: 19.9, prefixo: "USD") . PHP_EOL;
+        output: |-
+          R$ 19,90
+          USD 19,90
+        tags:
+          - php
+          - parametro
+          - default
+          - argumento-nomeado
+          - funcao
+      - title: Arrow function para callbacks curtos
+        kicker: fn($x) => expressão
+        description: Arrow functions são boas para callbacks simples em `array_map`, `array_filter` e ordenações. Para mais de uma instrução, prefira função anônima tradicional ou função nomeada.
+        descriptionTone: default
+        code: |-
+          <?php
+          $numeros = [1, 2, 3];
+          $dobrados = array_map(fn(int $n): int => $n * 2, $numeros);
+
+          print_r($dobrados);
+        output: |-
+          Array
+          (
+              [0] => 2
+              [1] => 4
+              [2] => 6
+          )
+        tags:
+          - php
+          - arrow-function
+          - callback
+          - array_map
+          - fn
+      - title: Escopo local e use em closure
+        kicker: Capturar valor externo explicitamente
+        description: Variáveis criadas dentro da função não vazam para fora. Em closures, use `use ($variavel)` quando precisar capturar um valor do escopo externo.
+        descriptionTone: default
+        code: |-
+          <?php
+          $taxa = 1.1;
+
+          $comAjuste = function (float $valor) use ($taxa): float {
+              return $valor * $taxa;
+          };
+
+          echo $comAjuste(100) . PHP_EOL;
+        output: "110"
+        tags:
+          - php
+          - closure
+          - escopo
+          - use
+          - funcao-anonima
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental dos fundamentos
+        kicker: Escolher a construção certa
+        description: Use este mapa como referência rápida quando estiver montando um script ou revisando código inicial.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`const` para valores fixos conhecidos pelo código."
+              - "`??` para fallback quando chave ou variável pode não existir."
+              - "`===` e `!==` para comparação segura de valor e tipo."
+              - "`if` quando a decisão depende de uma condição booleana."
+              - "`match` quando um valor precisa virar outro valor."
+              - "`for` quando existe contador claro."
+              - "`foreach` para arrays."
+              - "`function` nomeada para regra reutilizável."
+              - "`fn` para callback curto de uma expressão."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Cuidado:"
+            text: não confunda código que apenas imprime algo com função que retorna valor. `echo` escreve na saída; `return` entrega um valor para quem chamou a função.
+        tags:
+          - php
+          - fundamentos
+          - decisao
+          - referencia
+          - guia
+tech: php
+order: 0
+cardDescription: Porta de entrada do PHP com variáveis, tipos, operadores, controle de fluxo, loops e funções.

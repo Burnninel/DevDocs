@@ -1,0 +1,373 @@
+id: php-testes
+title: "PHP: Testes com PHPUnit"
+subtitle: Guia prático para instalar PHPUnit, escrever testes legíveis, organizar fixtures, testar exceções e isolar dependências.
+searchPlaceholder: Buscar phpunit, assert, fixture, mock, exception ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Composer + PHPUnit
+  description: Os exemplos assumem um projeto com Composer e PHPUnit instalado como dependência de desenvolvimento.
+  steps:
+    - Crie ou abra um projeto com `composer.json`.
+    - Instale PHPUnit com `composer require --dev phpunit/phpunit`.
+    - Coloque testes em `tests/`.
+    - Rode `vendor/bin/phpunit`.
+  codeLanguage: shell
+  code: |-
+    composer require --dev phpunit/phpunit
+    vendor/bin/phpunit --version
+    vendor/bin/phpunit
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "`PHP: Composer e autoload` cobre dependências e PSR-4; `PHP: Erros e exceções` ajuda nos testes de falha."
+sections:
+  - id: base
+    name: Base de PHPUnit
+    layout: single
+    entries:
+      - title: Estrutura mínima de projeto para testes
+        kicker: src/, tests/ e autoload-dev
+        description: Separe código de produção em `src/` e testes em `tests/`. O `autoload-dev` permite carregar classes de teste sem misturar com o autoload de produção.
+        descriptionTone: default
+        code: |-
+          {
+            "autoload": {
+              "psr-4": {
+                "App\\": "src/"
+              }
+            },
+            "autoload-dev": {
+              "psr-4": {
+                "Tests\\": "tests/"
+              }
+            },
+            "require-dev": {
+              "phpunit/phpunit": "^12.0"
+            }
+          }
+        codeLanguage: json
+        tags:
+          - php
+          - phpunit
+          - composer
+          - autoload-dev
+          - tests
+        callout:
+          type: hint
+          label: "Depois de editar:"
+          text: rode `composer dump-autoload` para atualizar os mapas de classe do Composer.
+      - title: Primeiro teste com TestCase
+        kicker: Nome do método descreve comportamento
+        description: Um teste é uma classe que estende `PHPUnit\Framework\TestCase`. Prefira nomes que descrevam o comportamento esperado, não o detalhe interno da implementação.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          namespace Tests;
+
+          use PHPUnit\Framework\TestCase;
+
+          final class CalculadoraTest extends TestCase
+          {
+              public function testSomaDoisValores(): void
+              {
+                  $resultado = 2 + 3;
+
+                  self::assertSame(5, $resultado);
+              }
+          }
+        tags:
+          - php
+          - phpunit
+          - testcase
+          - assert
+          - teste
+      - title: Configurar phpunit.xml
+        kicker: Um comando previsível para todos
+        description: O `phpunit.xml` centraliza diretórios, bootstrap e opções. Isso evita cada pessoa rodar a suíte com parâmetros diferentes.
+        descriptionTone: default
+        code: |-
+          <?xml version="1.0" encoding="UTF-8"?>
+          <phpunit bootstrap="vendor/autoload.php" colors="true">
+            <testsuites>
+              <testsuite name="Unit">
+                <directory>tests</directory>
+              </testsuite>
+            </testsuites>
+          </phpunit>
+        codeLanguage: xml
+        tags:
+          - php
+          - phpunit
+          - xml
+          - bootstrap
+          - suite
+  - id: asserts
+    name: Asserts e casos de teste
+    layout: single
+    entries:
+      - title: assertSame para comparar valor e tipo
+        kicker: Igualdade estrita nos testes
+        description: "`assertSame` compara valor e tipo, como `===`. Ele costuma ser melhor padrão que `assertEquals` para evitar teste passando com conversão implícita."
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          use PHPUnit\Framework\TestCase;
+
+          final class TotalTest extends TestCase
+          {
+              public function testTotalFormatado(): void
+              {
+                  $total = number_format(19.9, 2, ",", ".");
+
+                  self::assertSame("19,90", $total);
+              }
+          }
+        tags:
+          - php
+          - phpunit
+          - assertSame
+          - tipo
+          - comparacao
+      - title: Data provider para vários cenários
+        kicker: Uma regra, vários exemplos
+        description: Data providers reduzem repetição quando a mesma regra precisa ser validada com entradas diferentes. Mantenha a tabela pequena e legível.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          use PHPUnit\Framework\Attributes\DataProvider;
+          use PHPUnit\Framework\TestCase;
+
+          final class DescontoTest extends TestCase
+          {
+              #[DataProvider("casos")]
+              public function testAplicaDesconto(float $valor, float $esperado): void
+              {
+                  $resultado = $valor >= 100 ? $valor * 0.9 : $valor;
+
+                  self::assertSame($esperado, $resultado);
+              }
+
+              public static function casos(): array
+              {
+                  return [
+                      "sem desconto" => [80.0, 80.0],
+                      "com desconto" => [120.0, 108.0],
+                  ];
+              }
+          }
+        tags:
+          - php
+          - phpunit
+          - data-provider
+          - cenario
+          - teste-parametrizado
+        callout:
+          type: hint
+          label: "Ponto flutuante:"
+          text: "resultado de conta com `float` nem sempre bate exatamente com `assertSame`. Quando o cálculo envolver divisão ou porcentagem menos redonda, prefira `assertEqualsWithDelta($esperado, $resultado, 0.001)`."
+      - title: Testar exceções esperadas
+        kicker: Falhas também são contrato
+        description: Use `expectException` antes da chamada que deve falhar. Isso documenta qual erro faz parte do contrato da função.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          use PHPUnit\Framework\TestCase;
+
+          final class EmailTest extends TestCase
+          {
+              public function testEmailInvalidoFalha(): void
+              {
+                  self::expectException(InvalidArgumentException::class);
+
+                  if (!str_contains("ana", "@")) {
+                      throw new InvalidArgumentException("Email inválido");
+                  }
+              }
+          }
+        tags:
+          - php
+          - phpunit
+          - exception
+          - expectException
+          - erro
+  - id: organizacao
+    name: Organização e fixtures
+    layout: single
+    entries:
+      - title: Arrange, Act, Assert
+        kicker: Separar preparação, ação e verificação
+        description: Estruture testes em três blocos mentais. Primeiro prepare dados, depois execute a ação, por fim verifique o resultado.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          use PHPUnit\Framework\TestCase;
+
+          final class PedidoTest extends TestCase
+          {
+              public function testCalculaTotal(): void
+              {
+                  // Arrange
+                  $itens = [10.0, 15.0];
+
+                  // Act
+                  $total = array_sum($itens);
+
+                  // Assert
+                  self::assertSame(25.0, $total);
+              }
+          }
+        tags:
+          - php
+          - phpunit
+          - arrange-act-assert
+          - organizacao
+          - legibilidade
+      - title: setUp para fixture repetida
+        kicker: Preparação compartilhada sem duplicação
+        description: Use `setUp` quando vários testes precisam da mesma preparação. Evite colocar regra de negócio ali; deixe apenas criação de objetos e dados base.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          use PHPUnit\Framework\TestCase;
+
+          final class CarrinhoTest extends TestCase
+          {
+              private array $itens;
+
+              protected function setUp(): void
+              {
+                  $this->itens = [10.0, 20.0];
+              }
+
+              public function testSomaItens(): void
+              {
+                  self::assertSame(30.0, array_sum($this->itens));
+              }
+          }
+        tags:
+          - php
+          - phpunit
+          - setup
+          - fixture
+          - estado
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: se o `setUp` fica grande demais, o teste perde clareza. Prefira factories pequenas e explícitas.
+  - id: dependencias
+    name: Dependências e isolamento
+    layout: single
+    entries:
+      - title: Injetar dependência para testar sem serviço real
+        kicker: Interface pequena facilita teste
+        description: Quando uma classe depende de gateway, e-mail, fila ou API externa, injete uma interface. No teste, use uma implementação fake simples.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          interface GatewayPagamento
+          {
+              public function cobrar(float $valor): bool;
+          }
+
+          final class GatewayFake implements GatewayPagamento
+          {
+              public function cobrar(float $valor): bool
+              {
+                  return $valor > 0;
+              }
+          }
+        tags:
+          - php
+          - teste
+          - fake
+          - interface
+          - dependencia
+      - title: Mock para verificar colaboração pontual
+        kicker: Use com parcimônia
+        description: Mocks ajudam quando você precisa verificar se uma colaboração aconteceu. Para regra pura, prefira testar resultado final sem mock.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          use PHPUnit\Framework\TestCase;
+
+          final class NotificadorTest extends TestCase
+          {
+              public function testEnviaMensagem(): void
+              {
+                  $mailer = $this->createMock(Mailer::class);
+                  $mailer->expects(self::once())
+                      ->method("send")
+                      ->with("ana@email.com");
+
+                  $mailer->send("ana@email.com");
+              }
+          }
+        tags:
+          - php
+          - phpunit
+          - mock
+          - stub
+          - dependencia
+        callout:
+          type: warn
+          label: "Cuidado:"
+          text: muitos mocks podem deixar o teste preso à implementação. Se mudar uma refatoração interna quebra vários testes, talvez eles estejam testando detalhe demais.
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Como escolher o tipo de teste
+        kicker: Mais confiança com menos ruído
+        description: Use este mapa para decidir o formato do teste sem transformar a suíte em código frágil.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`assertSame` para valor e tipo exatos."
+              - "Data provider quando a mesma regra precisa de várias entradas."
+              - "`expectException` quando a falha faz parte do contrato."
+              - "`setUp` quando a fixture se repete em vários testes."
+              - "Fake simples quando quer evitar serviço externo."
+              - "Mock quando precisa verificar uma colaboração específica."
+              - "`phpunit.xml` para padronizar bootstrap e diretórios."
+          - type: checklist-block
+            title: Boas práticas
+            items:
+              - "Nomeie testes pelo comportamento esperado."
+              - "Mantenha cada teste pequeno e direto."
+              - "Evite depender de banco, rede ou relógio real em teste unitário."
+              - "Prefira testar regra de negócio por resultado observável."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Evite:"
+            text: testar só caminhos felizes. Regras importantes também precisam de cenários de erro, entrada inválida e limites.
+        tags:
+          - php
+          - phpunit
+          - testes
+          - decisao
+          - boas-praticas
+tech: php
+order: 4.5
+cardDescription: PHPUnit do zero ao fluxo de projeto, com asserts, fixtures, exceções, fakes e mocks.

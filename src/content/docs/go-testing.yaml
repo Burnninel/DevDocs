@@ -7,7 +7,7 @@ codeLanguage: go
 defaultSectionLayout: single
 quickStart:
   title: Primeiro teste
-  kicker: Ficheiro *_test.go
+  kicker: Arquivo *_test.go
   description: "Testes ficam no mesmo pacote (ou `package xxx_test` para testes externos). O nome da função começa por `Test` e recebe `*testing.T`. Para falhas modeladas com `error`, veja `Go: Erros` no hub."
   steps:
     - Módulo com `go mod init exemplo.local/demo`.
@@ -160,7 +160,7 @@ sections:
           - stack
       - title: httptest.Server para handlers HTTP
         kicker: Cliente contra servidor local
-        description: "`httptest.NewServer` sobe um `http.Server` com listener em porta efémera. Use `defer srv.Close()` e `srv.URL` em `http.Get`. Combine com `Go: JSON` quando o handler devolve JSON."
+        description: "`httptest.NewServer` inicia um `http.Server` com listener em porta efêmera. Use `defer srv.Close()` e `srv.URL` em `http.Get`. Combine com `Go: JSON` quando o handler retorna JSON."
         descriptionTone: default
         code: |
           package demo
@@ -199,7 +199,35 @@ sections:
         callout:
           type: hint
           label: "Go 1.14+:"
-          text: "`t.Cleanup` regista funções a correr ao fim do teste (substitui muitos `defer` manuais)."
+          text: "`t.Cleanup` registra funções que rodam ao fim do teste (substitui muitos `defer` manuais)."
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para escrever testes em Go
+        kicker: T.Errorf, table-driven e httptest
+        description: Use este resumo para decidir a forma do teste sem inflar a suíte com repetição.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Nome de função começando com `Test` + `*testing.T` para todo teste."
+              - "`t.Errorf` acumula falha e continua; `t.Fatalf` aborta o teste atual."
+              - "Table-driven test quando a mesma regra precisa de vários casos de entrada."
+              - "`t.Run` para nomear subtestes e poder filtrar com `-run`."
+              - "`t.Helper()` em função de apoio para apontar a falha na linha certa."
+              - "`httptest.NewServer` para testar handler HTTP sem porta fixa."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: esquecer `t.Cleanup` ou `defer` para fechar servidor de teste. Servidor de teste que não fecha vaza porta e handle entre execuções, e pode deixar a suíte instável em CI.
+        tags:
+          - go
+          - testing
+          - decisao
+          - boas-praticas
 tech: go
 order: 22
 cardDescription: Guia prático para testing, table-driven tests, t.Helper, -run e httptest.

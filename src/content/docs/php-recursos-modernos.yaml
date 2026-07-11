@@ -1,0 +1,311 @@
+id: php-recursos-modernos
+title: "PHP: Recursos Modernos"
+subtitle: "Guia prático para recursos do PHP 8+: union types, enums, constructor promotion, readonly, attributes e match."
+searchPlaceholder: Buscar enum, readonly, attribute, union type, match ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+defaultRunnable: true
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: PHP 8+ no terminal ou sandbox
+  description: Os exemplos usam recursos modernos da linguagem e são autocontidos. Para rodar localmente, use uma versão atual do PHP 8.
+  steps:
+    - Verifique a versão com `php --version`.
+    - Crie um arquivo `modernos.php`.
+    - Cole um exemplo por vez.
+    - Rode com `php modernos.php`.
+  codeLanguage: shell
+  code: |-
+    php --version
+    php modernos.php
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "`PHP: Orientação a Objetos` cobre classes e interfaces; `PHP: Fundamentos` cobre tipos, funções e match."
+sections:
+  - id: tipos
+    name: Tipos mais expressivos
+    layout: single
+    entries:
+      - title: Union type para aceitar mais de um tipo
+        kicker: string|int quando a fronteira permite variação
+        description: Use union types quando a regra realmente aceita mais de um tipo. Não use como desculpa para aceitar qualquer coisa; normalize entrada cedo quando possível.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          function normalizarId(int|string $id): string
+          {
+              return "ID-" . trim((string) $id);
+          }
+
+          echo normalizarId(10) . PHP_EOL;
+          echo normalizarId("  ABC ") . PHP_EOL;
+        output: |-
+          ID-10
+          ID-ABC
+        tags:
+          - php
+          - union-type
+          - tipos
+          - strict_types
+          - php8
+      - title: Nullable type para valor opcional explícito
+        kicker: ?Tipo quando null faz parte do contrato
+        description: "`?string` significa `string|null`. Use quando ausência de valor é uma possibilidade legítima, não para mascarar validação ausente."
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          function saudacao(?string $nome): string
+          {
+              return $nome === null ? "Olá, visitante" : "Olá, $nome";
+          }
+
+          echo saudacao(null) . PHP_EOL;
+          echo saudacao("Ana") . PHP_EOL;
+        output: |-
+          Olá, visitante
+          Olá, Ana
+        tags:
+          - php
+          - nullable
+          - "null"
+          - tipos
+          - contrato
+      - title: never para funções que não retornam
+        kicker: Encerrar fluxo de forma explícita
+        description: "`never` indica que a função sempre lança exceção ou encerra execução. É útil para helpers de falha, validação fatal e respostas que interrompem o fluxo."
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          function falhar(string $mensagem): never
+          {
+              throw new RuntimeException($mensagem);
+          }
+
+          try {
+              falhar("Token inválido");
+          } catch (RuntimeException $e) {
+              echo $e->getMessage() . PHP_EOL;
+          }
+        output: Token inválido
+        tags:
+          - php
+          - never
+          - exception
+          - tipos
+          - fluxo
+  - id: enums
+    name: Enums
+    layout: single
+    entries:
+      - title: Enum para estados fechados
+        kicker: Substituir strings soltas
+        description: Use `enum` quando um campo só pode assumir um conjunto pequeno e conhecido de valores. Isso evita erros de digitação em status, perfis e modos.
+        descriptionTone: default
+        code: |-
+          <?php
+          enum StatusPedido: string
+          {
+              case Pendente = "pendente";
+              case Pago = "pago";
+              case Cancelado = "cancelado";
+          }
+
+          $status = StatusPedido::Pago;
+
+          echo $status->value . PHP_EOL;
+          echo $status->name . PHP_EOL;
+        output: |-
+          pago
+          Pago
+        tags:
+          - php
+          - enum
+          - status
+          - php8
+          - value
+      - title: Métodos dentro do enum
+        kicker: Comportamento perto do estado
+        description: Enums podem ter métodos. Isso ajuda quando cada valor precisa responder uma pergunta simples, como se é final, visível ou permitido.
+        descriptionTone: default
+        code: |-
+          <?php
+          enum StatusPedido: string
+          {
+              case Pendente = "pendente";
+              case Pago = "pago";
+              case Cancelado = "cancelado";
+
+              public function finalizado(): bool
+              {
+                  return match ($this) {
+                      self::Pago, self::Cancelado => true,
+                      self::Pendente => false,
+                  };
+              }
+          }
+
+          var_dump(StatusPedido::Pago->finalizado());
+          var_dump(StatusPedido::Pendente->finalizado());
+        output: |-
+          bool(true)
+          bool(false)
+        tags:
+          - php
+          - enum
+          - metodo
+          - match
+          - estado
+  - id: classes-modernas
+    name: Classes modernas
+    layout: single
+    entries:
+      - title: Constructor property promotion
+        kicker: Menos repetição em DTOs e Value Objects
+        description: A promoção de propriedades no construtor declara e atribui propriedades ao mesmo tempo. Use em objetos simples, mantendo invariantes no construtor quando necessário.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          final class Produto
+          {
+              public function __construct(
+                  public string $nome,
+                  public float $preco,
+              ) {}
+          }
+
+          $produto = new Produto("Mouse", 120.0);
+
+          echo $produto->nome . PHP_EOL;
+          echo $produto->preco . PHP_EOL;
+        output: |-
+          Mouse
+          120
+        tags:
+          - php
+          - constructor-promotion
+          - classe
+          - dto
+          - php8
+      - title: readonly para objetos imutáveis simples
+        kicker: Depois de construir, não altera
+        description: "`readonly` impede alteração da propriedade depois da inicialização. É útil para DTOs, Value Objects e mensagens que não devem mudar durante o fluxo."
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          final readonly class Coordenada
+          {
+              public function __construct(
+                  public float $lat,
+                  public float $lng,
+              ) {}
+          }
+
+          $ponto = new Coordenada(-23.55, -46.63);
+
+          echo $ponto->lat . ", " . $ponto->lng . PHP_EOL;
+        output: "-23.55, -46.63"
+        tags:
+          - php
+          - readonly
+          - classe
+          - imutavel
+          - value-object
+      - title: named arguments em chamadas expressivas
+        kicker: Clareza quando há parâmetros opcionais
+        description: Argumentos nomeados ajudam quando uma função tem parâmetros opcionais ou valores parecidos. Evite depender deles em APIs públicas se nomes de parâmetros ainda podem mudar.
+        descriptionTone: default
+        code: |-
+          <?php
+          function criarUsuario(string $nome, bool $ativo = true, string $perfil = "leitor"): string
+          {
+              return "$nome:$perfil:" . ($ativo ? "ativo" : "inativo");
+          }
+
+          echo criarUsuario(nome: "Ana", perfil: "admin") . PHP_EOL;
+        output: "Ana:admin:ativo"
+        tags:
+          - php
+          - named-arguments
+          - parametro
+          - funcao
+          - php8
+  - id: attributes
+    name: Attributes
+    layout: single
+    entries:
+      - title: Criar e ler attribute com Reflection
+        kicker: Metadado estruturado no código
+        description: Attributes guardam metadados de forma estruturada. Frameworks usam isso para rotas, validação, serialização e injeção de dependência.
+        descriptionTone: default
+        code: |-
+          <?php
+          #[Attribute]
+          final class Rota
+          {
+              public function __construct(public string $path) {}
+          }
+
+          #[Rota("/usuarios")]
+          final class UsuarioController {}
+
+          $ref = new ReflectionClass(UsuarioController::class);
+          $attr = $ref->getAttributes(Rota::class)[0]->newInstance();
+
+          echo $attr->path . PHP_EOL;
+        output: /usuarios
+        tags:
+          - php
+          - attribute
+          - reflection
+          - metadado
+          - rota
+        callout:
+          type: hint
+          label: "Quando usar:"
+          text: attributes são bons para metadado lido por infraestrutura. Para regra de negócio simples, método ou configuração explícita costuma ser mais claro.
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Quando usar cada recurso moderno
+        kicker: Evitar novidade pela novidade
+        description: Recursos modernos ajudam quando reduzem ambiguidade. Use quando o código fica mais explícito, não apenas mais curto.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Union type quando dois ou três tipos realmente fazem parte do contrato."
+              - "Nullable type quando `null` é um estado válido e esperado."
+              - "`never` para helpers que sempre lançam exceção ou encerram o fluxo."
+              - "Enum para substituir strings soltas de status, perfil ou modo."
+              - "Constructor promotion para objetos simples com poucas propriedades."
+              - "`readonly` para DTOs e Value Objects imutáveis."
+              - "Attributes para metadado lido por framework ou infraestrutura."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Evite:"
+            text: transformar todo array em DTO, toda string em enum ou toda configuração em attribute. O recurso certo é aquele que reduz erro e deixa a intenção mais clara.
+        tags:
+          - php
+          - php8
+          - enum
+          - readonly
+          - attributes
+          - decisao
+tech: php
+order: 2.5
+cardDescription: "Recursos modernos do PHP 8+ aplicados com critério: tipos, enums, readonly, attributes e classes mais expressivas."

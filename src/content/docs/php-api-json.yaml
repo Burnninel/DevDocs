@@ -1,0 +1,424 @@
+id: php-api-json
+title: "PHP: API JSON sem Framework"
+subtitle: Capstone prático para montar uma API JSON pequena com roteamento, validação, respostas consistentes, PDO e autenticação simples.
+searchPlaceholder: Buscar API, JSON, rota, validação, PDO, token ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+defaultSectionLayout: single
+quickStart:
+  title: Como testar uma API local
+  kicker: Servidor embutido do PHP
+  description: "Os exemplos assumem uma pasta `public/` com `index.php` como front controller. Para banco, use a configuração explicada em `PHP: Conexão e Manipulação de Banco de Dados`."
+  steps:
+    - Crie `public/index.php`.
+    - Rode `php -S localhost:8000 -t public`.
+    - Teste com `curl http://localhost:8000/health`.
+    - Para endpoints com banco, configure PDO e tabela antes.
+  codeLanguage: shell
+  code: |-
+    php -S localhost:8000 -t public
+    curl http://localhost:8000/health
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "`PHP: Headers HTTP`, `PHP: JSON`, `PHP: Banco de Dados` e `PHP: Erros e exceções` são as peças que esta página combina."
+sections:
+  - id: contrato
+    name: Contrato da API
+    layout: single
+    entries:
+      - title: Definir rotas, métodos e formato de resposta
+        kicker: Antes do código, o contrato
+        description: Uma API pequena fica mais fácil de manter quando cada rota tem método, entrada, status e resposta esperados. Comece por esse contrato antes de espalhar `echo json_encode`.
+        descriptionTone: default
+        code: |-
+          GET  /health
+            200 {"ok": true}
+
+          GET  /usuarios
+            200 {"data": [{"id": 1, "nome": "Ana"}]}
+
+          POST /usuarios
+            body {"nome": "Ana", "email": "ana@email.com"}
+            201 {"data": {"id": 1, "nome": "Ana", "email": "ana@email.com"}}
+
+          erros
+            400 {"error": {"message": "Dados inválidos"}}
+            404 {"error": {"message": "Rota não encontrada"}}
+        codeLanguage: text
+        tags:
+          - php
+          - api
+          - contrato
+          - http
+          - json
+      - title: Estrutura mínima de pastas
+        kicker: Front controller e código fora de public
+        description: Deixe só o ponto de entrada público em `public/`. Código de domínio, repositórios e configuração ficam fora da raiz pública.
+        descriptionTone: default
+        code: |-
+          app/
+            composer.json
+            public/
+              index.php
+            src/
+              Http/
+                Response.php
+              Repository/
+                UsuarioRepository.php
+              Support/
+                Database.php
+        codeLanguage: shell
+        tags:
+          - php
+          - api
+          - estrutura
+          - public
+          - composer
+        callout:
+          type: warn
+          label: "Segurança:"
+          text: não coloque `.env`, `config.php`, dumps SQL ou arquivos internos dentro de `public/`.
+  - id: entrada-saida
+    name: Entrada e resposta JSON
+    layout: single
+    entries:
+      - title: Função única para responder JSON
+        kicker: Header, status e encode no mesmo lugar
+        description: Centralize resposta JSON para não repetir header, status code e flags de `json_encode` em todos os endpoints.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          function jsonResponse(array $payload, int $status = 200): never
+          {
+              http_response_code($status);
+              header("Content-Type: application/json; charset=utf-8");
+              echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+              exit;
+          }
+
+          jsonResponse(["ok" => true]);
+        tags:
+          - php
+          - api
+          - json
+          - header
+          - response
+      - title: Ler e validar body JSON
+        kicker: Entrada externa nunca é confiável
+        description: Leia `php://input`, decodifique com `json_decode(..., true)` e valide campos obrigatórios. Responda 400 quando o payload não cumpre o contrato.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          function jsonBody(): array
+          {
+              $raw = file_get_contents("php://input");
+              $data = json_decode($raw ?: "{}", true);
+
+              if (!is_array($data)) {
+                  jsonResponse(["error" => ["message" => "JSON inválido"]], 400);
+              }
+
+              return $data;
+          }
+
+          function requireString(array $data, string $field): string
+          {
+              $value = trim((string) ($data[$field] ?? ""));
+              if ($value === "") {
+                  jsonResponse(["error" => ["message" => "Campo obrigatório: $field"]], 400);
+              }
+
+              return $value;
+          }
+        tags:
+          - php
+          - api
+          - json_decode
+          - validacao
+          - input
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: validar presença de campo não basta. Em API real, valide formato, tamanho, domínio e permissões antes de persistir.
+      - title: Tratar erros sem vazar detalhe interno
+        kicker: Log interno, mensagem externa controlada
+        description: Use `try/catch` no front controller para converter exceções em JSON. Faça log do detalhe e responda mensagem genérica ao cliente.
+        descriptionTone: default
+        code: |-
+          <?php
+          try {
+              // dispatch($method, $path);
+          } catch (Throwable $e) {
+              error_log($e->getMessage());
+
+              jsonResponse([
+                  "error" => ["message" => "Erro interno"],
+              ], 500);
+          }
+        tags:
+          - php
+          - api
+          - exception
+          - error_log
+          - erro
+  - id: roteamento
+    name: Roteamento simples
+    layout: single
+    entries:
+      - title: Roteador por método e path
+        kicker: Suficiente para APIs pequenas
+        description: Para uma API pequena, um `match` por método + path é legível. Quando crescer, migre para um roteador ou framework em vez de inventar um mini-framework.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          $method = $_SERVER["REQUEST_METHOD"] ?? "GET";
+          $path = parse_url($_SERVER["REQUEST_URI"] ?? "/", PHP_URL_PATH) ?: "/";
+
+          match ([$method, $path]) {
+              ["GET", "/health"] => jsonResponse(["ok" => true]),
+              ["GET", "/usuarios"] => listarUsuarios(),
+              ["POST", "/usuarios"] => criarUsuario(),
+              default => jsonResponse(["error" => ["message" => "Rota não encontrada"]], 404),
+          };
+        tags:
+          - php
+          - api
+          - roteamento
+          - match
+          - request_uri
+      - title: Normalizar CORS quando a API será chamada pelo navegador
+        kicker: Headers antes da resposta
+        description: Se o frontend estiver em outro domínio, configure CORS conscientemente. Para APIs internas ou same-origin, não abra `*` por hábito.
+        descriptionTone: default
+        code: |-
+          <?php
+          $origin = $_SERVER["HTTP_ORIGIN"] ?? "";
+          $permitidas = ["http://localhost:4321"];
+
+          if (in_array($origin, $permitidas, true)) {
+              header("Access-Control-Allow-Origin: $origin");
+              header("Vary: Origin");
+          }
+
+          header("Access-Control-Allow-Headers: Content-Type, Authorization");
+          header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+
+          if (($_SERVER["REQUEST_METHOD"] ?? "GET") === "OPTIONS") {
+              http_response_code(204);
+              exit;
+          }
+        tags:
+          - php
+          - api
+          - cors
+          - headers
+          - options
+  - id: persistencia
+    name: Persistência com PDO
+    layout: single
+    entries:
+      - title: Repository pequeno para isolar SQL
+        kicker: Endpoint não precisa conhecer detalhes do banco
+        description: Coloque SQL em uma classe dedicada. Isso deixa endpoints mais legíveis e facilita trocar regra, paginação ou testes depois.
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          final class UsuarioRepository
+          {
+              public function __construct(private PDO $pdo) {}
+
+              public function listar(): array
+              {
+                  return $this->pdo
+                      ->query("SELECT id, nome, email FROM usuarios ORDER BY id DESC")
+                      ->fetchAll(PDO::FETCH_ASSOC);
+              }
+
+              public function criar(string $nome, string $email): array
+              {
+                  $stmt = $this->pdo->prepare(
+                      "INSERT INTO usuarios (nome, email) VALUES (:nome, :email)"
+                  );
+                  $stmt->execute([":nome" => $nome, ":email" => $email]);
+
+                  return ["id" => (int) $this->pdo->lastInsertId(), "nome" => $nome, "email" => $email];
+              }
+          }
+        tags:
+          - php
+          - api
+          - pdo
+          - repository
+          - sql
+      - title: Endpoint de criação com validação
+        kicker: Body JSON -> regra -> resposta 201
+        description: O endpoint deve ler entrada, validar, chamar a regra ou repository e responder com status correto. Não deixe SQL, validação e resposta misturados em blocos grandes.
+        descriptionTone: default
+        code: |-
+          <?php
+          function criarUsuario(): never
+          {
+              $data = jsonBody();
+              $nome = requireString($data, "nome");
+              $email = requireString($data, "email");
+
+              if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                  jsonResponse(["error" => ["message" => "Email inválido"]], 400);
+              }
+
+              $repo = new UsuarioRepository(Database::pdo());
+              $usuario = $repo->criar($nome, $email);
+
+              jsonResponse(["data" => $usuario], 201);
+          }
+        tags:
+          - php
+          - api
+          - post
+          - validacao
+          - pdo
+  - id: seguranca
+    name: Segurança mínima
+    layout: single
+    entries:
+      - title: Autenticação simples com Bearer token
+        kicker: Exemplo mínimo para APIs internas
+        description: Para APIs internas pequenas, um Bearer token pode ser suficiente. Compare com `hash_equals` e mantenha o segredo fora do código versionado.
+        descriptionTone: default
+        code: |-
+          <?php
+          function exigirToken(): void
+          {
+              $header = $_SERVER["HTTP_AUTHORIZATION"] ?? "";
+              $token = str_starts_with($header, "Bearer ") ? substr($header, 7) : "";
+              $esperado = getenv("API_TOKEN") ?: "";
+
+              if ($esperado === "" || !hash_equals($esperado, $token)) {
+                  jsonResponse(["error" => ["message" => "Não autorizado"]], 401);
+              }
+          }
+        tags:
+          - php
+          - api
+          - bearer
+          - token
+          - autorizacao
+        callout:
+          type: danger
+          label: "Perigo:"
+          text: não coloque token fixo no repositório. Use variável de ambiente, secret do provedor ou cofre de segredo.
+      - title: Limitar métodos e tamanho de payload
+        kicker: Reduzir superfície de abuso
+        description: Antes de processar a rota, rejeite métodos inesperados e payloads grandes demais. Isso evita gastar CPU e memória com requisições que a API nunca deveria aceitar.
+        descriptionTone: default
+        code: |-
+          <?php
+          $permitidos = ["GET", "POST", "OPTIONS"];
+          $method = $_SERVER["REQUEST_METHOD"] ?? "GET";
+
+          if (!in_array($method, $permitidos, true)) {
+              jsonResponse(["error" => ["message" => "Método não permitido"]], 405);
+          }
+
+          $contentLength = (int) ($_SERVER["CONTENT_LENGTH"] ?? 0);
+          if ($contentLength > 1024 * 1024) {
+              jsonResponse(["error" => ["message" => "Payload muito grande"]], 413);
+          }
+        tags:
+          - php
+          - api
+          - seguranca
+          - payload
+          - metodo
+  - id: exemplo-completo
+    name: Exemplo completo
+    layout: single
+    entries:
+      - title: public/index.php com fluxo completo
+        kicker: Front controller pequeno e previsível
+        description: "Este esqueleto mostra a ordem saudável: headers gerais, helpers, autenticação quando necessário, roteamento, tratamento de erro e resposta JSON centralizada."
+        descriptionTone: default
+        code: |-
+          <?php
+          declare(strict_types=1);
+
+          require __DIR__ . "/../vendor/autoload.php";
+
+          function jsonResponse(array $payload, int $status = 200): never
+          {
+              http_response_code($status);
+              header("Content-Type: application/json; charset=utf-8");
+              echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+              exit;
+          }
+
+          try {
+              $method = $_SERVER["REQUEST_METHOD"] ?? "GET";
+              $path = parse_url($_SERVER["REQUEST_URI"] ?? "/", PHP_URL_PATH) ?: "/";
+
+              match ([$method, $path]) {
+                  ["GET", "/health"] => jsonResponse(["ok" => true]),
+                  ["GET", "/usuarios"] => jsonResponse(["data" => []]),
+                  default => jsonResponse(["error" => ["message" => "Rota não encontrada"]], 404),
+              };
+          } catch (Throwable $e) {
+              error_log($e->getMessage());
+              jsonResponse(["error" => ["message" => "Erro interno"]], 500);
+          }
+        tags:
+          - php
+          - api
+          - front-controller
+          - json
+          - exemplo-completo
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Checklist para uma API PHP pequena
+        kicker: O mínimo que evita bagunça cedo
+        description: Uma API sem framework ainda precisa de contrato, erro consistente, validação e fronteiras claras.
+        descriptionTone: default
+        contentBlocks:
+          - type: checklist-block
+            title: Antes de publicar
+            items:
+              - "Defina contrato de rotas, status e payload antes de implementar."
+              - "Centralize resposta JSON em uma função."
+              - "Valide body JSON e campos obrigatórios antes de chamar regra ou banco."
+              - "Use prepared statements via PDO para todo dado externo."
+              - "Responda erros com mensagem controlada e registre detalhes no servidor."
+              - "Mantenha segredos fora do código versionado."
+              - "Não deixe código interno ou configuração dentro de `public/`."
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`jsonResponse` para status + header + encode."
+              - "`jsonBody` para ler e decodificar entrada."
+              - "`match([$method, $path])` para roteamento pequeno."
+              - "`Repository` para isolar SQL."
+              - "`Bearer token` para autenticação simples em API interna."
+              - "Framework quando rotas, middlewares e autenticação crescerem."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Evite:"
+            text: responder JSON em vários lugares com formatos diferentes. Cliente de API precisa de consistência para tratar sucesso, validação, não encontrado e erro interno.
+        tags:
+          - php
+          - api
+          - json
+          - decisao
+          - checklist
+tech: php
+order: 15.5
+cardDescription: Capstone para montar uma API JSON pequena em PHP, conectando HTTP, JSON, validação, PDO, erros e segurança mínima.

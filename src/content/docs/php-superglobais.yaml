@@ -24,7 +24,7 @@ quickStart:
     text: "`PHP: Sessões, Cookies e Tokens` detalha autenticação, regeneração de ID, CSRF e `setcookie` seguro; aqui o foco é o que chega em `$_GET`, `$_POST`, `$_SESSION`, etc."
 sections:
   - id: o-que-sao-superglobais
-    name: 1. O que são superglobais
+    name: O que são superglobais
     layout: single
     entries:
       - title: Superglobais são arrays associativos disponíveis em qualquer escopo
@@ -80,7 +80,7 @@ sections:
           - null-coalescing
           - base
   - id: por-que-superglobais
-    name: 2. Por que são chamadas de superglobais
+    name: Por que são chamadas de superglobais
     layout: single
     entries:
       - title: Elas podem ser acessadas sem import, sem parâmetro e em qualquer função
@@ -109,7 +109,7 @@ sections:
           - get
           - conceito
   - id: server
-    name: 3. $_SERVER
+    name: $_SERVER
     layout: single
     entries:
       - title: Leia metadados da requisição e do servidor com fallback seguro
@@ -179,7 +179,7 @@ sections:
           - php_self
           - seguranca
   - id: get
-    name: 4. $_GET
+    name: $_GET
     layout: single
     entries:
       - title: Use $_GET para dados da query string da URL
@@ -212,7 +212,7 @@ sections:
           - htmlspecialchars
           - dinamico
   - id: post
-    name: 5. $_POST
+    name: $_POST
     layout: single
     entries:
       - title: Use $_POST para dados enviados no corpo da requisição
@@ -253,7 +253,7 @@ sections:
           - validacao
           - seguranca
   - id: session
-    name: 6. $_SESSION
+    name: $_SESSION
     layout: single
     entries:
       - title: Guarde estado do usuário no servidor com $_SESSION
@@ -299,12 +299,12 @@ sections:
           label: "Fronteira:"
           text: esta página explica o **acesso** a `$_SESSION`; políticas de login e segurança ficam na doc de Sessões.
   - id: cookie
-    name: 7. $_COOKIE
+    name: $_COOKIE
     layout: single
     entries:
       - title: Cookie persiste no navegador e volta em novas requisições
         kicker: Use para preferências leves e nunca para segredo sensível
-        description: "`$_COOKIE` contém valores enviados pelo navegador. Com `setcookie()` você define expiração e flags de segurança como `HttpOnly`, `Secure` e `SameSite`."
+        description: "`$_COOKIE` contém os cookies que o navegador **enviou** nesta requisição, ou seja, cookies definidos em requisições anteriores. `setcookie()` apenas envia o header `Set-Cookie`: o valor só aparece em `$_COOKIE` a partir da **próxima** requisição, nunca na mesma. Use flags de segurança como `HttpOnly`, `Secure` e `SameSite`."
         contentBlocks:
           - type: context-block
             variant: common-error
@@ -312,6 +312,8 @@ sections:
             text: não salve senha, token mestre, chave privada ou payload sensível em cookies comuns.
         code: |-
           <?php
+          // Requisição 1: apenas DEFINE o cookie (envia o header Set-Cookie).
+          // Nesta mesma requisição, $_COOKIE["tema"] ainda não existe.
           setcookie("tema", "dark", [
               "expires" => time() + 60 * 60 * 24 * 30,
               "path" => "/",
@@ -320,9 +322,12 @@ sections:
               "samesite" => "Lax",
           ]);
 
-          $tema = $_COOKIE["tema"] ?? "light";
-          echo "Tema atual: {$tema}" . PHP_EOL;
-        output: "Tema atual: dark"
+          $tema = $_COOKIE["tema"] ?? "light"; // cai no fallback: navegador ainda não reenviou o cookie
+          echo "Req 1 (recém-definido): {$tema}" . PHP_EOL;
+
+          // Requisição 2 (próxima visita ao domínio): o navegador reenvia o cookie e então
+          // $_COOKIE["tema"] passa a valer "dark".
+        output: "Req 1 (recém-definido): light"
         tags:
           - php
           - cookie
@@ -331,7 +336,7 @@ sections:
           - samesite
           - secure
   - id: files
-    name: 8. $_FILES
+    name: $_FILES
     layout: single
     entries:
       - title: Upload com $_FILES exige validação de tamanho, erro e tipo real
@@ -386,9 +391,9 @@ sections:
         callout:
           type: hint
           label: "Depois da validação:"
-          text: "para gravar no disco, caminhos seguros, append e logs, use `PHP: Ficheiros e I/O` no hub (`move_uploaded_file`, `file_put_contents`, etc.)."
+          text: "para gravar no disco, caminhos seguros, append e logs, use `PHP: Arquivos e I/O` no hub (`move_uploaded_file`, `file_put_contents`, etc.)."
   - id: request
-    name: 9. $_REQUEST
+    name: $_REQUEST
     layout: single
     entries:
       - title: Evite $_REQUEST quando clareza de origem importa
@@ -401,6 +406,7 @@ sections:
             text: quando você usa `$_REQUEST`, perde rastreabilidade da origem e pode introduzir comportamento inesperado.
         code: |-
           <?php
+          // URL: /busca.php?filtro=recentes
           // Evite em fluxos críticos
           $filtro = $_REQUEST["filtro"] ?? "";
 
@@ -418,7 +424,7 @@ sections:
           - cookie
           - clareza
   - id: env
-    name: 10. $_ENV
+    name: $_ENV
     layout: single
     entries:
       - title: Use variáveis de ambiente para configuração sensível
@@ -453,7 +459,7 @@ sections:
           - getenv
           - ambiente
   - id: globals
-    name: 11. $GLOBALS
+    name: $GLOBALS
     layout: single
     entries:
       - title: Acesse variáveis globais via $GLOBALS com cuidado
@@ -483,7 +489,7 @@ sections:
           - boas-praticas
           - manutencao
   - id: nativa-vs-chave-dinamica
-    name: 12. Diferença entre variável nativa e chave dinâmica
+    name: Diferença entre variável nativa e chave dinâmica
     layout: single
     entries:
       - title: Superglobal é nativa; chaves internas dependem do contexto
@@ -526,7 +532,7 @@ sections:
           - server
           - session
   - id: boas-praticas
-    name: 13. Boas práticas
+    name: Boas práticas
     layout: single
     entries:
       - title: Checklist para usar superglobais com clareza e segurança
@@ -556,7 +562,7 @@ sections:
           - validacao
           - sanitize
   - id: erros-comuns
-    name: 14. Erros comuns
+    name: Erros comuns
     layout: single
     entries:
       - title: Falhas frequentes ao trabalhar com superglobais
@@ -586,7 +592,7 @@ sections:
           - seguranca
           - validacao
   - id: exemplo-pratico-completo
-    name: 15. Exemplo prático completo
+    name: Exemplo prático completo
     layout: single
     entries:
       - title: Visão geral curta com request-info.php, login.php e upload.php
@@ -676,5 +682,5 @@ sections:
           - post
           - files
 tech: php
-order: 14
+order: 5.5
 cardDescription: Guia prático para usar $_SERVER, $_GET, $_POST, $_SESSION, $_COOKIE, $_FILES, $_REQUEST, $_ENV e $GLOBALS com segurança.

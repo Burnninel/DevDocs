@@ -1,0 +1,483 @@
+---
+/**
+ * Explorador de arquitetura interativo (só docs de `tech: arquitetura`): funde
+ * três vistas de uma mesma estrutura — diagrama de camadas, árvore de
+ * pastas/arquivos e cards de responsabilidade — ligadas por um `id` de camada.
+ * Clicar numa camada em qualquer vista destaca as peças relacionadas nas outras
+ * (ver `scripts/arch-explorer.ts`). Sem JS, tudo aparece estático e indexável.
+ */
+import { Icon } from "astro-icon/components";
+import { formatInline } from "@/lib/format";
+import type { ContentBlock } from "@/content.config";
+import ArchRings from "./ArchRings.astro";
+
+type Block = Extract<ContentBlock, { type: "architecture-explorer" }>;
+interface Props {
+	block: Block;
+}
+const { block } = Astro.props;
+
+// Paleta fosca por camada: reforça o vínculo entre diagrama, árvore e card.
+const palette = [
+	"var(--color-tone-hint)",
+	"var(--color-tone-warn)",
+	"var(--color-tone-good)",
+	"var(--color-tone-info)",
+	"var(--color-tone-danger)",
+	"var(--color-accent-strong)",
+];
+const layers = block.layers.map((l, i) => ({
+	...l,
+	color: palette[i % palette.length],
+}));
+const colorOf = new Map(layers.map((l) => [l.id, l.color]));
+
+const shape = block.shape ?? "stack";
+const tree = block.tree ?? [];
+const hint = block.hint ?? "Clique numa camada para destacá-la nas três vistas.";
+---
+
+<section class="arch-explorer not-prose" data-arch-explorer>
+	<header class="arch-head">
+		{
+			block.title && (
+				<h4 class="arch-title">{block.title}</h4>
+			)
+		}
+		{
+			block.description && (
+				<p class="arch-desc" set:html={formatInline(block.description)} />
+			)
+		}
+		<p class="arch-hint">
+			<Icon name="lucide:mouse-pointer-click" class="size-3.5" />
+			<span set:html={formatInline(hint)} />
+		</p>
+	</header>
+
+	<div class:list={["arch-grid", tree.length === 0 && "arch-grid-solo"]}>
+		<!-- Diagrama -->
+		<div class="arch-panel arch-panel-diagram">
+			<span class="arch-panel-label">Camadas</span>
+			{
+				shape === "concentric" ? (
+					<div class="arch-diagram arch-diagram-concentric">
+						<ArchRings layers={layers} />
+					</div>
+				) : (
+					<div class="arch-diagram arch-diagram-stack">
+						{layers.map((l, i) => (
+							<>
+								<button
+									type="button"
+									class="arch-bar"
+									data-arch-node
+									data-arch-trigger
+									data-arch-layer={l.id}
+									style={`--layer: ${l.color}`}
+									aria-pressed="false"
+								>
+									<span class="arch-dot" aria-hidden="true" />
+									<span class="arch-bar-name">{l.name}</span>
+									<span class="arch-bar-role">{l.role}</span>
+								</button>
+								{i < layers.length - 1 && (
+									<span class="arch-arrow" aria-hidden="true">
+										depende de
+									</span>
+								)}
+							</>
+						))}
+					</div>
+				)
+			}
+		</div>
+
+		<!-- Árvore de projeto -->
+		{
+			tree.length > 0 && (
+				<div class="arch-panel arch-panel-tree">
+					<span class="arch-panel-label">Estrutura do projeto</span>
+					<div class="arch-tree scroll-x">
+						{tree.map((node) => {
+							const clickable = Boolean(node.layer);
+							const color = node.layer ? colorOf.get(node.layer) : undefined;
+							const Tag = clickable ? "button" : "div";
+							return (
+								<Tag
+									class:list={["arch-tree-row", clickable && "is-clickable"]}
+									data-arch-node={clickable ? "" : undefined}
+									data-arch-trigger={clickable ? "" : undefined}
+									data-arch-layer={node.layer}
+									aria-pressed={clickable ? "false" : undefined}
+									style={color ? `--layer: ${color}` : undefined}
+									type={clickable ? "button" : undefined}
+								>
+									<span
+										class="arch-tree-indent"
+										style={`width: ${node.depth * 1.15}rem`}
+									/>
+									<Icon
+										name={node.kind === "dir" ? "lucide:folder" : "lucide:file-code"}
+										class="arch-tree-icon size-4 shrink-0"
+									/>
+									<span class="arch-tree-label">{node.label}</span>
+									{node.note && (
+										<span class="arch-tree-note">{node.note}</span>
+									)}
+								</Tag>
+							);
+						})}
+					</div>
+				</div>
+			)
+		}
+	</div>
+
+	<!-- Cards de responsabilidade -->
+	<div class="arch-cards">
+		{
+			layers.map((l) => (
+				<button
+					type="button"
+					class="arch-card"
+					data-arch-node
+					data-arch-trigger
+					data-arch-layer={l.id}
+					style={`--layer: ${l.color}`}
+					aria-pressed="false"
+				>
+					<span class="arch-card-head">
+						<span class="arch-dot" aria-hidden="true" />
+						{l.name}
+					</span>
+					<span class="arch-card-role" set:html={formatInline(l.role)} />
+					{l.detail && (
+						<span class="arch-card-detail" set:html={formatInline(l.detail)} />
+					)}
+					{(l.knows || l.avoids) && (
+						<span class="arch-card-meta">
+							{l.knows && (
+								<span class="arch-meta-line">
+									<b>conhece</b> <span set:html={formatInline(l.knows)} />
+								</span>
+							)}
+							{l.avoids && (
+								<span class="arch-meta-line arch-meta-avoid">
+									<b>não conhece</b> <span set:html={formatInline(l.avoids)} />
+								</span>
+							)}
+						</span>
+					)}
+				</button>
+			))
+		}
+	</div>
+</section>
+
+<style is:global>
+	/* ---- Explorador de arquitetura -------------------------------------------
+	 * Estilos globais namespaced por [data-arch-explorer]. As classes de estado
+	 * (.is-active / .has-selection) são alternadas por scripts/arch-explorer.ts,
+	 * que cruza as três vistas por camada — por isso não podem ser scoped.
+	 */
+	.arch-explorer {
+		display: grid;
+		gap: 1.25rem;
+		padding: 1.5rem;
+		border-radius: var(--radius-lg);
+		background: var(--glass-tint);
+		backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+		-webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+		box-shadow: inset 0 1px 0 0 color-mix(in oklab, white 5%, transparent);
+	}
+
+	.arch-head {
+		display: grid;
+		gap: 0.4rem;
+	}
+	.arch-title {
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--color-accent);
+	}
+	.arch-desc {
+		font-size: 0.95rem;
+		line-height: 1.6;
+		color: var(--color-ink-soft);
+		max-width: var(--reading-measure);
+	}
+	.arch-hint {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.78rem;
+		color: var(--color-faint);
+	}
+
+	.arch-grid {
+		display: grid;
+		gap: 1rem;
+	}
+	@media (min-width: 64rem) {
+		.arch-grid {
+			grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+			align-items: start;
+		}
+		.arch-grid-solo {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
+	.arch-panel {
+		display: grid;
+		gap: 0.75rem;
+		padding: 1rem;
+		border-radius: var(--radius-md);
+		background: color-mix(in oklab, var(--color-surface-1) 70%, transparent);
+	}
+	.arch-panel-label {
+		font-family: var(--font-mono);
+		font-size: 0.64rem;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--color-faint);
+	}
+
+	/* ---- Diagrama: pilha ---- */
+	.arch-diagram-stack {
+		display: grid;
+		gap: 0;
+		justify-items: stretch;
+	}
+	.arch-bar {
+		display: grid;
+		gap: 0.15rem;
+		text-align: left;
+		width: 100%;
+		padding: 0.7rem 0.9rem;
+		border-radius: var(--radius-sm);
+		background: color-mix(in oklab, var(--layer) 12%, var(--color-surface-2));
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--layer) 30%, transparent);
+		cursor: pointer;
+		transition:
+			transform var(--dur-fast) var(--ease-out),
+			box-shadow var(--dur-fast) var(--ease-out),
+			opacity var(--dur-fast) var(--ease-out);
+	}
+	.arch-bar-name {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-family: var(--font-display);
+		font-weight: 600;
+		color: var(--color-ink);
+	}
+	.arch-bar-role {
+		padding-left: 1.1rem;
+		font-size: 0.8rem;
+		color: var(--color-muted);
+	}
+	.arch-arrow {
+		justify-self: center;
+		padding: 0.25rem 0;
+		font-family: var(--font-mono);
+		font-size: 0.62rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-faint);
+	}
+	.arch-arrow::before {
+		content: "↓ ";
+	}
+
+	/* ---- Diagrama: concêntrico ---- */
+	.arch-diagram-concentric {
+		display: block;
+	}
+	.arch-ring {
+		padding: 0.7rem;
+		border-radius: var(--radius-md);
+		background: color-mix(in oklab, var(--layer) 10%, var(--color-surface-2));
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--layer) 32%, transparent);
+		transition: opacity var(--dur-fast) var(--ease-out);
+	}
+	.arch-ring + .arch-ring,
+	.arch-ring-inner {
+		margin-top: 0.55rem;
+	}
+	.arch-ring-label {
+		display: grid;
+		gap: 0.1rem;
+		width: 100%;
+		text-align: left;
+		padding: 0.15rem 0.25rem 0.4rem;
+		cursor: pointer;
+		background: transparent;
+	}
+	.arch-ring-name {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-family: var(--font-display);
+		font-weight: 600;
+		color: var(--color-ink);
+	}
+	.arch-ring-role {
+		padding-left: 1.1rem;
+		font-size: 0.78rem;
+		color: var(--color-muted);
+	}
+
+	/* ---- Árvore ---- */
+	.arch-tree {
+		display: grid;
+		gap: 0.1rem;
+		font-family: var(--font-mono);
+		font-size: 0.82rem;
+	}
+	.arch-tree-row {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		width: 100%;
+		text-align: left;
+		padding: 0.28rem 0.5rem;
+		border-radius: var(--radius-sm);
+		color: var(--color-ink-soft);
+		background: transparent;
+		transition:
+			background var(--dur-fast) var(--ease-out),
+			opacity var(--dur-fast) var(--ease-out);
+	}
+	.arch-tree-row.is-clickable {
+		cursor: pointer;
+	}
+	.arch-tree-row.is-clickable:hover {
+		background: color-mix(in oklab, var(--layer) 14%, transparent);
+	}
+	.arch-tree-indent {
+		display: inline-block;
+		flex-shrink: 0;
+	}
+	.arch-tree-icon {
+		color: var(--layer, var(--color-faint));
+	}
+	.arch-tree-row:not(.is-clickable) .arch-tree-icon {
+		color: var(--color-faint);
+	}
+	.arch-tree-label {
+		white-space: nowrap;
+	}
+	.arch-tree-note {
+		margin-left: 0.35rem;
+		color: var(--color-faint);
+		white-space: nowrap;
+	}
+	.arch-tree-note::before {
+		content: "# ";
+	}
+
+	/* ---- Cards ---- */
+	.arch-cards {
+		display: grid;
+		gap: 0.75rem;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	}
+	.arch-card {
+		display: grid;
+		gap: 0.35rem;
+		text-align: left;
+		padding: 0.9rem 1rem;
+		border-radius: var(--radius-md);
+		background: color-mix(in oklab, var(--color-surface-1) 75%, transparent);
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--layer) 22%, transparent);
+		cursor: pointer;
+		transition:
+			transform var(--dur-fast) var(--ease-out),
+			box-shadow var(--dur-fast) var(--ease-out),
+			opacity var(--dur-fast) var(--ease-out);
+	}
+	.arch-card-head {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-family: var(--font-display);
+		font-weight: 600;
+		color: var(--color-ink);
+	}
+	.arch-card-role {
+		font-size: 0.85rem;
+		line-height: 1.5;
+		color: var(--color-ink-soft);
+	}
+	.arch-card-detail {
+		font-size: 0.8rem;
+		line-height: 1.5;
+		color: var(--color-muted);
+	}
+	.arch-card-meta {
+		display: grid;
+		gap: 0.15rem;
+		margin-top: 0.15rem;
+	}
+	.arch-meta-line {
+		font-size: 0.76rem;
+		color: var(--color-muted);
+	}
+	.arch-meta-line b {
+		font-weight: 600;
+		color: color-mix(in oklab, var(--layer) 70%, var(--color-ink));
+	}
+	.arch-meta-avoid b {
+		color: var(--color-faint);
+	}
+
+	/* ---- Ponto colorido da camada ---- */
+	.arch-dot {
+		width: 0.55rem;
+		height: 0.55rem;
+		border-radius: 999px;
+		flex-shrink: 0;
+		background: var(--layer, var(--color-accent));
+		box-shadow: 0 0 10px -2px var(--layer, var(--color-accent));
+	}
+
+	/* ---- Estados de seleção (JS) ---- */
+	.arch-explorer.has-selection [data-arch-node]:not(.is-active) {
+		opacity: 0.32;
+		filter: saturate(0.4);
+	}
+	[data-arch-node].is-active {
+		opacity: 1 !important;
+		filter: none !important;
+	}
+	.arch-bar.is-active,
+	.arch-card.is-active {
+		transform: translateY(-1px);
+		box-shadow:
+			inset 0 0 0 1px color-mix(in oklab, var(--layer) 60%, transparent),
+			0 0 24px -6px color-mix(in oklab, var(--layer) 55%, transparent);
+	}
+	.arch-ring.is-active {
+		box-shadow:
+			inset 0 0 0 1px color-mix(in oklab, var(--layer) 60%, transparent),
+			0 0 24px -8px color-mix(in oklab, var(--layer) 50%, transparent);
+	}
+	.arch-tree-row.is-active {
+		background: color-mix(in oklab, var(--layer) 20%, transparent);
+	}
+	[data-arch-trigger]:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.arch-bar,
+		.arch-card {
+			transition-duration: 0.001ms;
+		}
+	}
+</style>

@@ -1,6 +1,6 @@
 id: go-interfaces
 title: "Go: Interfaces"
-subtitle: Guia prático para satisfação implícita de interfaces, desenho com interfaces pequenas e contratos com io.Reader e io.Writer.
+subtitle: Guia prático para satisfação implícita de interfaces, design com interfaces pequenas e contratos com io.Reader e io.Writer.
 searchPlaceholder: Buscar interface, Reader, Writer, Stringer ou palavra...
 shortcutHint: "Atalho: pressione / para focar a busca."
 codeLanguage: go
@@ -8,7 +8,7 @@ defaultSectionLayout: single
 quickStart:
   title: Uma interface e duas implementações
   kicker: Satisfação em tempo de compilação
-  description: "Em Go não escreves `implements`. Se o tipo tem os métodos certos, já satisfaz a interface. Relembre structs e métodos em `Go: Tipos e valores` no hub."
+  description: "Em Go você não escreve `implements`. Se o tipo tem os métodos certos, já satisfaz a interface. Relembre structs e métodos em `Go: Tipos e valores` no hub."
   steps:
     - "Crie módulo com `go mod init` (ver `Go: Módulos`)."
     - Cole o exemplo completo em `main.go` e execute `go run .`.
@@ -53,7 +53,7 @@ sections:
     entries:
       - title: Interface é conjunto de métodos
         kicker: Contrato comportamental
-        description: Uma variável de tipo interface guarda um valor concreto e um tipo dinâmico. Só podes chamar métodos que a interface declara. O compilador verifica se o concreto satisfaz a interface.
+        description: Uma variável de tipo interface guarda um valor concreto e um tipo dinâmico. Você só pode chamar métodos que a interface declara. O compilador verifica se o concreto satisfaz a interface.
         descriptionTone: default
         code: |-
           package main
@@ -86,7 +86,7 @@ sections:
           - contrato
       - title: Interface vazia e any
         kicker: Go 1.18+
-        description: "`interface{}` significa qualquer valor com qualquer método. O alias predefinido `any` é equivalente. Use com parcimónia: perde-se informação de tipo e costuma exigir type assertion ou `switch` por tipo."
+        description: "`interface{}` significa qualquer valor com qualquer método. O alias predefinido `any` é equivalente. Use com parcimônia: perde-se informação de tipo e costuma exigir type assertion ou `switch` por tipo."
         descriptionTone: warn
         code: |-
           package main
@@ -115,7 +115,7 @@ sections:
     entries:
       - title: Reader como contrato de leitura
         kicker: Streams e bytes
-        description: "`io.Reader` declara `Read([]byte) (int, error)`. Muitas APIs aceitam `Reader` em vez de ficheiros concretos, o que facilita testes com `bytes.Reader` ou `strings.Reader`."
+        description: "`io.Reader` declara `Read([]byte) (int, error)`. Muitas APIs aceitam `Reader` em vez de arquivos concretos, o que facilita testes com `bytes.Reader` ou `strings.Reader`."
         descriptionTone: default
         code: |-
           package main
@@ -170,12 +170,12 @@ sections:
           - Fprintf
           - bytes.Buffer
   - id: desenho-interfaces
-    name: Boas práticas de desenho
+    name: Boas práticas de design
     layout: single
     entries:
-      - title: Aceite interfaces, devolva structs concretas
-        kicker: Proverbio útil
-        description: Funções públicas costumam receber interfaces estreitas (`io.Reader`, `context.Context`) e devolver structs concretos ou `(T, error)`. Isso reduz acoplamento e facilita evoluir implementações.
+      - title: Aceite interfaces, retorne structs concretas
+        kicker: Provérbio útil
+        description: Funções públicas costumam receber interfaces estreitas (`io.Reader`, `context.Context`) e retornar structs concretas ou `(T, error)`. Isso reduz acoplamento e facilita evoluir implementações.
         descriptionTone: default
         code: |-
           package main
@@ -222,6 +222,33 @@ sections:
           - interface
           - composicao
           - ReadCloser
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para desenhar uma interface
+        kicker: Tamanho do contrato e onde declarar
+        description: Use este resumo para decidir se vale criar uma interface e o quão pequena ela deve ser.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Interface pequena (um ou dois métodos) para contrato fácil de implementar e testar."
+              - "`io.Reader`/`io.Writer` quando a função só precisa ler ou escrever bytes, não o tipo concreto."
+              - "`any` só quando o valor realmente pode ser qualquer tipo — normalmente exige type assertion depois."
+              - "Aceite interfaces nos parâmetros, retorne structs concretas no retorno."
+              - "Composição de interfaces pequenas (`ReadCloser`) em vez de uma interface grande."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: definir uma interface antes de existir uma segunda implementação real. Sem um segundo caso de uso concreto, a abstração normalmente só adiciona indireção sem ganho.
+        tags:
+          - go
+          - interface
+          - decisao
+          - design
 tech: go
 order: 19
 cardDescription: Guia prático para satisfação implícita, interfaces pequenas, io.Reader, io.Writer e any.

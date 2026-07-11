@@ -24,7 +24,7 @@ quickStart:
     text: "`PHP: Superglobais` resume `$_SESSION`, `$_COOKIE` e `$_SERVER` na requisição; este guia aprofunda fluxo de login, flags de cookie, tokens e CSRF."
 sections:
   - id: o-que-sao-sessoes
-    name: 1. O que são sessões em PHP
+    name: O que são sessões em PHP
     layout: single
     entries:
       - title: Sessão guarda estado no servidor entre requisições
@@ -48,7 +48,7 @@ sections:
           - autenticacao
           - base
   - id: como-funciona-phpsessid
-    name: 2. Como funciona o PHPSESSID
+    name: Como funciona o PHPSESSID
     layout: single
     entries:
       - title: PHPSESSID conecta navegador com dados salvos no servidor
@@ -74,7 +74,7 @@ sections:
           label: "Atenção:"
           text: se alguém roubar o identificador da sessão, pode tentar sequestrar a sessão. Por isso hardening de cookie e regeneração de ID são essenciais.
   - id: session-start
-    name: 3. session_start()
+    name: session_start()
     layout: single
     entries:
       - title: session_start() inicia ou retoma a sessão atual
@@ -101,7 +101,7 @@ sections:
           label: "Perigo:"
           text: echo, espaço ou HTML antes de `session_start()` pode quebrar o envio de header e cookie de sessão.
   - id: session-array
-    name: 4. $_SESSION
+    name: $_SESSION
     layout: single
     entries:
       - title: "`$_SESSION` é um array associativo por usuário"
@@ -129,7 +129,7 @@ sections:
           - estado
           - dados
   - id: salvar-dados-sessao
-    name: 5. Como salvar dados na sessão
+    name: Como salvar dados na sessão
     layout: single
     entries:
       - title: Salvar usuário logado na sessão após autenticação
@@ -163,7 +163,7 @@ sections:
           - session_regenerate_id
           - salvar
   - id: ler-dados-sessao
-    name: 6. Como ler dados da sessão
+    name: Como ler dados da sessão
     layout: single
     entries:
       - title: Verificar autenticação antes de abrir página protegida
@@ -188,7 +188,7 @@ sections:
           - auth
           - leitura
   - id: remover-dados-sessao
-    name: 7. Como remover dados da sessão
+    name: Como remover dados da sessão
     layout: single
     entries:
       - title: Use unset() para remover chaves específicas
@@ -211,7 +211,7 @@ sections:
           - csrf
           - flash
   - id: destruir-sessao
-    name: 8. Como destruir uma sessão
+    name: Como destruir uma sessão
     layout: single
     entries:
       - title: Logout completo com session_destroy()
@@ -272,7 +272,7 @@ sections:
           label: "Atenção:"
           text: regenerar ID faz diferença de segurança justamente no momento da autenticação.
   - id: cookies-relacao-sessao
-    name: 9. Cookies e relação com sessão
+    name: Cookies e relação com sessão
     layout: single
     entries:
       - title: Sessão e cookie trabalham juntos, mas têm papéis diferentes
@@ -314,7 +314,7 @@ sections:
           label: "Perigo:"
           text: não salve senha, token mestre ou dados sensíveis em cookie comum.
   - id: httponly-secure-samesite
-    name: 10. HttpOnly, Secure e SameSite
+    name: HttpOnly, Secure e SameSite
     layout: single
     entries:
       - title: Configurações de cookie que elevam segurança da autenticação
@@ -364,7 +364,7 @@ sections:
           label: "Atenção:"
           text: "`HttpOnly` ajuda muito, mas não impede todos os ataques. Continue validando entrada, saída e lógica de autorização."
   - id: geracao-de-tokens
-    name: 11. Geração de tokens em PHP
+    name: Geração de tokens em PHP
     layout: single
     entries:
       - title: Gere token seguro com random_bytes() e bin2hex()
@@ -391,7 +391,7 @@ sections:
           label: "Perigo:"
           text: não use `rand()` ou `uniqid()` para token de segurança.
   - id: tokens-autenticacao
-    name: 12. Tokens para autenticação
+    name: Tokens para autenticação
     layout: single
     entries:
       - title: Token de autenticação, token temporário e token CSRF têm objetivos diferentes
@@ -445,7 +445,7 @@ sections:
           - sessao
           - comparacao
   - id: token-csrf
-    name: 13. Token CSRF
+    name: Token CSRF
     layout: single
     entries:
       - title: Gerar e validar CSRF token em formulário
@@ -497,7 +497,7 @@ sections:
           label: "Dica:"
           text: SameSite ajuda, mas não substitui token CSRF em fluxos críticos.
   - id: boas-praticas
-    name: 14. Boas práticas
+    name: Boas práticas
     layout: single
     entries:
       - title: Checklist de segurança para sessão, cookie e token
@@ -529,7 +529,7 @@ sections:
           - token
           - seguranca
   - id: erros-comuns
-    name: 15. Erros comuns
+    name: Erros comuns
     layout: single
     entries:
       - title: Falhas frequentes em autenticação com sessão, cookie e token
@@ -559,7 +559,7 @@ sections:
           - token
           - seguranca
   - id: exemplo-pratico-completo
-    name: 16. Exemplo prático completo
+    name: Exemplo prático completo
     layout: single
     entries:
       - title: Visão geral curta de arquivos para login e logout

@@ -20,6 +20,8 @@ export const getStaticPaths = (async () => {
 const { entry } = Astro.props;
 const doc = entry.data;
 const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
+const readerMode = doc.readerLayout ?? "panels";
+const isNarrative = readerMode === "narrative";
 ---
 
 <DocLayout title={doc.title} description={doc.subtitle}>
@@ -65,7 +67,11 @@ const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
 				)
 			}
 
-			<div class="doc-panels" data-pagefind-body>
+			<div
+				class:list={["doc-panels", isNarrative && "doc-panels-narrative"]}
+				data-reader-mode={readerMode}
+				data-pagefind-body
+			>
 				{
 					doc.sections.map((section, i) => (
 						<section
@@ -93,7 +99,7 @@ const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
 				}
 			</div>
 
-			<SectionPager />
+			{!isNarrative && <SectionPager />}
 		</main>
 	</div>
 </DocLayout>

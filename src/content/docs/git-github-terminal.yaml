@@ -45,6 +45,44 @@ sections:
           - local
           - main
           - base
+      - title: Ignorar arquivos com .gitignore
+        kicker: Antes do primeiro commit do projeto
+        description: Crie o .gitignore na raiz do repositório antes de rastrear os primeiros arquivos. Um padrão por linha; # inicia comentário.
+        descriptionTone: default
+        code: |-
+          # .gitignore
+          node_modules/
+          dist/
+          .env
+          *.log
+        codeLanguage: shell
+        tags:
+          - gitignore
+          - ignorar
+          - node_modules
+          - env
+          - build
+          - base
+          - setup
+      - title: Parar de rastrear arquivo já versionado
+        kicker: Adicionar ao .gitignore não remove o que já está no histórico
+        description: Se o arquivo já foi commitado antes de entrar no .gitignore, ele continua rastreado. Remova do índice sem apagar do disco.
+        descriptionTone: warn
+        code: |-
+          echo ".env" >> .gitignore
+          git rm --cached .env
+          git commit -m "chore: para de rastrear .env"
+        tags:
+          - gitignore
+          - rm --cached
+          - rastrear
+          - remover
+          - engano
+          - base
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: isso não apaga o arquivo do histórico antigo. Para remover de commits passados (por exemplo, um segredo vazado), é preciso reescrever histórico — fora do escopo deste guia rápido.
       - title: Conferir estado e histórico
         kicker: Antes de commitar, puxar ou corrigir
         description: Mostra o estado dos arquivos e os últimos commits.
@@ -209,6 +247,34 @@ sections:
           - pull
           - conflito
           - branches
+      - title: Resolver conflito de merge
+        kicker: Quando duas alterações batem na mesma linha
+        description: O Git marca o trecho em conflito direto no arquivo. Resolva manualmente, adicione ao stage e finalize o merge com commit.
+        descriptionTone: warn
+        code: |-
+          git status                # mostra os arquivos em conflito
+          # edite os arquivos e resolva os marcadores <<<<<<< ======= >>>>>>>
+          git add arquivo-resolvido.js
+          git commit                # finaliza o merge com os marcadores já removidos
+        tags:
+          - merge
+          - conflito
+          - resolver
+          - marcadores
+          - editar
+          - branches
+        contentBlocks:
+          - type: flow-steps
+            title: Passo a passo
+            steps:
+              - Rode `git status` para ver quais arquivos estão em conflito.
+              - Abra cada arquivo e resolva os marcadores `<<<<<<<`, `=======`, `>>>>>>>`.
+              - Rode `git add` nos arquivos já resolvidos.
+              - Rode `git commit` para finalizar o merge, ou `git merge --abort` para cancelar e voltar ao estado anterior.
+        callout:
+          type: hint
+          label: "Desistir do merge:"
+          text: se o conflito ficar confuso demais, `git merge --abort` cancela e devolve a branch ao estado de antes do merge, sem perder nada.
       - title: Apagar branch após merge
         kicker: Limpeza local e remota
         description: Remove branches antigas para manter o repo organizado.
@@ -326,6 +392,53 @@ sections:
           type: danger
           label: "Crítico:"
           text: isso altera o histórico remoto. Evite em branch compartilhada sem alinhamento.
+  - id: tags-releases
+    name: Tags e Releases
+    entries:
+      - title: Criar tag anotada de versão
+        kicker: Marcar um commit como release
+        description: Tags anotadas guardam autor, data e mensagem. Prefira -a a tags leves quando a tag representa uma release de verdade.
+        descriptionTone: default
+        code: |-
+          git tag -a v1.2.0 -m "release: v1.2.0"
+          git push origin v1.2.0
+        tags:
+          - tag
+          - anotada
+          - versao
+          - release
+          - v1.2.0
+          - tags
+      - title: Listar e conferir tags
+        kicker: Ver o que já foi publicado
+        description: Liste as tags locais e inspecione o commit e a mensagem associados a uma tag específica.
+        descriptionTone: default
+        code: |-
+          git tag
+          git show v1.2.0
+        tags:
+          - tag
+          - listar
+          - show
+          - conferir
+          - release
+      - title: Apagar tag local e remota
+        kicker: Corrigir tag criada por engano
+        description: Remova primeiro a tag local e depois a referência no remoto — os dois comandos são independentes.
+        descriptionTone: warn
+        code: |-
+          git tag -d v1.2.0
+          git push origin --delete v1.2.0
+        tags:
+          - tag
+          - apagar
+          - deletar
+          - remoto
+          - engano
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: se alguém já baixou a tag ou uma release já foi publicada a partir dela, apagar e recriar com o mesmo nome pode causar confusão. Prefira criar uma tag nova.
   - id: extras-frequentes
     name: Extras Frequentes
     entries:

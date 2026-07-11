@@ -217,7 +217,7 @@ sections:
           - formulario
       - title: "strtolower() e strtoupper(): padronizar caixa"
         kicker: Comparar e armazenar dados com consistência
-        description: "`strtolower($texto)` recebe a string e devolve em minúsculo; `strtoupper($texto)` faz o mesmo para maiúsculo. Use para comparação sem erro de caixa e para padronizar email, código e status."
+        description: "`strtolower($texto)` recebe a string e retorna em minúsculo; `strtoupper($texto)` faz o mesmo para maiúsculo. Use para comparação sem erro de caixa e para padronizar email, código e status."
         descriptionTone: default
         code: |-
           <?php
@@ -295,14 +295,15 @@ sections:
           - api
       - title: Comparação de strings com segurança
         kicker: Evitar falso positivo por caixa ou tipo
-        description: Use `===` para comparação estrita. Em comparação textual, `strcmp($a, $b)` compara duas strings com diferença de caixa e `strcasecmp($a, $b)` ignora caixa. `$a` e `$b` são os dois textos comparados. Isso é útil em regra de permissão, status e integrações.
+        description: Use `===` para comparação estrita. Em comparação textual, `strcmp($a, $b)` diferencia maiúsculas de minúsculas e `strcasecmp($a, $b)` ignora a caixa. `$a` e `$b` são os dois textos comparados. De `strcmp` use apenas o sinal do retorno (negativo, zero ou positivo); o valor exato não é garantido pela linguagem. Isso é útil em regra de permissão, status e integrações.
         descriptionTone: default
         code: |-
           <?php
           $perfilEntrada = "Admin";
 
           var_dump($perfilEntrada === "Admin"); // Comparação estrita exata
-          var_dump(strcmp($perfilEntrada, "admin")); // Sensível a caixa
+          $ordem = strcmp($perfilEntrada, "admin"); // Sensível a caixa
+          echo "Comparação exata: " . ($ordem < 0 ? "antes" : ($ordem > 0 ? "depois" : "igual")) . PHP_EOL;
           var_dump(strcasecmp($perfilEntrada, "admin")); // Ignora caixa
 
           if (strcasecmp($perfilEntrada, "admin") === 0) {
@@ -310,7 +311,7 @@ sections:
           }
         output: |-
           bool(true)
-          int(-32)
+          Comparação exata: antes
           int(0)
           Perfil autorizado
         tags:
@@ -355,11 +356,11 @@ sections:
           $nomeEntrada = "  Ana   SILVA  ";
 
           $nomeNormalizado = trim($nomeEntrada); // Remove bordas
-          $nomeNormalizado = str_replace("  ", " ", $nomeNormalizado); // Reduz espaço duplo simples
+          $nomeNormalizado = str_replace("  ", " ", $nomeNormalizado); // troca pares: "   " (3) vira "  " (2). Para colapsar tudo use preg_replace('/\s+/', ' ', ...)
           $nomeNormalizado = strtolower($nomeNormalizado); // Padroniza caixa para comparação
 
           echo "Nome normalizado: " . $nomeNormalizado . PHP_EOL;
-        output: "Nome normalizado: ana silva"
+        output: "Nome normalizado: ana  silva"
         tags:
           - php
           - strings
@@ -393,7 +394,7 @@ sections:
     entries:
       - title: "explode(): quebrar string em partes"
         kicker: Útil para tags, CSV simples e filtros
-        description: "`explode($separador, $texto, $limiteOpcional)` divide `$texto` usando `$separador` e devolve um array. O terceiro parâmetro é opcional para limitar quantas partes retornar. Use quando dados chegam em linha única e você precisa tratar item por item."
+        description: "`explode($separador, $texto, $limiteOpcional)` divide `$texto` usando `$separador` e retorna um array. O terceiro parâmetro é opcional para limitar quantas partes retornar. Use quando dados chegam em linha única e você precisa tratar item por item."
         descriptionTone: default
         code: |-
           <?php
@@ -591,11 +592,11 @@ sections:
           <?php
           $texto = "ação";
 
-          echo "strlen: " . strlen($texto) . PHP_EOL; // Pode contar bytes
+          echo "strlen: " . strlen($texto) . PHP_EOL; // conta bytes: ç e ã ocupam 2 bytes cada em UTF-8
 
           echo "mb_strlen: " . mb_strlen($texto, "UTF-8") . PHP_EOL; // Conta caracteres visuais
         output: |-
-          strlen: 5
+          strlen: 6
           mb_strlen: 4
         tags:
           - php
@@ -638,5 +639,5 @@ sections:
           label: "Perigo:"
           text: bugs de string costumam parecer intermitentes porque dependem do formato exato de entrada.
 tech: php
-order: 8
+order: 1.5
 cardDescription: Guia prático para manipular strings no dia a dia com validação, transformação, APIs e formatação de dados.

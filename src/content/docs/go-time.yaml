@@ -1,6 +1,6 @@
 id: go-time
 title: "Go: Tempo (time)"
-subtitle: Guia prático para time.Time em UTC, formatar com layouts, Duration, Since e nota sobre relógio monotónico.
+subtitle: Guia prático para time.Time em UTC, formatar com layouts, Duration, Since e nota sobre relógio monotônico.
 searchPlaceholder: Buscar RFC3339, UTC, Duration, Parse ou palavra...
 shortcutHint: "Atalho: pressione / para focar a busca."
 codeLanguage: go
@@ -8,7 +8,7 @@ defaultSectionLayout: single
 quickStart:
   title: Instante fixo em UTC
   kicker: Evitar surpresas de fuso
-  description: "Guarde instantes na base de dados em UTC (`time.RFC3339`). Converta para fuso local só na apresentação. Combine com APIs HTTP em `Go: HTTP` e JSON em `Go: JSON`."
+  description: "Guarde instantes no banco de dados em UTC (`time.RFC3339`). Converta para fuso local só na apresentação. Combine com APIs HTTP em `Go: HTTP` e JSON em `Go: JSON`."
   steps:
     - Módulo com `go mod init`.
     - Cole o exemplo em `main.go` e `go run .`.
@@ -37,7 +37,7 @@ sections:
     entries:
       - title: time.Parse em UTC explícito
         kicker: Fuso ambíguo sem monotonic
-        description: "`time.Parse` usa UTC se a string não trouxer offset. Para strings com fuso, o instante resultante ajusta-se. Valide formatos de entrada de utilizadores."
+        description: "`time.Parse` usa UTC se a string não trouxer offset. Para strings com fuso, o instante resultante ajusta-se. Valide formatos de entrada de usuários."
         descriptionTone: default
         code: |-
           package main
@@ -87,12 +87,12 @@ sections:
           - ParseDuration
           - Sleep
   - id: since-monotonic
-    name: Since, Sub e monotónico
+    name: Since, Sub e monotônico
     layout: single
     entries:
       - title: Since e Sub para intervalos
         kicker: Medir duração decorrida
-        description: "`time.Since(t)` é açúcar sintático para `time.Now().Sub(t)`. `t.Sub(u)` devolve `Duration` assinada entre dois instantes."
+        description: "`time.Since(t)` é açúcar sintático para `time.Now().Sub(t)`. `t.Sub(u)` retorna `Duration` assinada entre dois instantes."
         descriptionTone: default
         code: |-
           package main
@@ -114,9 +114,9 @@ sections:
           - Sub
           - Duration
           - medicao
-      - title: Relógio monotónico e comparações
+      - title: Relógio monotônico e comparações
         kicker: Detalhe interno útil
-        description: "`time.Time` pode incluir um relógio monotónico para medir intervalos sem saltos quando o relógio de parede é ajustado (NTP). Comparações (`Before`, `After`) usam ambos os relógios de forma segura; não dependas de `UnixNano` para ordenar instantes de wall clock distantes sem ler a documentação oficial."
+        description: "`time.Now()` inclui uma leitura de relógio monotônico, usada para medir intervalos sem sofrer com ajustes do relógio de parede (NTP). Operações entre dois instantes (`Sub`, `Before`, `After`) usam a leitura monotônica **quando ambos os valores a têm**; se um deles perdeu essa leitura (após `t.Round`, `t.UTC`, serialização, etc.), a comparação recai sobre o relógio de parede. Por isso, para ordenar instantes que passaram por serialização, compare com `Before`/`After` em vez de `UnixNano`."
         descriptionTone: warn
         code: |-
           package main
@@ -138,6 +138,33 @@ sections:
           - monotonic
           - Before
           - After
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para trabalhar com tempo
+        kicker: UTC, Duration e comparação de instantes
+        description: Use este resumo para não reintroduzir bug de fuso horário em código novo.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Guarde instantes em UTC; converta para fuso local só na apresentação."
+              - "`time.RFC3339` como layout padrão para parse e format."
+              - "`time.ParseDuration` em vez de número mágico em nanosegundos."
+              - "`time.Since(t)` para medir intervalo decorrido a partir de um instante salvo."
+              - "Comparação (`Before`/`After`) em vez de subtrair `UnixNano` manualmente."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: assumir um offset fixo (`+03:00`) o ano todo. Horário de verão, em fusos que ainda o observam, muda o offset — sempre converta a partir de um instante em UTC salvo, não de um offset copiado uma vez.
+        tags:
+          - go
+          - time
+          - decisao
+          - boas-praticas
 tech: go
 order: 27
-cardDescription: Guia prático para UTC, RFC3339, Parse, Duration, Since e relógio monotónico.
+cardDescription: Guia prático para UTC, RFC3339, Parse, Duration, Since e relógio monotônico.

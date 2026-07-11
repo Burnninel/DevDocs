@@ -28,7 +28,7 @@ sections:
     entries:
       - title: JSON é texto; PHP trabalha com tipos nativos
         kicker: encode gera string; decode reconstrói estrutura
-        description: 'JSON (JavaScript Object Notation) é um formato de texto para trocar dados. O PHP não tem tipo "JSON": você serializa com `json_encode` para obter uma `string` e desserializa com `json_decode` para obter `array`, `stdClass` ou tipos escalares conforme o conteúdo. Use JSON em APIs, ficheiros de configuração e integrações com serviços externos.'
+        description: 'JSON (JavaScript Object Notation) é um formato de texto para trocar dados. O PHP não tem tipo "JSON": você serializa com `json_encode` para obter uma `string` e desserializa com `json_decode` para obter `array`, `stdClass` ou tipos escalares conforme o conteúdo. Use JSON em APIs, arquivos de configuração e integrações com serviços externos.'
         descriptionTone: default
         code: |-
           <?php
@@ -86,8 +86,8 @@ sections:
           label: "PHP 8.3+:"
           text: existe `json_validate()` para verificar string sem decodificar o payload inteiro em estrutura.
       - title: Recursos não representáveis em JSON
-        kicker: resources e tipos especiais viram null ou falham
-        description: JSON não transporta `resource`. Objetos arbitrários sem `JsonSerializable` são serializados como `{}` ou propriedades públicas dependendo do contexto; prefira arrays ou DTOs explícitos para APIs.
+        kicker: Propriedades públicas viram JSON; `resource` não é representável
+        description: JSON não transporta `resource`. Um objeto **sem** `JsonSerializable` é serializado a partir das suas propriedades **públicas**; propriedades privadas ou protegidas são ignoradas, e um objeto sem nenhuma propriedade pública vira `{}`. Para controlar o formato, implemente `JsonSerializable`; em APIs, prefira arrays ou DTOs explícitos.
         descriptionTone: warn
         code: |-
           <?php
@@ -111,7 +111,7 @@ sections:
 
           echo json_encode(new PontoJson(3, 4), JSON_THROW_ON_ERROR) . PHP_EOL;
         output: |-
-          {}
+          {"x":1,"y":2}
           {"x":3,"y":4}
         tags:
           - php
@@ -172,7 +172,7 @@ sections:
     entries:
       - title: json_last_error e json_last_error_msg
         kicker: Código legado ou estilo sem JSON_THROW_ON_ERROR
-        description: "Sem `JSON_THROW_ON_ERROR`, `json_decode` devolve `null` tanto para JSON nulo literal quanto para erro. Por isso a ordem recomendada é: decodificar, chamar `json_last_error()` e só então usar o resultado. Prefira exceções em código novo."
+        description: "Sem `JSON_THROW_ON_ERROR`, `json_decode` retorna `null` tanto para JSON nulo literal quanto para erro. Por isso a ordem recomendada é: decodificar, chamar `json_last_error()` e só então usar o resultado. Prefira exceções em código novo."
         descriptionTone: default
         code: |-
           <?php
@@ -225,7 +225,7 @@ sections:
         callout:
           type: hint
           label: "Ordem:"
-          text: nenhum `echo` antes dos headers; veja a secção sobre "headers antes da saída" na documentação de HTTP.
+          text: nenhum `echo` antes dos headers; veja a seção sobre "headers antes da saída" na documentação de HTTP.
   - id: boas-praticas
     name: Boas práticas
     layout: single

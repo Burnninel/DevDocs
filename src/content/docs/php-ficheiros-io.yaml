@@ -1,6 +1,6 @@
 id: php-ficheiros-io
-title: "PHP: Ficheiros e I/O"
-subtitle: Guia prático para ler e gravar ficheiros com segurança, caminhos estáveis, streams e o que fazer depois de um upload HTTP validado.
+title: "PHP: Arquivos e I/O"
+subtitle: Guia prático para ler e gravar arquivos com segurança, caminhos estáveis, streams e o que fazer depois de um upload HTTP validado.
 searchPlaceholder: Buscar file_get_contents, fopen, path, upload ou palavra...
 shortcutHint: "Atalho: pressione / para focar a busca."
 codeLanguage: php
@@ -8,11 +8,11 @@ defaultSectionLayout: single
 quickStart:
   title: Como testar os exemplos desta documentação
   kicker: PHP CLI e diretório de trabalho atual
-  description: Os exemplos usam `sys_get_temp_dir()` ou ficheiros relativos ao diretório de execução. Em Windows e Linux o separador é abstraído com `DIRECTORY_SEPARATOR` quando necessário.
+  description: Os exemplos usam `sys_get_temp_dir()` ou arquivos relativos ao diretório de execução. Em Windows e Linux o separador é abstraído com `DIRECTORY_SEPARATOR` quando necessário.
   steps:
     - Execute `php --version`.
     - Crie `io.php` na pasta desejada e cole um exemplo.
-    - Corra `php io.php` a partir dessa pasta para caminhos relativos funcionarem como esperado.
+    - Rode `php io.php` a partir dessa pasta para caminhos relativos funcionarem como esperado.
   codeLanguage: shell
   code: |-
     php --version
@@ -27,8 +27,8 @@ sections:
     layout: single
     entries:
       - title: __DIR__, realpath e basename
-        kicker: Nunca concatenar caminho com input cru do utilizador
-        description: Use `__DIR__` para ancorar ficheiros relativos ao script atual. `realpath` normaliza `..` e ligações simbólicas; devolve `false` se o caminho não existir. `basename` remove diretórios de um nome de ficheiro. Para nomes vindos de uploads, combine com validação na doc de superglobais antes de gravar fora de uma pasta controlada.
+        kicker: Nunca concatenar caminho com input cru do usuário
+        description: Use `__DIR__` para ancorar arquivos relativos ao script atual. `realpath` normaliza `..` e links simbólicos; retorna `false` se o caminho não existir. `basename` remove diretórios de um nome de arquivo. Para nomes vindos de uploads, combine com validação na doc de superglobais antes de gravar fora de uma pasta controlada.
         descriptionTone: warn
         code: |-
           <?php
@@ -41,12 +41,12 @@ sections:
           file_put_contents($arquivo, "1");
 
           $real = realpath($arquivo);
-          echo ($real !== false ? "ficheiro existe" : "sem caminho") . PHP_EOL;
+          echo ($real !== false ? "arquivo existe" : "sem caminho") . PHP_EOL;
           echo "Nome: " . basename($arquivo) . PHP_EOL;
           @unlink($arquivo);
           @rmdir($dir);
         output: |-
-          ficheiro existe
+          arquivo existe
           Nome: contagem.txt
         tags:
           - php
@@ -63,9 +63,9 @@ sections:
     name: file_get_contents e file_put_contents
     layout: single
     entries:
-      - title: Ler e escrever ficheiros pequenos de uma vez
+      - title: Ler e escrever arquivos pequenos de uma vez
         kicker: Simples para config, cache pequeno e templates
-        description: "`file_get_contents` lê o ficheiro inteiro para memória. `file_put_contents` grava string de uma vez; a flag `FILE_APPEND` adiciona ao fim em vez de truncar. Para ficheiros grandes ou leitura linha a linha prefira `fopen`/`fgets`."
+        description: "`file_get_contents` lê o arquivo inteiro para memória. `file_put_contents` grava string de uma vez; a flag `FILE_APPEND` adiciona ao fim em vez de truncar. Para arquivos grandes ou leitura linha a linha prefira `fopen`/`fgets`."
         descriptionTone: default
         code: |-
           <?php
@@ -91,7 +91,7 @@ sections:
     layout: single
     entries:
       - title: Modos r, w, a e lock exclusivo
-        kicker: Streams dão controlo fino e leitura parcial
+        kicker: Streams dão controle fino e leitura parcial
         description: "`fopen` com `rb` lê em binário (evita surpresas de newline em Windows). `LOCK_EX` com `file_put_contents` ajuda em escrita concorrente simples. Sempre `fclose` em `finally` ou deixe o PHP fechar ao fim do script, mas fechar cedo liberta locks."
         descriptionTone: default
         code: |-
@@ -137,9 +137,9 @@ sections:
           @unlink($dest);
           file_put_contents($tmp, "ok");
           rename($tmp, $dest);
-          echo "Ficheiro final: " . basename($dest) . PHP_EOL;
+          echo "Arquivo final: " . basename($dest) . PHP_EOL;
           @unlink($dest);
-        output: "Ficheiro final: destino-movido.txt"
+        output: "Arquivo final: destino-movido.txt"
         tags:
           - php
           - move_uploaded_file
@@ -149,7 +149,7 @@ sections:
         callout:
           type: hint
           label: "Lembrete:"
-          text: "`is_uploaded_file` e `move_uploaded_file` existem para impedir que um script mova ficheiros arbitrários do servidor fingindo ser upload."
+          text: "`is_uploaded_file` e `move_uploaded_file` existem para impedir que um script mova arquivos arbitrários do servidor fingindo ser upload."
   - id: csv-log
     name: CSV simples e log em append
     layout: single
@@ -160,7 +160,6 @@ sections:
         descriptionTone: default
         code: |-
           <?php
-          use DateTimeImmutable;
 
           $f = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "php-doc-log.txt";
           @unlink($f);
@@ -186,7 +185,7 @@ sections:
     entries:
       - title: Permissões, dono do processo e dados sensíveis
         kicker: 775 em diretório nem sempre é aceitável
-        description: Ajuste permissões ao ambiente (servidor web costuma ter utilizador próprio). Não grave segredos em ficheiros world-readable sem necessidade. Para configuração, variáveis de ambiente ou fora do docroot são preferíveis a credenciais em PHP versionado.
+        description: Ajuste permissões ao ambiente (servidor web costuma ter usuário próprio). Não grave segredos em arquivos world-readable sem necessidade. Para configuração, variáveis de ambiente ou fora do docroot são preferíveis a credenciais em PHP versionado.
         descriptionTone: default
         code: |-
           <?php
@@ -213,7 +212,7 @@ sections:
     layout: single
     entries:
       - title: Esquecer LOCK ou concurrent writes
-        kicker: Corrupção de ficheiro sob carga
+        kicker: Corrupção de arquivo sob carga
         description: Outro erro é assumir `file_get_contents` sempre bem-sucedido sem verificar `false`. Use operador `??` ou compare explicitamente e trate I/O como operação que pode falhar (disco cheio, permissão).
         descriptionTone: warn
         code: |-
@@ -234,4 +233,4 @@ sections:
           - lock
 tech: php
 order: 13
-cardDescription: Guia prático para ler e gravar ficheiros, caminhos seguros, streams, logs e ligação a uploads após validação.
+cardDescription: Guia prático para ler e gravar arquivos, caminhos seguros, streams, logs e conexão a uploads após validação.

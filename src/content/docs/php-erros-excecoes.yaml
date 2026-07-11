@@ -21,7 +21,7 @@ quickStart:
   callout:
     type: hint
     label: "Documentação relacionada:"
-    text: "combine este guia com `PHP: Debugging` para investigar estado e com `PHP: Headers HTTP` ao devolver JSON de erro com status correto."
+    text: "combine este guia com `PHP: Debugging` para investigar estado e com `PHP: Headers HTTP` ao retornar JSON de erro com status correto."
 sections:
   - id: conceitos-throwable
     name: "Conceitos: Throwable, Exception e Error"
@@ -72,7 +72,7 @@ sections:
           text: em bibliotecas públicas prefira tipos específicos (`InvalidArgumentException`, etc.); em fronteira HTTP, muitas vezes você centraliza em um único tradutor para resposta JSON.
       - title: Diferença entre erro recuperável e bug de tipo
         kicker: Exception comunica regra; Error sinaliza uso incorreto
-        description: "`InvalidArgumentException` costuma indicar entrada inválida que o chamador pode corrigir ou exibir ao utilizador. `TypeError` indica que o programa violou uma assinatura (tipo errado em chamada). Tratar os dois como `Throwable` evita página em branco, mas a mensagem enviada ao cliente deve ser genérica; detalhes ficam em log."
+        description: "`InvalidArgumentException` costuma indicar entrada inválida que o chamador pode corrigir ou exibir ao usuário. `TypeError` indica que o programa violou uma assinatura (tipo errado em chamada). Tratar os dois como `Throwable` evita página em branco, mas a mensagem enviada ao cliente deve ser genérica; detalhes ficam em log."
         descriptionTone: default
         code: |-
           <?php
@@ -145,8 +145,8 @@ sections:
               echo "Operação abortada." . PHP_EOL;
           }
         output: |-
-          Resultado: DADOS
           Recurso fechado.
+          Resultado: DADOS
         tags:
           - php
           - try
@@ -327,7 +327,7 @@ sections:
     entries:
       - title: display_errors, log_errors e o que o cliente vê
         kicker: Desenvolvimento verboso; produção contida
-        description: Em desenvolvimento, `display_errors=On` ajuda. Em produção, desligue exibição de erros ao utilizador final e use `log_errors` com destino seguro. Handlers globais (`set_exception_handler`) podem converter qualquer exceção não capturada em resposta 500 padronizada.
+        description: Em desenvolvimento, `display_errors=On` ajuda. Em produção, desligue exibição de erros ao usuário final e use `log_errors` com destino seguro. Handlers globais (`set_exception_handler`) podem converter qualquer exceção não capturada em resposta 500 padronizada.
         descriptionTone: warn
         code: |-
           <?php
@@ -359,7 +359,7 @@ sections:
         callout:
           type: danger
           label: "Crítico:"
-          text: nunca exponha caminhos de ficheiro, queries SQL completas ou segredos em JSON ou HTML de erro em produção.
+          text: nunca exponha caminhos de arquivo, queries SQL completas ou segredos em JSON ou HTML de erro em produção.
   - id: boas-praticas
     name: Boas práticas
     layout: single
@@ -373,7 +373,7 @@ sections:
           function buscarUsuario(?int $id): ?array
           {
               if ($id === null) {
-                  return null; // caminho esperado: sem id, sem utilizador
+                  return null; // caminho esperado: sem id, sem usuário
               }
               if ($id <= 0) {
                   throw new InvalidArgumentException("ID inválido");
@@ -423,7 +423,7 @@ sections:
               }
           }
 
-          // Melhor: registar e transformar em erro de sistema conhecido.
+          // Melhor: registrar e transformar em erro de sistema conhecido.
           function exemploMelhor(): void
           {
               try {
@@ -450,7 +450,7 @@ sections:
         callout:
           type: hint
           label: "Correção:"
-          text: o exemplo imprime uma referência; em produção devolva esse id ao cliente e guarde stack só no servidor.
+          text: o exemplo imprime uma referência; em produção retorne esse id ao cliente e guarde stack só no servidor.
 tech: php
 order: 5
 cardDescription: Guia prático para try/catch, Throwable, APIs JSON de erro, produção vs desenvolvimento e boas práticas.

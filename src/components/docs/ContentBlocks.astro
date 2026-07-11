@@ -6,6 +6,7 @@ import ContextBlock from "./blocks/ContextBlock.astro";
 import ComparisonBlock from "./blocks/ComparisonBlock.astro";
 import ChecklistBlock from "./blocks/ChecklistBlock.astro";
 import FlowSteps from "./blocks/FlowSteps.astro";
+import ArchitectureExplorer from "./blocks/ArchitectureExplorer.astro";
 
 interface Props {
 	blocks?: ContentBlock[];
@@ -30,6 +31,8 @@ const { blocks = [] } = Astro.props;
 						return <ChecklistBlock block={block} />;
 					case "flow-steps":
 						return <FlowSteps block={block} />;
+					case "architecture-explorer":
+						return <ArchitectureExplorer block={block} />;
 					default:
 						return null;
 				}

@@ -81,7 +81,7 @@ sections:
           - map
       - title: Decoder com DisallowUnknownFields
         kicker: Rejeitar chaves extra
-        description: Por omissão `json.Unmarshal` ignora chaves desconhecidas. Para APIs estritas, use `json.NewDecoder` com `DisallowUnknownFields(true)` antes de `Decode`.
+        description: Por padrão `json.Unmarshal` ignora chaves desconhecidas. Para APIs estritas, use `json.NewDecoder` com `DisallowUnknownFields()` (sem argumento) antes de `Decode`.
         descriptionTone: default
         code: |-
           package main
@@ -115,7 +115,7 @@ sections:
     entries:
       - title: Renomear chaves e omitir vazios
         kicker: Struct tags
-        description: 'A tag `json:"nome"` define o nome da chave. `omitempty` omite o campo quando está no zero value (atenção: slice nil omite, slice vazia `[]` não é zero value para omitempty da mesma forma — consulte a documentação oficial para matizes).'
+        description: 'A tag `json:"nome"` define o nome da chave. `omitempty` omite o campo quando o valor está "vazio": `0`, `""`, `false`, `nil` ou um slice/map/array com `len() == 0`. Por isso tanto uma slice `nil` quanto uma slice vazia `[]int{}` são omitidas (ambas têm `len() == 0`). Atenção: uma struct aninhada não conta como "vazia" e não é omitida por `omitempty`.'
         descriptionTone: default
         code: |-
           package main
@@ -142,7 +142,7 @@ sections:
           - tag
           - struct
       - title: json.RawMessage para adiar decode
-        kicker: Payload heterogéneo
+        kicker: Payload heterogêneo
         description: "`json.RawMessage` é um alias de `[]byte` que implementa `UnmarshalJSON` para guardar JSON bruto. Útil quando o formato interno depende de um campo discriminador."
         descriptionTone: default
         code: |-
@@ -195,7 +195,7 @@ sections:
           	err := json.Unmarshal([]byte(`{"n":"5"}`), &v)
           	fmt.Println(err)
           }
-        output: "json: cannot unmarshal string into Go struct field .N of type int"
+        output: "json: cannot unmarshal string into Go struct field .n of type int"
         tags:
           - go
           - json
@@ -204,7 +204,7 @@ sections:
           - unmarshal
       - title: Tratar erro de Unmarshal
         kicker: Não ignorar err
-        description: "Em handlers HTTP, devolva 400 com mensagem genérica e registe o erro interno. O mesmo espírito de `Go: Erros` aplica-se aqui."
+        description: "Em handlers HTTP, retorne 400 com mensagem genérica e registre o erro interno. O mesmo espírito de `Go: Erros` aplica-se aqui."
         descriptionTone: default
         code: |-
           package main
@@ -233,6 +233,33 @@ sections:
           - wrap
           - erro
           - handler
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para encoding/json
+        kicker: Marshal, tags e erro de decode
+        description: Use este resumo para lembrar qual API usar sem reler a documentação do pacote toda vez.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`json.Marshal`/`json.MarshalIndent` para gerar JSON compacto ou legível."
+              - "`json.Unmarshal` para decodificar direto num valor já conhecido."
+              - "Tag `json:\"nome,omitempty\"` para renomear a chave e omitir valor zero."
+              - "`json.NewDecoder(...).DisallowUnknownFields()` em APIs estritas."
+              - "`json.RawMessage` para adiar o decode de um payload heterogêneo."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: ignorar o `error` de `Unmarshal`. Tipo incompatível (string onde se espera número, por exemplo) falha e o valor de destino pode ficar parcialmente preenchido se o erro não for tratado.
+        tags:
+          - go
+          - json
+          - decisao
+          - boas-praticas
 tech: go
 order: 20
 cardDescription: Guia prático para json.Marshal e Unmarshal, tags, omitempty, json.RawMessage e erros de decode.

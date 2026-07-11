@@ -35,7 +35,7 @@ sections:
     entries:
       - title: Zero value por tipo
         kicker: Estado inicial seguro
-        description: "Tipos têm valor zero: `0` para números, `false` para bool, string vazia para o tipo string, `nil` para ponteiros, slices, maps, canais e interfaces. Structs têm campos no respetivo zero."
+        description: "Tipos têm valor zero: `0` para números, `false` para bool, string vazia para o tipo string, `nil` para ponteiros, slices, maps, canais e interfaces. Structs têm campos no respectivo zero."
         descriptionTone: default
         code: |-
           package main
@@ -106,7 +106,7 @@ sections:
           - referencia
       - title: new(T) vs literal &T{}
         kicker: Alocação na heap quando escapa
-        description: '`new(T)` devolve `*T` com campos em zero. `&Person{Name: "Ana"}` cria um valor e já devolve ponteiro. Na prática literais são mais legíveis para structs.'
+        description: '`new(T)` retorna `*T` com campos em zero. `&Person{Name: "Ana"}` cria um valor e já retorna ponteiro. Na prática literais são mais legíveis para structs.'
         descriptionTone: default
         code: |-
           package main
@@ -134,7 +134,7 @@ sections:
     entries:
       - title: Campos e métodos exportados
         kicker: Maiúscula inicial = público ao pacote
-        description: Identificadores que começam por maiúscula são exportados (visíveis noutros pacotes). Minúscula fica privado ao pacote. Aplica-se a campos, funções, métodos e tipos.
+        description: Identificadores que começam por maiúscula são exportados (visíveis em outros pacotes). Minúscula fica privado ao pacote. Aplica-se a campos, funções, métodos e tipos.
         descriptionTone: default
         code: |-
           package main
@@ -168,7 +168,7 @@ sections:
           - pacote
       - title: Composição em vez de herança clássica
         kicker: Struct embutido
-        description: Go não tem `extends`. Incorpora um tipo anónimo para promover métodos e campos (embedding). Use com moderação para não obscurecer onde vem cada método.
+        description: Go não tem `extends`. Incorpora um tipo anônimo para promover métodos e campos (embedding). Use com moderação para não obscurecer onde vem cada método.
         descriptionTone: default
         code: |-
           package main
@@ -195,6 +195,35 @@ sections:
           - composicao
           - embedding
           - struct
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para tipos, ponteiros e structs
+        kicker: Zero value, referência e visibilidade
+        description: Use este resumo para decidir rápido entre valor e ponteiro, e o que exportar de um pacote.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Valor zero (`0`, `\"\"`, `nil`, `false`) antes de assumir que um campo foi preenchido de propósito."
+              - "`&x` para endereço, `*p` para ler ou escrever o valor apontado."
+              - "Ponteiro quando a struct é grande ou a função precisa alterar o valor original."
+              - "Literal `&Tipo{...}` no lugar de `new(Tipo)` quando quiser inicializar campos direto."
+              - "Maiúscula inicial para exportar campo, método, função ou tipo ao pacote."
+              - "Embedding de struct para compor comportamento, não para simular herança."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: tratar `int` zerado como \"não preenchido\". Se ausência de valor for um estado válido no domínio, use ponteiro, um `bool` extra ou um tipo como `sql.NullInt64`.
+        tags:
+          - go
+          - zero value
+          - ponteiro
+          - struct
+          - decisao
 tech: go
 order: 17
 cardDescription: Guia prático para zero values, ponteiros, structs, composição e nomes exportados.

@@ -1,13 +1,13 @@
 id: go-ficheiros-io
-title: "Go: Ficheiros e I/O"
-subtitle: "Guia prático para os e io: ler e gravar ficheiros, filepath.Join, os.Open com defer e erros."
+title: "Go: Arquivos e I/O"
+subtitle: "Guia prático para os e io: ler e gravar arquivos, filepath.Join, os.Open com defer e erros."
 searchPlaceholder: Buscar ReadFile, WriteFile, Open, filepath ou palavra...
 shortcutHint: "Atalho: pressione / para focar a busca."
 codeLanguage: go
 defaultSectionLayout: single
 quickStart:
   title: Gravar e ler com os
-  kicker: Ficheiro temporário seguro
+  kicker: Arquivo temporário seguro
   description: "Use `filepath.Join` para compor caminhos portáveis no disco. Trate `(T, error)` como em `Go: Erros` no hub."
   steps:
     - Módulo com `go mod init`.
@@ -46,8 +46,8 @@ sections:
     layout: single
     entries:
       - title: os.Open com defer Close
-        kicker: Streams e ficheiros reais
-        description: "`os.ReadFile` lê o ficheiro completo (ideal para ficheiros pequenos). Para controlar leituras parciais ou ficheiros grandes, `os.Open` com `Read`/`io.Copy` mantém controlo de memória."
+        kicker: Streams e arquivos reais
+        description: "`os.ReadFile` lê o arquivo completo (ideal para arquivos pequenos). Para controlar leituras parciais ou arquivos grandes, `os.Open` com `Read`/`io.Copy` mantém controle de memória."
         descriptionTone: default
         code: |-
           package main
@@ -84,10 +84,10 @@ sections:
           - os.Open
           - defer
           - Read
-          - ficheiro
+          - arquivo
       - title: os.ReadFile em poucas linhas
         kicker: API conveniente
-        description: Desde Go 1.16, `os.ReadFile` substitui o padrão `ioutil.ReadFile`. Devolve `[]byte` completo ou erro; combine com `os.WriteFile` para round-trip simples.
+        description: Desde Go 1.16, `os.ReadFile` substitui o padrão `ioutil.ReadFile`. Retorna `[]byte` completo ou erro; combine com `os.WriteFile` para round-trip simples.
         descriptionTone: default
         code: |-
           package main
@@ -120,7 +120,7 @@ sections:
           - ReadFile
           - WriteFile
           - os
-          - ficheiro
+          - arquivo
   - id: filepath-io-copy
     name: Caminhos e io.Copy
     layout: single
@@ -149,7 +149,7 @@ sections:
           - rota
       - title: io.Copy entre Reader e Writer
         kicker: Reutilizar buffers internos
-        description: "`io.Copy(dst, src)` move bytes até `EOF` ou erro. Combina com ficheiros, `bytes.Buffer` ou `http.ResponseWriter` (ver `Go: HTTP`)."
+        description: "`io.Copy(dst, src)` move bytes até `EOF` ou erro. Combina com arquivos, `bytes.Buffer` ou `http.ResponseWriter` (ver `Go: HTTP`)."
         descriptionTone: default
         code: |-
           package main
@@ -177,6 +177,33 @@ sections:
           - Reader
           - Writer
           - buffer
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para arquivos e streams
+        kicker: ReadFile, Open e caminhos
+        description: Use este resumo para escolher entre ler tudo de uma vez ou controlar o stream manualmente.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`os.ReadFile`/`os.WriteFile` para arquivo pequeno, lido ou gravado de uma vez."
+              - "`os.Open` + `defer f.Close()` quando precisa controlar leitura parcial ou arquivo grande."
+              - "`filepath.Join` para caminho no disco do sistema operacional."
+              - "`path.Join` para segmento de rota/URL, não caminho de disco."
+              - "`io.Copy(dst, src)` para mover bytes entre `Reader` e `Writer` sem buffer manual."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: esquecer `defer f.Close()` logo após tratar o erro de abertura. Arquivo aberto sem fechar acumula descritor e pode impedir escrita de outro processo.
+        tags:
+          - go
+          - arquivos
+          - io
+          - decisao
 tech: go
 order: 25
 cardDescription: Guia prático para os.ReadFile, WriteFile, Open, filepath, defer e io.Copy.

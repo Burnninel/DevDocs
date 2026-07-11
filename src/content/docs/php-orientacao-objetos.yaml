@@ -49,11 +49,8 @@ sections:
           $produto->preco = 299.90;
 
           echo $produto->resumo() . PHP_EOL;
-
-          /*
-          Saída:
+        output: |-
           Teclado Mecânico - R$ 299.9
-          */
         tags:
           - php
           - oop
@@ -275,9 +272,9 @@ sections:
           type: hint
           label: "Dica:"
           text: esse formato funciona muito bem quando a classe recebe poucos dados e não precisa de lógica extra no construtor.
-      - title: De classes em ficheiro único para Composer e PSR-4
+      - title: De classes em arquivo único para Composer e PSR-4
         kicker: Namespaces ganham escala com autoload
-        description: "Nesta documentação os exemplos cabem num só ficheiro para leitura rápida. Em projetos reais você divide `src/` por namespace, adiciona `autoload.psr-4` no `composer.json` e carrega tudo com `vendor/autoload.php`. No hub, siga `PHP: Composer e autoload` para `composer require`, `dump-autoload` e o mapeamento exato entre namespace e caminho de pastas."
+        description: "Nesta documentação os exemplos cabem num só arquivo para leitura rápida. Em projetos reais você divide `src/` por namespace, adiciona `autoload.psr-4` no `composer.json` e carrega tudo com `vendor/autoload.php`. No hub, siga `PHP: Composer e autoload` para `composer require`, `dump-autoload` e o mapeamento exato entre namespace e caminho de pastas."
         descriptionTone: default
         code: |-
           <?php
@@ -304,7 +301,7 @@ sections:
         callout:
           type: hint
           label: "Próximo passo:"
-          text: configure o `composer.json`, rode `composer install` e mantenha o nome da classe igual ao nome do ficheiro `.php`.
+          text: configure o `composer.json`, rode `composer install` e mantenha o nome da classe igual ao nome do arquivo `.php`.
   - id: encapsulamento
     name: Encapsulamento
     layout: single

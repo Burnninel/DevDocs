@@ -20,7 +20,7 @@ quickStart:
   callout:
     type: hint
     label: "Documentação relacionada:"
-    text: "valores nil e funções que devolvem `(T, error)` combinam com `Go: Tipos e valores` no hub."
+    text: "valores nil e funções que retornam `(T, error)` combinam com `Go: Tipos e valores` no hub."
 sections:
   - id: error-basico
     name: O tipo error e nil
@@ -28,7 +28,7 @@ sections:
     entries:
       - title: errors.New e fmt.Errorf
         kicker: Mensagens simples
-        description: "`error` é uma interface com método `Error() string`. `errors.New` cria um erro constante. `fmt.Errorf` formata mensagens; com `%w` podes encadear (wrap) outro erro."
+        description: "`error` é uma interface com método `Error() string`. `errors.New` cria um erro constante. `fmt.Errorf` formata mensagens; com `%w` você pode encadear (wrap) outro erro."
         descriptionTone: default
         code: |-
           package main
@@ -54,7 +54,7 @@ sections:
           - interface
       - title: Padrão (T, error) e if err != nil
         kicker: Fluxo explícito
-        description: Funções que podem falhar devolvem `error` como último valor. O chamador compara com `nil`. Não há exceções genéricas; o fluxo é linear e visível.
+        description: Funções que podem falhar retornam `error` como último valor. O chamador compara com `nil`. Não há exceções genéricas; o fluxo é linear e visível.
         descriptionTone: default
         code: |-
           package main
@@ -91,7 +91,7 @@ sections:
     entries:
       - title: fmt.Errorf com %w
         kicker: Preservar erro de origem
-        description: Use `%w` apenas uma vez por `fmt.Errorf` e com um único erro wrapável. Cadeias permitem que `errors.Is` e `errors.As` encontrem o erro sentinela ou um tipo concreto no fundo da pilha.
+        description: Use `%w` para encadear (wrap) um erro dentro de outro. Desde o Go 1.20 é possível usar mais de um `%w` no mesmo `fmt.Errorf` (o erro resultante passa a ter `Unwrap() []error`). Cadeias permitem que `errors.Is` e `errors.As` encontrem o erro sentinela ou um tipo concreto no fundo da pilha.
         descriptionTone: default
         code: |-
           package main
@@ -157,7 +157,7 @@ sections:
     entries:
       - title: Quando panic é aceitável
         kicker: Programação defensiva, não fluxo normal
-        description: "`panic` interrompe a goroutine atual. Use para invariantes que nunca deveriam falhar (bug interno) ou durante init. Em bibliotecas e handlers HTTP, devolva `error` em vez de panic para condições esperadas (validação, I/O)."
+        description: "`panic` interrompe a goroutine atual. Use para invariantes que nunca deveriam falhar (bug interno) ou durante init. Em bibliotecas e handlers HTTP, retorne `error` em vez de panic para condições esperadas (validação, I/O)."
         descriptionTone: warn
         code: |-
           package main
@@ -181,10 +181,10 @@ sections:
         callout:
           type: danger
           label: "Evite:"
-          text: usar panic para validação de pedido HTTP ou entrada de utilizador; modele com `error` e status adequado.
+          text: usar panic para validação de requisição HTTP ou entrada de usuário; modele com `error` e status adequado.
       - title: defer e limpeza com erro
         kicker: Fechar recursos
-        description: "`defer` empilha chamadas que correm ao sair da função (return ou panic). Combine com funções que devolvem erro para fechar ficheiros; em código avançado, funções nomeadas e `defer` ajudam a sobrescrever o `return err`."
+        description: "`defer` empilha chamadas que executam ao sair da função (return ou panic). Combine com funções que retornam erro para fechar arquivos; em código avançado, funções nomeadas e `defer` ajudam a sobrescrever o `return err`."
         descriptionTone: default
         code: |-
           package main
@@ -211,6 +211,35 @@ sections:
           - os
           - limpeza
           - recurso
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para modelar falhas
+        kicker: error, wrap e quando usar panic
+        description: Use este resumo para escolher rápido entre retornar erro, encadear contexto ou usar panic.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`errors.New` para erro constante simples."
+              - "`fmt.Errorf` com `%w` para adicionar contexto sem perder o erro original."
+              - "`errors.Is` para comparar com um erro sentinela conhecido."
+              - "`errors.As` para extrair um tipo de erro customizado da cadeia."
+              - "`panic`/`recover` só para bug interno ou invariante quebrada, nunca para validação de entrada."
+              - "`defer` para fechar recurso, mesmo quando a função retorna erro."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: usar `panic` para erro esperado (entrada inválida, arquivo ausente) em vez de retornar `error`. Isso tira do chamador a chance de decidir o que fazer com a falha.
+        tags:
+          - go
+          - error
+          - panic
+          - decisao
+          - boas-praticas
 tech: go
 order: 18
 cardDescription: Guia prático para error, errors.New, fmt.Errorf com %w, errors.Is, errors.As, defer e panic.

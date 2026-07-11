@@ -1,0 +1,48 @@
+---
+/**
+ * Anéis concêntricos do `ArchitectureExplorer` (recursivo via `Astro.self`):
+ * a primeira camada envolve as demais, mostrando visualmente que a dependência
+ * aponta para dentro. Cada anel é um nó destacável (`data-arch-node`) e o rótulo
+ * é o gatilho de clique (`data-arch-trigger`) — botões não podem aninhar botões,
+ * por isso o anel em si não é `<button>`.
+ */
+interface RingLayer {
+	id: string;
+	name: string;
+	role: string;
+	color: string;
+}
+interface Props {
+	layers: RingLayer[];
+}
+const { layers } = Astro.props;
+const [head, ...rest] = layers;
+---
+
+{
+	head && (
+		<div
+			class="arch-ring"
+			data-arch-node
+			data-arch-layer={head.id}
+			style={`--layer: ${head.color}`}
+		>
+			<button
+				type="button"
+				class="arch-ring-label"
+				data-arch-trigger
+				data-arch-layer={head.id}
+				aria-pressed="false"
+			>
+				<span class="arch-dot" aria-hidden="true" />
+				<span class="arch-ring-name">{head.name}</span>
+				<span class="arch-ring-role">{head.role}</span>
+			</button>
+			{rest.length > 0 && (
+				<div class="arch-ring-inner">
+					<Astro.self layers={rest} />
+				</div>
+			)}
+		</div>
+	)
+}

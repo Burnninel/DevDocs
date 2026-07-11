@@ -76,7 +76,7 @@ sections:
     entries:
       - title: Capturar grupos e todas as ocorrências
         kicker: preg_match para primeira; preg_match_all para lista
-        description: "`preg_match` devolve 1 se houve correspondência e preenche `$m` com grupos. `PREG_OFFSET_CAPTURE` guarda posição. `preg_match_all` percorre todas as coincidências, útil para extrair códigos repetidos num texto."
+        description: "`preg_match` retorna 1 se houve correspondência e preenche `$m` com grupos. `PREG_OFFSET_CAPTURE` guarda posição. `preg_match_all` percorre todas as coincidências, útil para extrair códigos repetidos num texto."
         descriptionTone: default
         code: |-
           <?php
@@ -105,9 +105,9 @@ sections:
     name: preg_replace e preg_quote
     layout: single
     entries:
-      - title: Substituir por padrão e escapar texto de utilizador
+      - title: Substituir por padrão e escapar texto de usuário
         kicker: Backreferences $1 e preg_quote para literais
-        description: "`preg_replace` aplica padrão a string ou array. Use `preg_quote` quando o utilizador fornece fragmento que vai dentro do padrão, para não interpretar metacaracteres como `.` ou `+` como operadores regex."
+        description: "`preg_replace` aplica padrão a string ou array. Use `preg_quote` quando o usuário fornece fragmento que vai dentro do padrão, para não interpretar metacaracteres como `.` ou `+` como operadores regex."
         descriptionTone: default
         code: |-
           <?php
@@ -155,7 +155,7 @@ sections:
     layout: single
     entries:
       - title: Esquecer delimitador ou usar . sem intenção
-        kicker: preg_match devolve 0 ou false; verifique ===
+        kicker: preg_match retorna 0 ou false; verifique ===
         description: Confundir `false` (erro) com `0` (sem match) quebra fluxo. Ative `preg_last_error()` em versões recentes ou valide retorno antes de usar `$m`. `.` não casa newline sem `/s`.
         descriptionTone: warn
         code: |-

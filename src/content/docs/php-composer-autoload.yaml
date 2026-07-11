@@ -1,6 +1,6 @@
 id: php-composer-autoload
 title: "PHP: Composer e autoload"
-subtitle: Guia prático para instalar o Composer, declarar dependências, configurar autoload PSR-4 e ligar classes com namespaces.
+subtitle: Guia prático para include/require, Composer, dependências, autoload PSR-4 e classes com namespaces.
 searchPlaceholder: Buscar composer, psr-4, vendor, autoload ou palavra...
 shortcutHint: "Atalho: pressione / para focar a busca."
 codeLanguage: php
@@ -29,7 +29,7 @@ sections:
     entries:
       - title: Gestor de dependências e autoload do ecossistema PHP
         kicker: composer.json, composer.lock e pasta vendor
-        description: O Composer lê `composer.json` (o que o projeto precisa), resolve versões, grava `composer.lock` com versões exatas (em aplicações deve ir para o Git) e instala pacotes em `vendor/`. O ficheiro `vendor/autoload.php` registra o autoload das dependências e do teu código se declarares `autoload` no JSON.
+        description: O Composer lê `composer.json` (o que o projeto precisa), resolve versões, grava `composer.lock` com versões exatas (em aplicações deve ir para o Git) e instala pacotes em `vendor/`. O arquivo `vendor/autoload.php` registra o autoload das dependências e do seu código se declarar `autoload` no JSON.
         descriptionTone: default
         code: |-
           meu-projeto/
@@ -37,7 +37,7 @@ sections:
             composer.lock      # versões travadas (commit em apps)
             vendor/            # código de terceiros (não editar à mão)
               autoload.php     # ponto de entrada do autoload
-            src/               # teu código (exemplo comum com PSR-4)
+            src/               # seu código (exemplo comum com PSR-4)
         codeLanguage: shell
         tags:
           - php
@@ -68,13 +68,68 @@ sections:
           type: hint
           label: "Dica:"
           text: em CI use `composer install --no-dev --prefer-dist` para builds de produção quando não precisar de dependências de desenvolvimento.
+  - id: include-require
+    name: include e require manuais
+    layout: single
+    entries:
+      - title: Carregar um arquivo com require
+        kicker: Antes do autoload, carregamento explícito
+        description: "`require` carrega um arquivo PHP e interrompe a execução se ele não existir. Use `__DIR__` para montar caminhos estáveis a partir do arquivo atual."
+        descriptionTone: default
+        code: |-
+          <?php
+          // bootstrap.php
+          function appName(): string
+          {
+              return "DevDocs";
+          }
+
+          // index.php
+          require __DIR__ . "/bootstrap.php";
+
+          echo appName() . PHP_EOL;
+        output: DevDocs
+        tags:
+          - php
+          - require
+          - include
+          - arquivo
+          - bootstrap
+      - title: Diferença entre include, require e *_once
+        kicker: Falha opcional vs obrigatória
+        description: "`include` emite warning quando falha e tenta continuar; `require` falha de forma fatal. As variações `include_once` e `require_once` evitam carregar o mesmo arquivo mais de uma vez."
+        descriptionTone: default
+        contentBlocks:
+          - type: tech-list
+            title: Quando usar
+            termHeader: Forma
+            descriptionHeader: Uso
+            items:
+              - term: "`require`"
+                description: Arquivo obrigatório para o script funcionar.
+              - term: "`include`"
+                description: Arquivo opcional, como template ou trecho que pode não existir.
+              - term: "`require_once`"
+                description: Arquivo obrigatório que declara funções, classes ou constantes.
+              - term: "`include_once`"
+                description: Arquivo opcional que não deve ser carregado duas vezes.
+        tags:
+          - php
+          - include
+          - require
+          - require_once
+          - include_once
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: em projetos com classes, prefira Composer autoload. `require_once` espalhado pelo código vira difícil de manter conforme o projeto cresce.
   - id: autoload-psr4
     name: Autoload PSR-4 no composer.json
     layout: single
     entries:
       - title: Mapear namespace para pasta src
         kicker: Prefixo de namespace aponta para diretório
-        description: 'PSR-4 diz: o sufixo do namespace (após o prefixo registado) corresponde ao caminho do ficheiro. Ex.: com `"App\\": "src/"`, a classe `App\Modelo\Pedido` fica em `src/Modelo/Pedido.php`. O nome do ficheiro deve coincidir com o nome da classe.'
+        description: 'PSR-4 diz: o sufixo do namespace (após o prefixo registrado) corresponde ao caminho do arquivo. Ex.: com `"App\\": "src/"`, a classe `App\Modelo\Pedido` fica em `src/Modelo/Pedido.php`. O nome do arquivo deve coincidir com o nome da classe.'
         descriptionTone: default
         code: |-
           {
@@ -97,7 +152,7 @@ sections:
           - namespace
       - title: Classe PHP alinhada ao PSR-4
         kicker: declare(strict_types=1) e namespace no topo
-        description: Depois de configurar o `composer.json`, rode `composer dump-autoload` sempre que adicionar namespaces novos ou mudar o mapeamento. No script de entrada, `require 'vendor/autoload.php';` carrega todas as classes registadas.
+        description: Depois de configurar o `composer.json`, rode `composer dump-autoload` sempre que adicionar namespaces novos ou mudar o mapeamento. No script de entrada, `require 'vendor/autoload.php';` carrega todas as classes registradas.
         descriptionTone: default
         code: |-
           <?php
@@ -110,7 +165,7 @@ sections:
               public function __construct(public int $id) {}
           }
 
-          // Em outro ficheiro, após vendor/autoload.php:
+          // Em outro arquivo, após vendor/autoload.php:
           // use App\Modelo\Pedido;
           // $p = new Pedido(1);
         tags:
@@ -122,14 +177,14 @@ sections:
         callout:
           type: hint
           label: "Lembrete:"
-          text: no JSON real do Composer use uma única barra invertida escapada (`App\\`) como no exemplo da documentação; ao editar o ficheiro no disco, o Composer espera o formato JSON válido.
+          text: no JSON real do Composer use uma única barra invertida escapada (`App\\`) como no exemplo da documentação; ao editar o arquivo no disco, o Composer espera o formato JSON válido.
   - id: use-bootstrap
     name: use e bootstrap da aplicação
     layout: single
     entries:
       - title: Importar classes com use e caminho totalmente qualificado
         kicker: Evitar nomes longos no meio do código
-        description: "`use App\\Servico\\Email;` no topo do ficheiro permite escrever `new Email()` em vez do nome completo. Em scripts únicos, `require __DIR__ . '/vendor/autoload.php';` usa a pasta do próprio script como base. No projeto real a classe `Pedido` viria de `src/Modelo/Pedido.php` carregada pelo autoload; aqui o exemplo está num único ficheiro só para ilustrar `use`."
+        description: "`use App\\Servico\\Email;` no topo do arquivo permite escrever `new Email()` em vez do nome completo. Em scripts únicos, `require __DIR__ . '/vendor/autoload.php';` usa a pasta do próprio script como base. No projeto real a classe `Pedido` viria de `src/Modelo/Pedido.php` carregada pelo autoload; aqui o exemplo está num único arquivo só para ilustrar `use`."
         descriptionTone: default
         code: |-
           <?php
@@ -163,7 +218,7 @@ sections:
     entries:
       - title: Regenerar mapas de classe
         kicker: composer dump-autoload -o
-        description: Após mover ficheiros ou alterar `autoload` no JSON, execute `composer dump-autoload`. A flag `-o` (otimizado) gera classmaps mais rápidos em produção. Scripts definidos em `composer.json` (`scripts.post-autoload-dump`, etc.) rodam em eventos do Composer.
+        description: Após mover arquivos ou alterar `autoload` no JSON, execute `composer dump-autoload`. A flag `-o` (otimizado) gera classmaps mais rápidos em produção. Scripts definidos em `composer.json` (`scripts.post-autoload-dump`, etc.) rodam em eventos do Composer.
         descriptionTone: default
         code: |-
           composer dump-autoload
@@ -181,7 +236,7 @@ sections:
     entries:
       - title: Versionamento de composer.lock e vendor no Git
         kicker: Aplicações vs bibliotecas
-        description: Em **aplicações** (sites, APIs), faça commit de `composer.lock` para todos instalarem as mesmas versões. Em **bibliotecas** open source, o lock costuma ser ignorado. Nunca edite manualmente ficheiros dentro de `vendor/`; altere versões via `composer require` ou `composer update` com critério.
+        description: Em **aplicações** (sites, APIs), faça commit de `composer.lock` para todos instalarem as mesmas versões. Em **bibliotecas** open source, o lock costuma ser ignorado. Nunca edite manualmente arquivos dentro de `vendor/`; altere versões via `composer require` ou `composer update` com critério.
         descriptionTone: default
         code: |-
           # Commit típico em uma API PHP
@@ -199,14 +254,14 @@ sections:
     name: Erros comuns
     layout: single
     entries:
-      - title: Namespace ou caminho de ficheiro fora do PSR-4
+      - title: Namespace ou caminho de arquivo fora do PSR-4
         kicker: Class not found após autoload
-        description: "Erros frequentes: namespace no PHP não bate com o diretório; nome da classe diferente do nome do ficheiro; esquecer `composer dump-autoload` após mudar `composer.json`. O Composer não adivinha pastas: o mapeamento tem de ser explícito."
+        description: "Erros frequentes: namespace no PHP não bate com o diretório; nome da classe diferente do nome do arquivo; esquecer `composer dump-autoload` após mudar `composer.json`. O Composer não adivinha pastas: o mapeamento precisa ser explícito."
         descriptionTone: warn
         code: |-
           <?php
-          // Errado: ficheiro src/Modelo/pedido.php com classe "Pedido"
-          // mas namespace App\Modelo nao bate com case do ficheiro em sistemas case-sensitive.
+          // Errado: arquivo src/Modelo/pedido.php com classe "Pedido"
+          // mas namespace App\Modelo nao bate com case do arquivo em sistemas case-sensitive.
 
           // Certo: src/Modelo/Pedido.php
           // <?php
@@ -224,7 +279,7 @@ sections:
         callout:
           type: hint
           label: "Checklist:"
-          text: namespace = prefixo PSR-4 + caminho relativo; nome da classe = nome do ficheiro `.php`; rode dump-autoload após alterações.
+          text: namespace = prefixo PSR-4 + caminho relativo; nome da classe = nome do arquivo `.php`; rode dump-autoload após alterações.
 tech: php
 order: 3
 cardDescription: Guia prático para composer.json, dependências, autoload PSR-4, vendor e uso de namespaces no projeto.
