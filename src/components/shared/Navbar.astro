@@ -1,0 +1,66 @@
+---
+import { Icon } from "astro-icon/components";
+import { withBase, techUrl } from "@/lib/paths";
+import { getDocsGroupedByTech } from "@/lib/docs";
+
+const groups = await getDocsGroupedByTech();
+const current = Astro.url.pathname;
+---
+
+<header
+	class="fixed inset-x-0 top-0 z-50 flex h-[var(--nav-h)] items-center"
+	data-pagefind-ignore
+>
+	<div class="glass absolute inset-0 -z-10"></div>
+	<nav class="mx-auto flex w-full max-w-7xl items-center gap-6 px-5">
+		<a
+			href={withBase("/")}
+			class="flex items-center gap-2.5 font-display text-lg font-semibold text-ink"
+		>
+			<span
+				class="grid size-7 place-items-center rounded-lg font-bold"
+				style="background: var(--accent-soft); color: var(--color-accent-strong)"
+				>D</span
+			>
+			DevDocs
+		</a>
+
+		<div class="ml-2 hidden items-center gap-1 md:flex">
+			{
+				groups.map(({ tech, meta }) => {
+					const href = techUrl(tech);
+					const active = current.startsWith(href);
+					return (
+						<a
+							href={href}
+							class:list={[
+								"rounded-lg px-3 py-1.5 text-sm transition-colors duration-[var(--dur-fast)]",
+								active
+									? "text-accent-strong"
+									: "text-muted hover:text-ink",
+							]}
+							style={active ? "background: var(--accent-soft)" : undefined}
+						>
+							{meta.short}
+						</a>
+					);
+				})
+			}
+		</div>
+
+		<button
+			type="button"
+			data-search-open
+			class="ml-auto flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-muted transition-colors duration-[var(--dur-fast)] hover:text-ink"
+			style="background: color-mix(in oklab, var(--color-surface-2) 55%, transparent)"
+			aria-label="Buscar"
+		>
+			<Icon name="lucide:search" class="size-4" />
+			<span class="hidden sm:inline">Buscar</span>
+			<kbd
+				class="hidden rounded-md px-1.5 py-0.5 font-mono text-[0.68rem] text-faint sm:inline"
+				style="background: var(--color-surface-3)">⌘K</kbd
+			>
+		</button>
+	</nav>
+</header>

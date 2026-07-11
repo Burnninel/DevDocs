@@ -1,0 +1,179 @@
+id: javascript-dom-eventos
+title: "JavaScript: DOM e Eventos"
+subtitle: "Selecionar elementos, manipular a página e reagir a eventos do usuário."
+searchPlaceholder: Buscar querySelector, addEventListener, classList, createElement ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: javascript
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Console do navegador (F12)
+  description: Estes exemplos dependem de uma página HTML carregada — cole no console do navegador de qualquer página, ou crie um `.html` simples e abra o console nele.
+  steps:
+    - Abra uma página no navegador.
+    - Abra as ferramentas de desenvolvedor (F12) e vá para o Console.
+    - Cole um exemplo por vez e ajuste os seletores para elementos que existam na página.
+  codeLanguage: shell
+  code: "# Não há comando de terminal — use o Console do navegador (F12)."
+  callout:
+    type: hint
+    label: "Dica:"
+    text: os exemplos desta página não têm saída fixa (`output`) porque o resultado depende da página HTML real onde o código roda.
+sections:
+  - id: selecionar-elementos
+    name: Selecionar elementos
+    layout: single
+    entries:
+      - title: querySelector e querySelectorAll
+        kicker: Seletores CSS para encontrar elementos
+        description: "`querySelector` retorna o primeiro elemento que combina com o seletor CSS (ou `null` se nenhum combinar). `querySelectorAll` retorna todos, numa `NodeList`."
+        descriptionTone: default
+        code: |-
+          const botao = document.querySelector(".botao-enviar");
+          const itens = document.querySelectorAll("ul.lista li");
+
+          console.log(botao);
+          console.log(itens.length);
+        tags:
+          - javascript
+          - dom
+          - queryselector
+          - queryselectorall
+      - title: getElementById para acesso direto por id
+        kicker: Mais rápido quando o id é conhecido
+        description: "`getElementById` busca por `id` sem precisar do seletor `#`. É a forma mais direta quando você já sabe o id exato do elemento."
+        descriptionTone: default
+        code: |-
+          const painel = document.getElementById("painel-principal");
+          console.log(painel);
+        tags:
+          - javascript
+          - dom
+          - getelementbyid
+          - id
+  - id: manipular-dom
+    name: Manipular o DOM
+    layout: single
+    entries:
+      - title: textContent e classList
+        kicker: Trocar texto e alternar classes CSS
+        description: "`textContent` lê ou define o texto de um elemento (mais seguro que `innerHTML` para texto simples, pois não interpreta HTML). `classList` adiciona, remove e alterna classes CSS sem manipular a string `className` na mão."
+        descriptionTone: default
+        code: |-
+          const titulo = document.querySelector("h1");
+
+          titulo.textContent = "Novo título";
+          titulo.classList.add("destaque");
+          titulo.classList.toggle("oculto");
+        tags:
+          - javascript
+          - dom
+          - textcontent
+          - classlist
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: use `innerHTML` só quando o conteúdo precisar mesmo ser interpretado como HTML — inserir texto de usuário direto em `innerHTML` sem sanitizar abre brecha para XSS.
+      - title: Criar e inserir elementos
+        kicker: createElement e appendChild
+        description: "`document.createElement` cria um elemento novo (ainda fora da página). `appendChild` o insere como último filho de outro elemento."
+        descriptionTone: default
+        code: |-
+          const item = document.createElement("li");
+          item.textContent = "Novo item";
+
+          const lista = document.querySelector("ul.lista");
+          lista.appendChild(item);
+        tags:
+          - javascript
+          - dom
+          - createelement
+          - appendchild
+  - id: eventos
+    name: Eventos
+    layout: single
+    entries:
+      - title: addEventListener para reagir a interações
+        kicker: Forma padrão de ouvir eventos
+        description: "`addEventListener` registra uma função a ser chamada quando o evento ocorre. É preferível a atributos inline (`onclick=\"...\"`) porque separa comportamento de marcação e permite múltiplos listeners no mesmo elemento."
+        descriptionTone: default
+        code: |-
+          const botao = document.querySelector(".botao-enviar");
+
+          botao.addEventListener("click", (evento) => {
+            console.log("Botão clicado", evento.target);
+          });
+        tags:
+          - javascript
+          - addeventlistener
+          - click
+          - evento
+      - title: preventDefault para controlar o comportamento padrão
+        kicker: Impede recarregar página em formulários, por exemplo
+        description: "`evento.preventDefault()` cancela a ação padrão do navegador para aquele evento — como recarregar a página ao enviar um `<form>`, permitindo tratar o envio via JavaScript."
+        descriptionTone: default
+        code: |-
+          const formulario = document.querySelector("form");
+
+          formulario.addEventListener("submit", (evento) => {
+            evento.preventDefault();
+            console.log("Envio interceptado");
+          });
+        tags:
+          - javascript
+          - preventdefault
+          - submit
+          - formulario
+      - title: Delegação de eventos
+        kicker: Um listener no elemento pai cobre os filhos
+        description: Em vez de registrar um listener em cada item de uma lista, registre um único listener no elemento pai e verifique `evento.target` — funciona até para itens adicionados depois, sem precisar recadastrar listeners.
+        descriptionTone: default
+        code: |-
+          const lista = document.querySelector("ul.lista");
+
+          lista.addEventListener("click", (evento) => {
+            if (evento.target.matches("li")) {
+              console.log("Item clicado:", evento.target.textContent);
+            }
+          });
+        tags:
+          - javascript
+          - delegacao
+          - evento
+          - target
+        callout:
+          type: hint
+          label: "Dica:"
+          text: delegação de eventos é especialmente útil em listas dinâmicas, onde itens são adicionados ou removidos depois que a página já carregou.
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para DOM e eventos
+        kicker: Qual API usar em cada situação
+        description: Use este mapa como referência rápida ao manipular a página.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`querySelector`/`querySelectorAll` para seletores CSS; `getElementById` quando já souber o id exato."
+              - "`textContent` para texto simples; `innerHTML` só quando o conteúdo for HTML confiável."
+              - "`classList.add/remove/toggle` em vez de manipular a string `className`."
+              - "`createElement` + `appendChild` para inserir elementos novos."
+              - "`addEventListener` em vez de atributos `on*` inline."
+              - "`preventDefault()` para cancelar o comportamento padrão do navegador."
+              - "Delegação de eventos (listener no pai) para listas dinâmicas."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Cuidado:"
+            text: registrar `addEventListener` antes do DOM estar pronto (script no `<head>` sem `defer`) resulta em `querySelector` retornando `null` para elementos que ainda não existem na página.
+        tags:
+          - javascript
+          - dom
+          - eventos
+          - decisao
+tech: javascript
+order: 5
+cardDescription: Selecionar elementos, manipular a página e reagir a eventos do usuário.

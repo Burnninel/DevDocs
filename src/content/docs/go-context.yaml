@@ -1,0 +1,181 @@
+id: go-context
+title: "Go: Context"
+subtitle: "Guia prático para context.Context: cancelamento, prazos, valores e conexão a requisições HTTP e trabalho em background."
+searchPlaceholder: Buscar WithCancel, WithTimeout, Deadline, Done ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Prazo curto com WithTimeout
+  kicker: Cancelar trabalho a meio
+  description: "`context.Context` propaga cancelamento e deadlines por uma árvore de chamadas. Em HTTP, prefira sempre `r.Context()` ao criar contextos novos sem necessidade (ver `Go: HTTP` no hub)."
+  steps:
+    - "Módulo com `go mod init` (ver `Go: Módulos`)."
+    - Cole o exemplo em `main.go` e execute `go run .`.
+  codeLanguage: go
+  code: |-
+    package main
+
+    import (
+    	"context"
+    	"fmt"
+    	"time"
+    )
+
+    func main() {
+    	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+    	defer cancel()
+    	<-ctx.Done()
+    	fmt.Println(ctx.Err())
+    }
+  output: context deadline exceeded
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "goroutines longas devem respeitar `ctx.Done()`; veja `Go: Concorrência` no hub."
+sections:
+  - id: background-cancel
+    name: Background, cancelamento e prazos
+    layout: single
+    entries:
+      - title: Background e TODO
+        kicker: Raiz da árvore
+        description: "`context.Background()` retorna um contexto vazio sem deadline, usado em `main`, init e testes de nível superior. `context.TODO()` sinaliza que ainda não sabe qual contexto propagar — evite deixar `TODO` permanente."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"context"
+          	"fmt"
+          )
+
+          func main() {
+          	ctx := context.Background()
+          	fmt.Println(ctx.Err())
+          }
+        output: <nil>
+        tags:
+          - go
+          - context
+          - Background
+          - TODO
+          - raiz
+      - title: WithCancel e propagação
+        kicker: Cancelar filhos
+        description: Chamar a função `cancel()` retorna `ctx.Done()` fechado a todos os descendentes criados com `WithCancel`, `WithTimeout` ou `WithDeadline` a partir desse nó.
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"context"
+          	"fmt"
+          )
+
+          func main() {
+          	ctx, cancel := context.WithCancel(context.Background())
+          	cancel()
+          	<-ctx.Done()
+          	fmt.Println(ctx.Err())
+          }
+        output: context canceled
+        tags:
+          - go
+          - context
+          - WithCancel
+          - Done
+          - cancel
+  - id: valores-context
+    name: WithValue e armadilhas
+    layout: single
+    entries:
+      - title: WithValue para dados de requisição
+        kicker: Chaves não exportadas
+        description: Use tipos privados como chaves (`type ctxKey struct{}`) para evitar colisões entre pacotes. Valores devem ser imutáveis ou cópias defensivas — não coloque ponteiros mutáveis compartilhados como valor de contexto.
+        descriptionTone: warn
+        code: |-
+          package main
+
+          import (
+          	"context"
+          	"fmt"
+          )
+
+          type ctxKeyUser struct{}
+
+          func main() {
+          	ctx := context.WithValue(context.Background(), ctxKeyUser{}, "Ana")
+          	fmt.Println(ctx.Value(ctxKeyUser{}))
+          }
+        output: Ana
+        tags:
+          - go
+          - context
+          - WithValue
+          - chave
+          - requisicao
+        callout:
+          type: danger
+          label: "Evite:"
+          text: passar `*sql.DB`, caches mutáveis ou logger com estado pelo `WithValue`; isso esconde dependências e dificulta testes.
+      - title: Ligar contexto a HTTP
+        kicker: Request.Context
+        description: "Em handlers, use `ctx := r.Context()` para respeitar cancelamento do cliente ou timeouts do servidor. `http.NewRequestWithContext` associa o contexto à requisição de saída (detalhes em `Go: HTTP` no hub)."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"context"
+          	"fmt"
+          	"net/http"
+          )
+
+          func main() {
+          	ctx, cancel := context.WithCancel(context.Background())
+          	cancel()
+          	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://example.invalid/", nil)
+          	if err != nil {
+          		panic(err)
+          	}
+          	fmt.Println(req.Context().Err())
+          }
+        output: context canceled
+        tags:
+          - go
+          - context
+          - http
+          - Request
+          - cliente
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para propagar context.Context
+        kicker: Cancelamento, prazo e valor de requisição
+        description: Use este resumo para lembrar como criar, encadear e ler um contexto sem esconder dependência.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`context.Background()` como raiz em `main`, init e testes de topo."
+              - "`context.WithTimeout`/`WithDeadline` para limitar quanto tempo uma operação pode rodar."
+              - "`context.WithCancel` para cancelar manualmente uma árvore de trabalho."
+              - "`ctx.Done()` + `ctx.Err()` para saber que cancelou e por quê."
+              - "`r.Context()` em handlers HTTP, em vez de criar um contexto novo do zero."
+              - "`WithValue` só para dado de requisição (id de rastreio, usuário autenticado), nunca para dependência como `*sql.DB`."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: guardar `context.Context` num struct ou passar `nil` no lugar de `context.Background()`/`context.TODO()`. O padrão idiomático é `ctx` como primeiro parâmetro explícito em toda função que pode cancelar ou ter prazo.
+        tags:
+          - go
+          - context
+          - decisao
+          - boas-praticas
+tech: go
+order: 24
+cardDescription: "Guia prático para context.Context: cancelamento, prazos, WithValue e requisições HTTP."

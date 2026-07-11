@@ -1,0 +1,223 @@
+id: go-slices-maps
+title: "Go: Slices e maps"
+subtitle: Guia prático para slices e arrays, append e capacidade, compartilhamento de backing array, maps e o idiom vírgula-ok.
+searchPlaceholder: Buscar slice, append, map, range, cap ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Slice e map no mesmo main
+  kicker: len, cap e chave inexistente
+  description: "Slices referenciam um array subjacente; maps são tabelas hash. Relembre valores zero em `Go: Tipos e valores` no hub."
+  steps:
+    - "Módulo com `go mod init` (ver `Go: Módulos`)."
+    - Cole o exemplo em `main.go` e execute `go run .`.
+  codeLanguage: go
+  code: |-
+    package main
+
+    import "fmt"
+
+    func main() {
+    	nomes := []string{"Ana", "Bruno"}
+    	fmt.Println(len(nomes), cap(nomes))
+
+    	idades := map[string]int{"Ana": 30}
+    	idades["Bruno"] = 28
+    	fmt.Println(idades["Ana"], idades["Carla"])
+    }
+  callout:
+    type: warn
+    label: "Map sem chave:"
+    text: ler `idades["Carla"]` retorna o zero value (0 para int); use o idiom vírgula-ok para distinguir ausente de zero legítimo.
+sections:
+  - id: arrays-e-slices
+    name: Arrays e slices
+    layout: single
+    entries:
+      - title: Array com tamanho fixo versus slice
+        kicker: "[n]T versus []T"
+        description: "`[3]int` tem tamanho parte do tipo; `[3]int` e `[4]int` são tipos diferentes. `[]int` é um slice: tamanho dinâmico, referência a backing array e metadados len/cap."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	var a [2]int
+          	a[0] = 1
+          	s := []int{10, 20, 30}
+          	fmt.Println(a, len(s), cap(s))
+          }
+        output: "[1 0] 3 3"
+        tags:
+          - go
+          - array
+          - slice
+          - len
+          - cap
+      - title: append e crescimento
+        kicker: Pode realocar
+        description: "`append` retorna um slice novo ou o mesmo, dependendo da capacidade livre. Guarde sempre o retorno: `s = append(s, x)`. Quando `cap` dobra, o runtime pode copiar elementos para um array maior."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	s := make([]int, 0, 2)
+          	s = append(s, 1)
+          	fmt.Println(len(s), cap(s))
+          	s = append(s, 2, 3)
+          	fmt.Println(len(s), cap(s), s)
+          }
+        output: |-
+          1 2
+          3 4 [1 2 3]
+        tags:
+          - go
+          - append
+          - slice
+          - cap
+          - realocacao
+  - id: partilha-backing
+    name: Compartilhamento do backing array
+    layout: single
+    entries:
+      - title: Re-slice do mesmo array subjacente
+        kicker: Mudança visível em outro slice
+        description: Dois slices podem compartilhar elementos. Alterar um índice visível em outro slice pode surpreender. Use `copy` ou `append` a um slice novo para isolar quando necessário.
+        descriptionTone: warn
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	base := []int{1, 2, 3, 4}
+          	a := base[0:2]
+          	b := base[1:3]
+          	b[0] = 99
+          	fmt.Println(a, b)
+          }
+        output: "[1 99] [99 3]"
+        tags:
+          - go
+          - slice
+          - backing
+          - copy
+          - alias
+      - title: copy para isolar
+        kicker: Slice independente
+        description: "`copy(dst, src)` copia o mínimo entre len(dst) e len(src). Combinado com `make` cria uma região de memória separada."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	src := []int{1, 2, 3}
+          	dst := make([]int, len(src))
+          	copy(dst, src)
+          	dst[0] = 9
+          	fmt.Println(src, dst)
+          }
+        output: "[1 2 3] [9 2 3]"
+        tags:
+          - go
+          - copy
+          - make
+          - slice
+  - id: maps
+    name: Maps
+    layout: single
+    entries:
+      - title: make e literal
+        kicker: map[K]V
+        description: O zero value de um map é `nil`; escrever nele panic. Use `make(map[string]int)` ou literal `map[string]int{}` antes de atribuir chaves.
+        descriptionTone: default
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	m := make(map[string]int)
+          	m["um"] = 1
+          	fmt.Println(m["um"])
+          }
+        output: "1"
+        tags:
+          - go
+          - map
+          - make
+          - chave
+      - title: Vírgula-ok e delete
+        kicker: Existência de chave
+        description: '`v, ok := m["k"]` distingue chave ausente de valor zero. `delete(m, "k")` remove a entrada. A ordem de `range` em maps não é definida — não dependa dela.'
+        descriptionTone: default
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	m := map[string]int{"a": 0}
+          	v, ok := m["a"]
+          	fmt.Println("a", v, ok)
+          	_, ok2 := m["b"]
+          	fmt.Println("b", ok2)
+          	delete(m, "a")
+          	fmt.Println(len(m))
+          }
+        output: |-
+          a 0 true
+          b false
+          0
+        tags:
+          - go
+          - map
+          - ok
+          - delete
+          - range
+        callout:
+          type: hint
+          label: "Iteração:"
+          text: não assuma ordem estável entre execuções; para ordenação explícita, extraia chaves e ordene (por exemplo com sort.Strings).
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Como escolher entre array, slice e map
+        kicker: Atalho mental para estruturas de coleção
+        description: Use este resumo para decidir rápido sem perder o detalhe importante de memória e chave.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`[n]T` quando o tamanho fixo faz parte do contrato do tipo."
+              - "`[]T` para listas que crescem, são fatiadas ou precisam de `append`."
+              - "`make([]T, len, cap)` quando você quer controlar tamanho inicial e capacidade."
+              - "`copy` quando precisa isolar um slice de outro backing array."
+              - "`map[K]V` para busca por chave, contadores, índices e cache simples."
+              - "`v, ok := m[k]` quando valor zero também pode ser um dado válido."
+              - "`delete(m, k)` para remover chaves sem erro se elas não existirem."
+          - type: context-block
+            title: Armadilhas mais comuns
+            variant: common-error
+            label: "Cuidado:"
+            text: slices podem compartilhar o mesmo backing array, e maps não têm ordem estável de iteração. Quando esses detalhes importarem, copie o slice ou ordene as chaves do map antes de percorrer.
+        tags:
+          - go
+          - slice
+          - map
+          - array
+          - decisao
+          - boas-praticas
+tech: go
+order: 17.5
+cardDescription: Guia prático para arrays, slices, append, backing array, maps e idiom vírgula-ok.

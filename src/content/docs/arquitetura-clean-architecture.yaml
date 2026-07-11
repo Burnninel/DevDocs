@@ -1,0 +1,500 @@
+id: arquitetura-clean-architecture
+title: "Arquitetura: Clean Architecture"
+subtitle: A regra de dependência que mantém a regra de negócio livre de framework, banco e HTTP. Guia lido de ponta a ponta, com Go conduzindo o exemplo e PHP na aba ao lado.
+searchPlaceholder: Buscar Entity, Use Case, Adapter, dependency rule ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+readerLayout: narrative
+quickStart:
+  title: A regra que o MVC não impõe
+  kicker: Quando a regra de negócio importa o banco
+  description: "MVC separa Model, View e Controller — mas nada impede o Model de importar `*sql.DB` ou `PDO` direto. Clean Architecture acrescenta uma única regra sobre isso: **a dependência do código-fonte só pode apontar para dentro**, na direção da regra de negócio. As camadas de fora (web, banco) conhecem as de dentro (a regra); a regra nunca conhece as de fora. Esta página segue o mesmo caso do MVC — confirmar um pedido — e mostra como isolar a regra por quatro camadas, com Go conduzindo por ser onde interfaces e composição expressam isso de forma direta."
+  steps:
+    - "Comece pelo sintoma: uma regra que só roda com um banco de verdade."
+    - "Explore as quatro camadas concêntricas — clique para ver cada uma na árvore."
+    - "Desça por Entities, Casos de Uso e Adapters; a aba PHP mostra o equivalente."
+  callout:
+    type: hint
+    label: "Vem depois do MVC:"
+    text: "se `Arquitetura: MVC` ainda não está claro, comece por lá. Clean Architecture é o passo seguinte: leva a separação até a regra de dependência entre camadas."
+sections:
+  - id: visao-geral
+    name: Visão geral
+    entries:
+      - title: O sintoma — a regra de negócio conhece o banco
+        kicker: Para testar "pedido sem valor não confirma", você precisa de um banco
+        description: "O código abaixo confirma um pedido, e funciona. O problema é sutil: a regra de negócio — o `if total <= 0` — está grudada na consulta ao banco. Para testar essa regra você precisa de um `*sql.DB` real, com tabela e dados. A parte que deveria ser a mais fácil de testar virou a mais difícil, porque depende da mais volátil de todas: a infraestrutura."
+        descriptionTone: warn
+        code: |-
+          // A regra de negócio conhece o banco. Testar "pedido sem valor
+          // não confirma" exige um *sql.DB de verdade, com tabela e dados.
+          type ConfirmarPedido struct {
+          	DB *sql.DB
+          }
+
+          func (uc ConfirmarPedido) Executar(id int) error {
+          	var total float64
+          	row := uc.DB.QueryRow("SELECT total FROM pedidos WHERE id = ?", id)
+          	if err := row.Scan(&total); err != nil {
+          		return err
+          	}
+
+          	if total <= 0 {
+          		return errors.New("pedido sem valor não pode ser confirmado")
+          	}
+
+          	_, err := uc.DB.Exec("UPDATE pedidos SET status = 'confirmado' WHERE id = ?", id)
+          	return err
+          }
+        callout:
+          type: warn
+          label: "O incômodo:"
+          text: "a regra de negócio é a coisa mais valiosa e mais estável do sistema, mas aqui ela só roda acoplada ao detalhe mais trocável. A regra de dependência inverte isso."
+        tags:
+          - arquitetura
+          - clean-architecture
+          - dependency-rule
+          - acoplamento
+      - title: A regra de dependência, em uma frase
+        kicker: A seta do import aponta sempre para dentro
+        description: "Clean Architecture organiza o código em camadas concêntricas e impõe uma regra só: **dependência de código-fonte só aponta para dentro**. A camada mais interna (Entities) não sabe que Casos de Uso existem; Casos de Uso não sabem que existe HTTP ou SQL. Quando a camada de dentro precisa de algo de fora — buscar um pedido no banco, por exemplo — ela declara uma **interface** e deixa a camada de fora implementá-la. A dependência do código continua apontando para dentro, mesmo com o dado vindo de fora."
+        descriptionTone: default
+        contentBlocks:
+          - type: comparison-block
+            title: Trocar um detalhe externo
+            columns:
+              - title: Sem a regra de dependência
+                items:
+                  - Trocar de framework web reescreve a regra de negócio junto.
+                  - Trocar de banco exige revisar cálculos e validações.
+                  - Testar a regra exige subir servidor e banco de verdade.
+              - title: Com a regra de dependência
+                items:
+                  - Trocar de framework só muda o Adapter que traduz a requisição.
+                  - Trocar de banco só muda a implementação do repositório.
+                  - Testar a regra é instanciar a Entity ou o caso de uso direto.
+        callout:
+          type: hint
+          label: "Não é sobre pastas:"
+          text: "organizar arquivos em `dominio/`, `aplicacao/`, `infra/` não garante a regra. O que garante é a direção do `import` — se o domínio importar algo de infra, quebrou, mesmo com as pastas certas."
+        tags:
+          - arquitetura
+          - clean-architecture
+          - dependency-rule
+          - camadas
+  - id: anatomia
+    name: Anatomia em quatro camadas
+    entries:
+      - title: Círculos concêntricos, seta sempre para dentro
+        kicker: Clique numa camada para vê-la no diagrama, na árvore e no card
+        description: "As quatro camadas, da borda ao centro: Frameworks & Drivers envolvem os Interface Adapters, que envolvem os Casos de Uso, que envolvem as Entities. Cada anel só pode depender do que está mais para dentro. A árvore ao lado mostra como isso vira pastas num projeto Go; os cards resumem o que cada camada conhece — e o que ela recusa conhecer."
+        descriptionTone: default
+        contentBlocks:
+          - type: architecture-explorer
+            title: Explorador Clean Architecture
+            description: A dependência aponta de fora para dentro. O anel externo é o mais fácil de trocar; o interno, o mais estável.
+            shape: concentric
+            hint: "Clique numa camada para destacá-la no diagrama concêntrico, nos arquivos e no card de responsabilidade."
+            layers:
+              - id: frameworks
+                name: Frameworks & Drivers
+                role: A borda — servidor web, driver de banco, bibliotecas de terceiros.
+                detail: A camada que menos importa para a regra e a que mais muda na vida do projeto.
+                knows: as camadas internas, para acioná-las
+                avoids: nada precisa conhecê-la de volta
+              - id: adapters
+                name: Interface Adapters
+                role: Controllers e repositórios concretos que traduzem entre o mundo externo e os casos de uso.
+                knows: casos de uso e entidades
+                avoids: detalhes de framework nas suas assinaturas
+              - id: casos
+                name: Casos de Uso
+                role: Orquestra a regra através de interfaces que ele mesmo declara.
+                detail: A inversão de dependência mora aqui — a camada de dentro dita o contrato.
+                knows: entidades e os contratos que declara
+                avoids: SQL, HTTP e framework
+              - id: entities
+                name: Entities
+                role: A regra de negócio que não muda por causa de framework.
+                knows: só o próprio domínio
+                avoids: tudo que é externo
+            tree:
+              - label: projeto/
+                depth: 0
+                kind: dir
+              - label: cmd/
+                depth: 1
+                kind: dir
+              - label: web/
+                depth: 2
+                kind: dir
+              - label: main.go
+                depth: 3
+                kind: file
+                layer: frameworks
+                note: sobe o servidor HTTP
+              - label: internal/
+                depth: 1
+                kind: dir
+              - label: dominio/
+                depth: 2
+                kind: dir
+              - label: pedido.go
+                depth: 3
+                kind: file
+                layer: entities
+                note: regra do pedido
+              - label: aplicacao/
+                depth: 2
+                kind: dir
+              - label: confirmar_pedido.go
+                depth: 3
+                kind: file
+                layer: casos
+                note: caso de uso
+              - label: repositorio.go
+                depth: 3
+                kind: file
+                layer: casos
+                note: interface (contrato)
+              - label: infra/
+                depth: 2
+                kind: dir
+              - label: pedido_sql.go
+                depth: 3
+                kind: file
+                layer: adapters
+                note: implementa o contrato
+              - label: http_handler.go
+                depth: 3
+                kind: file
+                layer: adapters
+                note: traduz a requisição
+        tags:
+          - arquitetura
+          - clean-architecture
+          - camadas
+          - estrutura-de-projeto
+  - id: entities
+    name: Entities — a regra que não muda
+    entries:
+      - title: Pedido não sabe que existe banco ou HTTP
+        kicker: A camada mais interna, mais estável
+        description: "A Entity carrega a regra que faria sentido mesmo fora de um sistema web — quando um pedido pode ser confirmado. Ela não importa `database/sql`, `PDO`, requisição nem resposta. Em Go isso é uma struct com métodos no pacote de domínio, sem nenhum import de infraestrutura; em PHP, uma classe no namespace de domínio. Repare que a validação vive **dentro** de `Confirmar`: quem tiver um `Pedido` não consegue confirmá-lo pela porta dos fundos."
+        descriptionTone: default
+        codeVariants:
+          - language: go
+            code: |-
+              package dominio
+
+              import "errors"
+
+              type Pedido struct {
+              	ID     int
+              	Total  float64
+              	status string
+              }
+
+              func NovoPedido(id int, total float64) *Pedido {
+              	return &Pedido{ID: id, Total: total, status: "pendente"}
+              }
+
+              func (p *Pedido) Confirmar() error {
+              	if p.Total <= 0 {
+              		return errors.New("pedido sem valor não pode ser confirmado")
+              	}
+              	p.status = "confirmado"
+              	return nil
+              }
+
+              func (p *Pedido) Status() string { return p.status }
+          - language: php
+            code: |-
+              <?php
+
+              namespace Dominio;
+
+              final class Pedido
+              {
+                  private string $status = "pendente";
+
+                  public function __construct(
+                      public readonly int $id,
+                      public readonly float $total,
+                  ) {}
+
+                  public function confirmar(): void
+                  {
+                      if ($this->total <= 0) {
+                          throw new \DomainException("Pedido sem valor não pode ser confirmado");
+                      }
+                      $this->status = "confirmado";
+                  }
+
+                  public function status(): string
+                  {
+                      return $this->status;
+                  }
+              }
+        tags:
+          - arquitetura
+          - clean-architecture
+          - entity
+          - dominio
+          - regra-de-negocio
+  - id: casos-de-uso
+    name: Casos de Uso — a inversão de dependência
+    entries:
+      - title: O caso de uso declara o contrato que a infra obedece
+        kicker: Ele pede dados por uma interface, não por uma implementação
+        description: "Aqui está o coração da regra de dependência. O caso de uso `ConfirmarPedido` precisa buscar e salvar pedidos, mas não conhece MySQL, Postgres nem memória. Ele declara uma **interface** `PedidoRepositorio` e trabalha só com ela. Quem implementa essa interface é a camada de fora — por isso a dependência do código continua apontando para dentro, mesmo com o dado vindo do banco. Essa é a inversão de dependência: a camada interna dita o contrato, a externa se adapta."
+        descriptionTone: default
+        codeVariants:
+          - language: go
+            code: |-
+              package aplicacao
+
+              import "projeto/internal/dominio"
+
+              type PedidoRepositorio interface {
+              	Buscar(id int) (*dominio.Pedido, error)
+              	Salvar(p *dominio.Pedido) error
+              }
+
+              type ConfirmarPedido struct {
+              	Repo PedidoRepositorio
+              }
+
+              func (uc ConfirmarPedido) Executar(id int) error {
+              	pedido, err := uc.Repo.Buscar(id)
+              	if err != nil {
+              		return err
+              	}
+              	if err := pedido.Confirmar(); err != nil {
+              		return err
+              	}
+              	return uc.Repo.Salvar(pedido)
+              }
+          - language: php
+            code: |-
+              <?php
+
+              namespace Aplicacao;
+
+              use Dominio\Pedido;
+
+              interface PedidoRepositorio
+              {
+                  public function buscar(int $id): ?Pedido;
+                  public function salvar(Pedido $pedido): void;
+              }
+
+              final class ConfirmarPedido
+              {
+                  public function __construct(private PedidoRepositorio $repo) {}
+
+                  public function executar(int $id): void
+                  {
+                      $pedido = $this->repo->buscar($id);
+                      if ($pedido === null) {
+                          throw new \RuntimeException("Pedido não encontrado");
+                      }
+
+                      $pedido->confirmar();
+                      $this->repo->salvar($pedido);
+                  }
+              }
+        callout:
+          type: hint
+          label: "Recompensa direta:"
+          text: "para testar `ConfirmarPedido` sem banco, basta implementar `PedidoRepositorio` com uma versão em memória. O teste fica rápido e determinístico — veja `Arquitetura: Repository Pattern` para essa implementação em detalhe."
+        tags:
+          - arquitetura
+          - clean-architecture
+          - use-case
+          - dependency-inversion
+          - interface
+  - id: interface-adapters
+    name: Interface Adapters — a implementação concreta
+    entries:
+      - title: A implementação real fica na borda, não no centro
+        kicker: O repositório concreto depende do caso de uso, nunca o contrário
+        description: "O Adapter é quem conhece o banco. Ele implementa a interface que o caso de uso declarou — logo é ele quem depende da camada de dentro, respeitando a seta para dentro. Trocar de driver, ou de MySQL para Postgres, muda só esta camada; o caso de uso e a Entity nem tomam conhecimento. É aqui também que vive o handler HTTP, que traduz a requisição num `Executar(id)` e a resposta de volta."
+        descriptionTone: default
+        codeVariants:
+          - language: go
+            code: |-
+              package infra
+
+              import (
+              	"database/sql"
+
+              	"projeto/internal/dominio"
+              )
+
+              type PedidoRepositorioSQL struct {
+              	DB *sql.DB
+              }
+
+              func (r PedidoRepositorioSQL) Buscar(id int) (*dominio.Pedido, error) {
+              	var (
+              		pid   int
+              		total float64
+              	)
+              	row := r.DB.QueryRow("SELECT id, total FROM pedidos WHERE id = ?", id)
+              	if err := row.Scan(&pid, &total); err != nil {
+              		return nil, err
+              	}
+              	return dominio.NovoPedido(pid, total), nil
+              }
+
+              func (r PedidoRepositorioSQL) Salvar(p *dominio.Pedido) error {
+              	_, err := r.DB.Exec("UPDATE pedidos SET status = ? WHERE id = ?", p.Status(), p.ID)
+              	return err
+              }
+          - language: php
+            code: |-
+              <?php
+
+              namespace Infra;
+
+              use Aplicacao\PedidoRepositorio;
+              use Dominio\Pedido;
+
+              final class PedidoRepositorioPdo implements PedidoRepositorio
+              {
+                  public function __construct(private \PDO $pdo) {}
+
+                  public function buscar(int $id): ?Pedido
+                  {
+                      $stmt = $this->pdo->prepare("SELECT id, total FROM pedidos WHERE id = :id");
+                      $stmt->execute(["id" => $id]);
+                      $linha = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+                      return $linha ? new Pedido((int) $linha["id"], (float) $linha["total"]) : null;
+                  }
+
+                  public function salvar(Pedido $pedido): void
+                  {
+                      $stmt = $this->pdo->prepare("UPDATE pedidos SET status = :status WHERE id = :id");
+                      $stmt->execute(["status" => $pedido->status(), "id" => $pedido->id]);
+                  }
+              }
+        callout:
+          type: hint
+          label: "Detalhe de conexão:"
+          text: "abrir a conexão (`sql.Open(...)`, `new PDO(...)`), DSN e charset seguem o mesmo cuidado do hub — ver `Go: Banco de Dados` e `PHP: Conexão e Manipulação de Banco de Dados`."
+        tags:
+          - arquitetura
+          - clean-architecture
+          - interface-adapter
+          - repositorio
+  - id: frameworks-drivers
+    name: Frameworks & Drivers — a borda descartável
+    entries:
+      - title: Onde vivem o roteador HTTP, o driver e a UI
+        kicker: A camada mais externa — e a mais fácil de trocar
+        description: "Aqui ficam os detalhes que Robert C. Martin chama de \"detalhes\": o framework web, o driver do banco, bibliotecas de terceiros. É a camada que menos importa para a regra de negócio e a que mais muda ao longo da vida de um projeto — por isso fica na borda, isolada pelas camadas internas. No projeto Go, é o `main.go` que monta tudo: abre a conexão, constrói o `PedidoRepositorioSQL`, injeta no `ConfirmarPedido` e registra o handler. É o único lugar que conhece todas as camadas ao mesmo tempo."
+        descriptionTone: default
+        code: |-
+          // cmd/web/main.go — o único ponto que conhece todas as camadas.
+          func main() {
+          	db, err := sql.Open("mysql", dsn)
+          	if err != nil {
+          		log.Fatal(err)
+          	}
+
+          	repo := infra.PedidoRepositorioSQL{DB: db}
+          	confirmar := aplicacao.ConfirmarPedido{Repo: repo}
+          	handler := infra.NovoPedidoHandler(confirmar)
+
+          	http.Handle("/pedidos/", handler)
+          	log.Fatal(http.ListenAndServe(":8080", nil))
+          }
+        callout:
+          type: hint
+          label: "O ponto de composição:"
+          text: "montar as dependências num lugar só (aqui, `main.go`) é o que mantém o resto do código ignorante sobre implementações concretas. Em PHP, esse papel costuma ficar num container de injeção de dependência."
+        tags:
+          - arquitetura
+          - clean-architecture
+          - frameworks
+          - drivers
+          - composicao
+  - id: fluxo
+    name: O fluxo de confirmar um pedido
+    entries:
+      - title: Da requisição HTTP até a Entity e de volta
+        kicker: "POST /pedidos/42/confirmar, passo a passo"
+        description: Juntando as quatro camadas, uma confirmação atravessa o sistema numa direção só — de fora para dentro na entrada, de dentro para fora na saída — sem que a regra de negócio saiba de nenhum detalhe externo.
+        descriptionTone: default
+        contentBlocks:
+          - type: flow-steps
+            title: Ciclo da confirmação
+            steps:
+              - O handler HTTP (Frameworks & Drivers) recebe a requisição e lê o id.
+              - O handler chama `ConfirmarPedido.Executar(id)` — não sabe como o pedido é buscado.
+              - O caso de uso pede o pedido ao `PedidoRepositorio` (interface que ele declara).
+              - "`PedidoRepositorioSQL` busca no banco e devolve uma `Pedido` (Entity) pronta."
+              - O caso de uso chama `pedido.Confirmar()` — a regra decide, sem saber de banco ou HTTP.
+              - O caso de uso pede ao repositório para salvar o novo estado.
+              - O handler traduz o resultado em resposta HTTP.
+        tags:
+          - arquitetura
+          - clean-architecture
+          - fluxo
+          - requisicao
+  - id: decisao
+    name: Quando usar e erros comuns
+    entries:
+      - title: Quando vale a pena inverter a dependência
+        kicker: Camadas custam disciplina — gaste onde compensa
+        description: Isolar a regra em Entity + Caso de Uso paga em bases que crescem e em regra que precisa ser testada sem banco. Num CRUD raso vira cerimônia. Use o mapa.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Regra de negócio não trivial que precisa ser testada sem banco: vale isolar em Entity + Caso de Uso."
+              - "Várias fontes de dados possíveis (banco, API externa, cache) por trás da mesma regra: a interface paga o investimento."
+              - "CRUD raso, sem regra além de salvar e ler: uma camada a mais é cerimônia — `Arquitetura: Repository Pattern` sozinho já resolve."
+              - "Projeto pequeno e de vida curta: MVC direto costuma bastar; Clean Architecture compensa em bases que crescem."
+          - type: checklist-block
+            title: Como saber se a regra está funcionando
+            items:
+              - A Entity compila e roda sem importar driver de banco nem framework web.
+              - O caso de uso depende de interfaces que ele mesmo declara, não de classes concretas de infra.
+              - Trocar o framework HTTP não obriga a tocar em Entities nem em Casos de Uso.
+        tags:
+          - arquitetura
+          - clean-architecture
+          - decisao
+          - boas-praticas
+      - title: Onde a regra de dependência costuma vazar
+        kicker: Os desvios mais frequentes, quase sempre por atalho
+        description: A violação raramente é um import direto e óbvio — ela entra por detalhes que parecem inofensivos, sempre na direção de deixar o domínio saber demais.
+        descriptionTone: warn
+        contentBlocks:
+          - type: context-block
+            title: Entity ou caso de uso importando infra
+            variant: common-error
+            label: "Evite:"
+            text: "uma Entity ou caso de uso que importa `database/sql`, `PDO`, um cliente HTTP ou um framework. Se a camada interna precisa de algo de fora, declare uma interface e injete a implementação — nunca importe a implementação direto."
+          - type: context-block
+            title: Caso de uso devolvendo a linha do banco
+            variant: common-error
+            label: "Evite:"
+            text: "um caso de uso que devolve `sql.Rows` ou um array associativo cru em vez de uma Entity. Isso vaza um detalhe de infraestrutura para quem chama, quebrando o isolamento na direção contrária."
+          - type: context-block
+            title: Camada extra sem regra para proteger
+            variant: common-error
+            label: "Evite:"
+            text: "criar Entity, caso de uso e Adapter para uma tela que só lista registros sem nenhuma regra. Cerimônia sem regra de negócio para proteger é custo sem retorno — reavalie com o mapa de decisão acima."
+        tags:
+          - arquitetura
+          - clean-architecture
+          - erros-comuns
+          - acoplamento
+tech: arquitetura
+order: 2
+cardDescription: A regra de dependência que isola a regra de negócio de framework, banco e HTTP — quatro camadas concêntricas, com Go conduzindo e PHP na aba.

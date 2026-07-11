@@ -1,0 +1,105 @@
+---
+import type { GetStaticPaths } from "astro";
+import DocLayout from "@/layouts/DocLayout.astro";
+import Breadcrumb from "@/components/docs/Breadcrumb.astro";
+import SectionNav from "@/components/docs/SectionNav.astro";
+import SectionPager from "@/components/docs/SectionPager.astro";
+import QuickStart from "@/components/docs/QuickStart.astro";
+import Entry from "@/components/docs/Entry.astro";
+import { getAllDocs } from "@/lib/docs";
+import { docParam } from "@/lib/paths";
+
+export const getStaticPaths = (async () => {
+	const docs = await getAllDocs();
+	return docs.map((entry) => ({
+		params: { tech: entry.data.tech, doc: docParam(entry.id, entry.data.tech) },
+		props: { entry },
+	}));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+const doc = entry.data;
+const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
+const readerMode = doc.readerLayout ?? "panels";
+const isNarrative = readerMode === "narrative";
+---
+
+<DocLayout title={doc.title} description={doc.subtitle}>
+	<div
+		class="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:py-12"
+	>
+		<!-- Navegação de seções: barra sticky no mobile, sidebar no desktop -->
+		<aside
+			class="sticky top-[var(--nav-h)] z-30 -mx-5 min-w-0 self-start px-5 py-3 lg:top-[calc(var(--nav-h)+1.5rem)] lg:mx-0 lg:px-0 lg:py-0"
+		>
+			<div
+				class="glass-outline scroll-x rounded-2xl p-2 lg:overflow-visible lg:p-4"
+			>
+				<SectionNav sections={navSections} />
+			</div>
+		</aside>
+
+		<main class="min-w-0">
+			<span data-doc-top class="block scroll-mt-[var(--nav-h)]"></span>
+			<Breadcrumb tech={doc.tech} docTitle={doc.title} />
+
+			<header class="mt-5 mb-8">
+				<h1
+					class="font-display text-4xl font-semibold text-ink sm:text-5xl"
+					data-pagefind-meta="title"
+				>
+					{doc.title}
+				</h1>
+				{
+					doc.subtitle && (
+						<p class="mt-4 max-w-[var(--reading-measure)] text-lg text-muted">
+							{doc.subtitle}
+						</p>
+					)
+				}
+			</header>
+
+			{
+				doc.quickStart && (
+					<div class="mb-10">
+						<QuickStart quickStart={doc.quickStart} />
+					</div>
+				)
+			}
+
+			<div
+				class:list={["doc-panels", isNarrative && "doc-panels-narrative"]}
+				data-reader-mode={readerMode}
+				data-pagefind-body
+			>
+				{
+					doc.sections.map((section, i) => (
+						<section
+							data-section-panel={section.id}
+							data-section-name={section.name}
+							class:list={["doc-section", i === 0 && "is-active"]}
+						>
+							<h2
+								id={section.id}
+								class="mb-6 scroll-mt-[calc(var(--nav-h)+1.5rem)] font-display text-2xl font-semibold text-ink"
+							>
+								{section.name}
+							</h2>
+							<div class="grid gap-12">
+								{section.entries.map((e) => (
+									<Entry
+										entry={e}
+										fallbackLang={doc.codeLanguage}
+										defaultRunnable={doc.defaultRunnable}
+									/>
+								))}
+							</div>
+						</section>
+					))
+				}
+			</div>
+
+			{!isNarrative && <SectionPager />}
+		</main>
+	</div>
+</DocLayout>

@@ -1,0 +1,93 @@
+---
+import SiteLayout from "@/layouts/SiteLayout.astro";
+import Hero from "@/components/home/Hero.astro";
+import TechBlock from "@/components/home/TechBlock.astro";
+import TechRefRow from "@/components/home/TechRefRow.astro";
+import { getAllDocs, getDocsGroupedByCategory } from "@/lib/docs";
+
+const categories = await getDocsGroupedByCategory();
+const all = await getAllDocs();
+const totalDocs = all.length;
+const totalTechs = categories.reduce((n, c) => n + c.groups.length, 0);
+const totalSections = all.reduce((n, d) => n + d.data.sections.length, 0);
+
+const stackCategories = categories.filter((c) => c.meta.variant === "stack");
+const referenceGroups = categories
+	.filter((c) => c.meta.variant === "reference")
+	.flatMap((c) => c.groups.map((group) => ({ group, categoryMeta: c.meta })));
+
+const stats = [
+	{ value: String(totalDocs), label: "documentações" },
+	{ value: String(totalTechs), label: "tecnologias" },
+	{ value: String(totalSections), label: "seções" },
+];
+
+const hairline =
+	"background: color-mix(in oklab, var(--color-hairline) 65%, transparent)";
+---
+
+<SiteLayout title="DevDocs">
+	<Hero
+		kicker="biblioteca de consulta"
+		title="DevDocs"
+		lead="Documentações técnicas foscas e sem ruído — a referência que você abre dezenas de vezes por dia."
+		stats={stats}
+		variant="compact"
+	>
+		<span slot="title">
+			Consulta<br />
+			<span style="color: var(--color-accent-strong)">sem ruído.</span>
+		</span>
+	</Hero>
+
+	<div class="mx-auto max-w-7xl px-5 pb-24">
+		{
+			stackCategories.map(({ meta: catMeta, groups }) => (
+				<div class="pt-16 first:pt-4">
+					<div class="mb-8 flex items-center gap-3" data-reveal>
+						<span class="font-mono text-xs font-medium tracking-[0.22em] text-faint uppercase">
+							{catMeta.label}
+						</span>
+						{catMeta.isNew && (
+							<span
+								class="font-mono text-[0.6rem] tracking-[0.1em] uppercase"
+								style="color: var(--color-tone-hint); background: color-mix(in oklab, var(--color-tone-hint) 12%, transparent); padding: 0.15rem 0.5rem; border-radius: 999px"
+							>
+								novo
+							</span>
+						)}
+						<span class="h-px flex-1" style={hairline} />
+					</div>
+
+					<div
+						class="grid gap-4"
+						style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr))"
+					>
+						{groups.map((group) => (
+							<TechBlock group={group} />
+						))}
+					</div>
+				</div>
+			))
+		}
+
+		{
+			referenceGroups.length > 0 && (
+				<div class="pt-16">
+					<div class="mb-6 flex items-center gap-3" data-reveal>
+						<span class="font-mono text-xs font-medium tracking-[0.22em] text-faint uppercase">
+							Referências
+						</span>
+						<span class="h-px flex-1" style={hairline} />
+					</div>
+
+					<div class="grid grid-cols-1 gap-3">
+						{referenceGroups.map(({ group, categoryMeta }) => (
+							<TechRefRow group={group} categoryMeta={categoryMeta} />
+						))}
+					</div>
+				</div>
+			)
+		}
+	</div>
+</SiteLayout>

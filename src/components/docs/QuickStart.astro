@@ -1,0 +1,59 @@
+---
+import { formatInline, splitCodeAndOutput, normalizeLang } from "@/lib/format";
+import type { QuickStart } from "@/content.config";
+import CodeBlock from "./CodeBlock.astro";
+import OutputBlock from "./OutputBlock.astro";
+import Callout from "./Callout.astro";
+
+interface Props {
+	quickStart: QuickStart;
+}
+const { quickStart: qs } = Astro.props;
+const { code, output } = splitCodeAndOutput(qs.code);
+const lang = normalizeLang(qs.codeLanguage);
+---
+
+<section
+	class="glass grid gap-5 rounded-3xl p-6 sm:p-8"
+	style="box-shadow: var(--glow-accent-sm)"
+	data-pagefind-ignore
+>
+	<header class="grid gap-1.5">
+		{
+			qs.kicker && (
+				<p class="font-mono text-xs tracking-wide text-accent">{qs.kicker}</p>
+			)
+		}
+		<h2 class="font-display text-2xl font-semibold text-ink">{qs.title}</h2>
+		{
+			qs.description && (
+				<p
+					class="wrap-anywhere max-w-[var(--reading-measure)] text-muted"
+					set:html={formatInline(qs.description)}
+				/>
+			)
+		}
+	</header>
+
+	{
+		qs.steps && qs.steps.length > 0 && (
+			<ol class="grid gap-2.5">
+				{qs.steps.map((step, i) => (
+					<li class="flex gap-3 text-sm leading-relaxed text-ink-soft">
+						<span
+							class="grid size-6 shrink-0 place-items-center rounded-full font-mono text-[0.7rem] font-semibold"
+							style="background: var(--accent-soft); color: var(--color-accent-strong)"
+						>
+							{i + 1}
+						</span>
+						<span class="wrap-anywhere pt-0.5" set:html={formatInline(step)} />
+					</li>
+				))}
+			</ol>
+		)
+	}
+
+	{code && <CodeBlock code={code} lang={lang} />}
+	{output && <OutputBlock output={output} />}
+	{qs.callout && <Callout callout={qs.callout} />}
+</section>

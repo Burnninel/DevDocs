@@ -1,0 +1,643 @@
+id: php-strings
+title: "PHP: Manipulação de Strings"
+subtitle: Guia prático para validar, transformar e preparar textos no dia a dia com PHP, com foco em formulários e APIs.
+searchPlaceholder: Buscar função, string ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+defaultRunnable: true
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Requisitos e execução no terminal
+  description: Todos os exemplos rodam com PHP CLI. Para aprender de verdade, teste cada bloco isoladamente e observe a saída.
+  steps:
+    - Verifique se o PHP está disponível com `php --version`.
+    - Crie um arquivo, por exemplo `strings.php`.
+    - Cole um exemplo desta página no arquivo.
+    - Execute no terminal com `php strings.php`.
+  codeLanguage: shell
+  code: |-
+    php --version
+    php strings.php
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "padrões em texto livre com `preg_*` em `PHP: Expressões regulares`; serialização em `PHP: JSON`."
+sections:
+  - id: o-que-sao-strings
+    name: O que são Strings em PHP
+    layout: single
+    entries:
+      - title: String é texto tratado como dado
+        kicker: Base para validação, formatação e integração
+        description: "String é qualquer sequência de caracteres: nome, email, URL, token, JSON e mensagem de erro. Use manipulação de strings quando dados entram por formulário, API ou banco e precisam de validação e padronização. Isso é importante porque texto sem tratamento costuma quebrar busca, comparação e regras de negócio."
+        descriptionTone: default
+        code: |-
+          <?php
+          $nome = "Ana";
+          $email = "ana@email.com";
+          $token = "abc123XYZ";
+
+          $payloadApi = "{\"ok\":true,\"mensagem\":\"sucesso\"}"; // JSON também chega como string
+
+          echo "Nome: {$nome}" . PHP_EOL;
+          echo "Email: {$email}" . PHP_EOL;
+          echo "Token: {$token}" . PHP_EOL;
+          echo "Payload bruto: {$payloadApi}" . PHP_EOL;
+        output: |-
+          Nome: Ana
+          Email: ana@email.com
+          Token: abc123XYZ
+          Payload bruto: {"ok":true,"mensagem":"sucesso"}
+        tags:
+          - php
+          - strings
+          - conceito
+          - texto
+          - api
+          - formulario
+  - id: formas-criar-strings
+    name: Formas de criar Strings (aspas simples e duplas)
+    layout: single
+    entries:
+      - title: Diferença entre aspas simples e duplas
+        kicker: Entender interpolação evita bugs de saída
+        description: Aspas simples (`''`) tratam quase tudo como literal. Aspas duplas (`""`) interpretam variáveis e caracteres de escape como `\n`. Use aspas simples para texto fixo e aspas duplas quando precisar interpolar variável. Isso evita saída errada e concatenação desnecessária.
+        descriptionTone: default
+        code: |-
+          <?php
+          $nome = "Bruno";
+
+          echo 'Olá, $nome' . PHP_EOL; // Aspa simples: variável não é interpolada
+          echo "Olá, $nome" . PHP_EOL; // Aspa dupla: variável é interpolada
+
+          echo "Linha 1\nLinha 2" . PHP_EOL; // Aspa dupla interpreta \n
+          // echo 'Linha 1\nLinha 2' . PHP_EOL; // Aspa simples manteria \n literal
+        output: |-
+          Olá, $nome
+          Olá, Bruno
+          Linha 1
+          Linha 2
+        tags:
+          - php
+          - strings
+          - aspas
+          - interpolacao
+          - simples
+          - duplas
+      - title: Interpolação com chaves para evitar ambiguidade
+        kicker: Útil quando variável encosta em texto
+        description: Quando a variável fica junto de letras, use `{}` para delimitar claramente o nome. Isso melhora legibilidade e evita interpretação errada do parser.
+        descriptionTone: default
+        code: |-
+          <?php
+          $usuario = "ana";
+
+          echo "User: {$usuario}_admin" . PHP_EOL; // Chaves definem o limite da variável
+
+          echo "URL: /perfil/{$usuario}" . PHP_EOL; // Interpolação segura em rotas
+        output: |-
+          User: ana_admin
+          URL: /perfil/ana
+        tags:
+          - php
+          - strings
+          - interpolacao
+          - chaves
+          - template
+          - saida
+  - id: concatenacao-strings
+    name: Concatenação de Strings
+    layout: single
+    entries:
+      - title: Concatenação com ponto (.) e ponto igual (.=)
+        kicker: Montar mensagens e payloads de forma incremental
+        description: No PHP, concatenação de strings é feita com `.`. Use `.=` quando quiser adicionar partes no mesmo buffer de texto. Isso é útil em logs, mensagens de validação e montagem de respostas.
+        descriptionTone: default
+        code: |-
+          <?php
+          $nome = "Ana";
+          $cargo = "Desenvolvedora";
+
+          $frase = "Usuária: " . $nome . " | Cargo: " . $cargo; // Concatena blocos de texto
+
+          echo $frase . PHP_EOL;
+
+          $log = "Início";
+          $log .= " -> validação"; // Adiciona trecho no mesmo texto
+          $log .= " -> envio API";
+
+          echo $log . PHP_EOL;
+        output: |-
+          Usuária: Ana | Cargo: Desenvolvedora
+          Início -> validação -> envio API
+        tags:
+          - php
+          - strings
+          - concatenacao
+          - operador-ponto
+          - montagem
+          - log
+  - id: principais-funcoes-strings
+    name: Principais funções de manipulação de Strings
+    layout: single
+    entries:
+      - title: "strlen(): tamanho do texto"
+        kicker: Validar limites de campos antes de salvar
+        description: "`strlen($texto)` recebe a string em `$texto` e retorna seu tamanho. Use para validar limite mínimo e máximo em formulário e payloads API. Isso evita gravar dados incompletos ou acima da regra."
+        descriptionTone: default
+        code: |-
+          <?php
+          $senha = "abc123";
+
+          echo "Tamanho simples: " . strlen($senha) . PHP_EOL; // Exemplo simples
+
+          $nomeUsuario = "ana_silva";
+          if (strlen($nomeUsuario) < 5) {
+              echo "Nome de usuário muito curto" . PHP_EOL;
+          } else {
+              echo "Nome de usuário válido" . PHP_EOL; // Exemplo prático de validação
+          }
+        output: |-
+          Tamanho simples: 6
+          Nome de usuário válido
+        tags:
+          - php
+          - strings
+          - strlen
+          - validacao
+          - tamanho
+          - formulario
+      - title: "substr(): extrair parte do texto"
+        kicker: Criar prévias e separar blocos de informação
+        description: "`substr($texto, $inicio, $tamanho)` recorta parte da string: `$texto` é a origem, `$inicio` é a posição inicial e `$tamanho` define quantos caracteres retornar. Use para preview de descrição, últimos dígitos de documento e extração de blocos fixos."
+        descriptionTone: default
+        code: |-
+          <?php
+          $codigo = "PED-2026-000981";
+
+          echo "Trecho simples: " . substr($codigo, 4, 4) . PHP_EOL; // Exemplo simples: 2026
+
+          $descricao = "Notebook gamer com 16GB RAM e SSD de 1TB";
+          $preview = substr($descricao, 0, 20) . "..."; // Exemplo prático: teaser para listagem
+
+          echo "Preview: " . $preview . PHP_EOL;
+        output: |-
+          Trecho simples: 2026
+          Preview: Notebook gamer com 1...
+        tags:
+          - php
+          - strings
+          - substr
+          - extracao
+          - preview
+          - formatacao
+      - title: "str_replace(): substituir trechos específicos"
+        kicker: Normalizar dados antes de processar
+        description: "`str_replace($buscar, $substituir, $texto)` troca conteúdo no texto: `$buscar` é o trecho original, `$substituir` é o novo valor e `$texto` é onde a troca acontece. Use para limpar máscara de CPF/telefone, ajustar formato e padronizar entrada de formulário/API."
+        descriptionTone: default
+        code: |-
+          <?php
+          $frase = "Olá mundo";
+          echo str_replace("mundo", "time", $frase) . PHP_EOL; // Exemplo simples
+
+          $telefone = "(11) 99999-8888";
+          $telefoneLimpo = str_replace(["(", ")", " ", "-"], "", $telefone); // Exemplo prático de limpeza
+
+          echo "Telefone limpo: " . $telefoneLimpo . PHP_EOL;
+        output: |-
+          Olá time
+          Telefone limpo: 11999998888
+        tags:
+          - php
+          - strings
+          - str_replace
+          - normalizacao
+          - telefone
+          - formulario
+      - title: "strtolower() e strtoupper(): padronizar caixa"
+        kicker: Comparar e armazenar dados com consistência
+        description: "`strtolower($texto)` recebe a string e retorna em minúsculo; `strtoupper($texto)` faz o mesmo para maiúsculo. Use para comparação sem erro de caixa e para padronizar email, código e status."
+        descriptionTone: default
+        code: |-
+          <?php
+          $status = "Aprovado";
+
+          echo strtolower($status) . PHP_EOL; // Exemplo simples
+          echo strtoupper($status) . PHP_EOL; // Exemplo simples
+
+          $emailForm = "ANA.SILVA@EMAIL.COM";
+          $emailNormalizado = strtolower($emailForm); // Exemplo prático para login e busca
+
+          echo "Email normalizado: " . $emailNormalizado . PHP_EOL;
+        output: |-
+          aprovado
+          APROVADO
+          Email normalizado: ana.silva@email.com
+        tags:
+          - php
+          - strings
+          - strtolower
+          - strtoupper
+          - normalizacao
+          - email
+      - title: "trim(): remover espaços extras nas bordas"
+        kicker: Primeiro passo em quase toda validação textual
+        description: "`trim($texto, $caracteresOpcional)` remove espaços nas bordas de `$texto`; o segundo parâmetro é opcional e define quais caracteres remover. Use antes de validar campo obrigatório, comparar textos e salvar dados para evitar falso vazio e ruído invisível."
+        descriptionTone: default
+        code: |-
+          <?php
+          $nome = "   Carla   ";
+          echo "[" . trim($nome) . "]" . PHP_EOL; // Exemplo simples
+
+          $comentario = "   "; // Usuário enviou só espaços
+          if (trim($comentario) === "") {
+              echo "Comentário obrigatório" . PHP_EOL; // Exemplo prático de validação
+          }
+        output: |-
+          [Carla]
+          Comentário obrigatório
+        tags:
+          - php
+          - strings
+          - trim
+          - validacao
+          - espacos
+          - formulario
+  - id: busca-verificacao-strings
+    name: Busca e verificação em Strings
+    layout: single
+    entries:
+      - title: "strpos(): encontrar posição de um trecho"
+        kicker: Busca direta para validação de conteúdo
+        description: "`strpos($texto, $trecho, $offsetOpcional)` procura `$trecho` dentro de `$texto` e retorna a posição inicial; se não achar, retorna `false`. O terceiro parâmetro é opcional para começar a busca de outro ponto. Compare sempre com `!== false` para não confundir posição `0` com falso."
+        descriptionTone: default
+        code: |-
+          <?php
+          $email = "ana@email.com";
+          $posicaoArroba = strpos($email, "@");
+
+          echo "Posição de @: " . $posicaoArroba . PHP_EOL; // Exemplo simples
+
+          $mensagemApi = "erro: token expirado";
+          if (strpos($mensagemApi, "erro:") !== false) { // Validação prática de prefixo
+              echo "Resposta de erro identificada" . PHP_EOL;
+          }
+        output: |-
+          Posição de @: 3
+          Resposta de erro identificada
+        tags:
+          - php
+          - strings
+          - strpos
+          - busca
+          - validacao
+          - api
+      - title: Comparação de strings com segurança
+        kicker: Evitar falso positivo por caixa ou tipo
+        description: Use `===` para comparação estrita. Em comparação textual, `strcmp($a, $b)` diferencia maiúsculas de minúsculas e `strcasecmp($a, $b)` ignora a caixa. `$a` e `$b` são os dois textos comparados. De `strcmp` use apenas o sinal do retorno (negativo, zero ou positivo); o valor exato não é garantido pela linguagem. Isso é útil em regra de permissão, status e integrações.
+        descriptionTone: default
+        code: |-
+          <?php
+          $perfilEntrada = "Admin";
+
+          var_dump($perfilEntrada === "Admin"); // Comparação estrita exata
+          $ordem = strcmp($perfilEntrada, "admin"); // Sensível a caixa
+          echo "Comparação exata: " . ($ordem < 0 ? "antes" : ($ordem > 0 ? "depois" : "igual")) . PHP_EOL;
+          var_dump(strcasecmp($perfilEntrada, "admin")); // Ignora caixa
+
+          if (strcasecmp($perfilEntrada, "admin") === 0) {
+              echo "Perfil autorizado" . PHP_EOL; // Exemplo prático em autorização
+          }
+        output: |-
+          bool(true)
+          Comparação exata: antes
+          int(0)
+          Perfil autorizado
+        tags:
+          - php
+          - strings
+          - comparacao
+          - strcmp
+          - strcasecmp
+          - validacao
+      - title: "Validação básica: verificar se contém texto útil"
+        kicker: Diferenciar vazio real de conteúdo válido
+        description: Em formulário e API, o campo pode chegar com espaço, quebra de linha ou texto parcial. Combine `trim()` e busca para validar intenção real do usuário.
+        descriptionTone: default
+        code: |-
+          <?php
+          $bio = "   Desenvolvedor PHP e APIs   ";
+
+          $bioLimpa = trim($bio); // Remove ruído nas bordas
+          if ($bioLimpa === "") {
+              echo "Bio obrigatória" . PHP_EOL;
+          } elseif (strpos(strtolower($bioLimpa), "php") !== false) {
+              echo "Bio contém tecnologia-chave: PHP" . PHP_EOL; // Validação de conteúdo
+          }
+        output: "Bio contém tecnologia-chave: PHP"
+        tags:
+          - php
+          - strings
+          - validacao
+          - trim
+          - strpos
+          - formulario
+  - id: transformacao-strings
+    name: Transformação de Strings
+    layout: single
+    entries:
+      - title: Normalizar texto para uso interno
+        kicker: Padronizar antes de salvar ou comparar
+        description: Transformar string é aplicar uma sequência de limpeza para deixar o dado previsível. Use em login, cadastro e integração para reduzir diferença entre entrada do usuário e padrão interno.
+        descriptionTone: default
+        code: |-
+          <?php
+          $nomeEntrada = "  Ana   SILVA  ";
+
+          $nomeNormalizado = trim($nomeEntrada); // Remove bordas
+          $nomeNormalizado = str_replace("  ", " ", $nomeNormalizado); // troca pares: "   " (3) vira "  " (2). Para colapsar tudo use preg_replace('/\s+/', ' ', ...)
+          $nomeNormalizado = strtolower($nomeNormalizado); // Padroniza caixa para comparação
+
+          echo "Nome normalizado: " . $nomeNormalizado . PHP_EOL;
+        output: "Nome normalizado: ana  silva"
+        tags:
+          - php
+          - strings
+          - transformacao
+          - normalizacao
+          - cadastro
+          - limpeza
+      - title: Transformar valores para formato de exibição
+        kicker: Separar dado bruto de dado amigável
+        description: Nem sempre o formato recebido é o melhor para exibir. Transforme apenas para apresentação sem perder o valor bruto original.
+        descriptionTone: default
+        code: |-
+          <?php
+          $statusBruto = "pedido_em_analise";
+
+          $statusTela = str_replace("_", " ", $statusBruto); // Troca separador técnico
+          $statusTela = strtoupper(substr($statusTela, 0, 1)) . substr($statusTela, 1); // Ajusta inicial
+
+          echo "Status exibido: " . $statusTela . PHP_EOL;
+        output: "Status exibido: Pedido em analise"
+        tags:
+          - php
+          - strings
+          - transformacao
+          - formatacao
+          - status
+          - ui
+  - id: conversao-string-array
+    name: Conversão entre String e Array
+    layout: single
+    entries:
+      - title: "explode(): quebrar string em partes"
+        kicker: Útil para tags, CSV simples e filtros
+        description: "`explode($separador, $texto, $limiteOpcional)` divide `$texto` usando `$separador` e retorna um array. O terceiro parâmetro é opcional para limitar quantas partes retornar. Use quando dados chegam em linha única e você precisa tratar item por item."
+        descriptionTone: default
+        code: |-
+          <?php
+          $tags = "php,api,backend";
+
+          $lista = explode(",", $tags); // Exemplo simples
+          print_r($lista);
+
+          $filtrosQuery = "status:ativo|perfil:admin|canal:email";
+          $filtros = explode("|", $filtrosQuery); // Exemplo prático para query de API
+          print_r($filtros);
+        output: |-
+          Array
+          (
+              [0] => php
+              [1] => api
+              [2] => backend
+          )
+          Array
+          (
+              [0] => status:ativo
+              [1] => perfil:admin
+              [2] => canal:email
+          )
+        tags:
+          - php
+          - strings
+          - explode
+          - conversao
+          - array
+          - api
+      - title: "implode(): juntar array em string"
+        kicker: Gerar saída textual para log, API e banco
+        description: "`implode($separador, $itens)` junta o array `$itens` em uma string, inserindo `$separador` entre os valores. Use para montar CSV, lista de erros e campos serializados para integração."
+        descriptionTone: default
+        code: |-
+          <?php
+          $tecnologias = ["PHP", "MySQL", "Docker"];
+
+          echo implode(", ", $tecnologias) . PHP_EOL; // Exemplo simples
+
+          $erros = ["email inválido", "senha curta", "termos não aceitos"];
+          $resumoErros = implode(" | ", $erros); // Exemplo prático para resposta de API
+
+          echo "Erros: " . $resumoErros . PHP_EOL;
+        output: |-
+          PHP, MySQL, Docker
+          Erros: email inválido | senha curta | termos não aceitos
+        tags:
+          - php
+          - strings
+          - implode
+          - conversao
+          - array
+          - api
+  - id: exemplos-praticos-dia-a-dia
+    name: Exemplos práticos do dia a dia
+    layout: single
+    entries:
+      - title: Manipular nome de usuário
+        kicker: Normalizar para login e comparação
+        description: Antes de salvar nome de usuário, limpe espaços e padronize caixa. Isso evita duplicidade aparente entre `Ana`, ` ana ` e `ANA`.
+        descriptionTone: default
+        code: |-
+          <?php
+          $entrada = "  ANA.SILVA  ";
+
+          $usuario = strtolower(trim($entrada)); // Normaliza para padrão interno
+          $usuario = str_replace(" ", "", $usuario); // Remove espaços internos no username
+
+          echo "Usuário final: " . $usuario . PHP_EOL;
+        output: "Usuário final: ana.silva"
+        tags:
+          - php
+          - strings
+          - usuario
+          - normalizacao
+          - cadastro
+          - login
+      - title: Tratar dados de formulário
+        kicker: Limpar e validar antes de processar
+        description: "Dados de formulário chegam com ruído: espaços, caixa inconsistente e campos vazios. Faça limpeza e validação mínima antes de persistir."
+        descriptionTone: default
+        code: |-
+          <?php
+          $nomeForm = "  Carla Nunes  ";
+          $emailForm = " CARLA@EMAIL.COM ";
+
+          $nome = trim($nomeForm); // Remove espaços excedentes
+          $email = strtolower(trim($emailForm)); // Normaliza email para busca/login
+
+          if ($nome === "" || strpos($email, "@") === false) {
+              echo "Dados inválidos" . PHP_EOL;
+          } else {
+              echo "Dados prontos para salvar" . PHP_EOL;
+          }
+        output: Dados prontos para salvar
+        tags:
+          - php
+          - strings
+          - formulario
+          - validacao
+          - trim
+          - email
+      - title: Preparar dados para API
+        kicker: Padronizar payload textual antes do envio
+        description: API costuma depender de padrões estritos. Padronize campos textuais antes de `json_encode` para reduzir erro de validação no serviço externo.
+        descriptionTone: default
+        code: |-
+          <?php
+          $nomeProduto = "  Mouse Gamer RGB  ";
+          $categorias = "hardware,perifericos,gamer";
+
+          $payload = [
+              "nome" => trim($nomeProduto), // Remove bordas do texto
+              "slug" => str_replace(" ", "-", strtolower(trim($nomeProduto))), // Gera chave amigável para URL
+              "categorias" => explode(",", strtolower($categorias)), // Converte lista textual em array
+          ];
+
+          echo json_encode($payload, JSON_UNESCAPED_UNICODE) . PHP_EOL;
+        output: '{"nome":"Mouse Gamer RGB","slug":"mouse-gamer-rgb","categorias":["hardware","perifericos","gamer"]}'
+        tags:
+          - php
+          - strings
+          - api
+          - payload
+          - json
+          - normalizacao
+      - title: Extrair partes de email e URL
+        kicker: Separar domínio, usuário e caminho
+        description: Extrair partes da string ajuda em regra de negócio, analytics e validação. Use `strpos`, `substr` e `explode` para quebrar dados estruturados de forma simples.
+        descriptionTone: default
+        code: |-
+          <?php
+          $email = "ana.silva@empresa.com";
+          $arroba = strpos($email, "@");
+
+          $usuarioEmail = substr($email, 0, $arroba); // Parte antes do @
+          $dominioEmail = substr($email, $arroba + 1); // Parte depois do @
+
+          echo "Usuário email: " . $usuarioEmail . PHP_EOL;
+          echo "Domínio email: " . $dominioEmail . PHP_EOL;
+
+          $url = "https://api.exemplo.com/v1/usuarios/lista";
+          $partesUrl = explode("/", $url); // Quebra URL em segmentos
+
+          echo "Último segmento da URL: " . end($partesUrl) . PHP_EOL;
+        output: |-
+          Usuário email: ana.silva
+          Domínio email: empresa.com
+          Último segmento da URL: lista
+        tags:
+          - php
+          - strings
+          - extracao
+          - email
+          - url
+          - api
+  - id: boas-praticas-strings
+    name: Boas práticas
+    layout: single
+    entries:
+      - title: Padronizar entrada e saída de texto
+        kicker: Consistência reduz bug de comparação e busca
+        description: "Defina um fluxo fixo: limpar (`trim`), normalizar (`strtolower`) e validar (`strpos`, tamanho). Use esse padrão em todo ponto de entrada de texto para evitar tratamento diferente em cada endpoint."
+        descriptionTone: default
+        code: |-
+          <?php
+          function normalizarEmail(string $email): string
+          {
+              return strtolower(trim($email)); // Fluxo padrão para email
+          }
+
+          $emailEntrada = " ANA@EMAIL.COM ";
+          $email = normalizarEmail($emailEntrada);
+
+          echo "Email normalizado: " . $email . PHP_EOL;
+        output: "Email normalizado: ana@email.com"
+        tags:
+          - php
+          - strings
+          - boas-praticas
+          - padrao
+          - normalizacao
+          - validacao
+        callout:
+          type: hint
+          label: "Checklist rápido:"
+          text: trim na entrada, comparação estrita, validação de conteúdo e padronização de caixa antes de salvar.
+      - title: Atenção com acentos e multibyte
+        kicker: strlen pode contar bytes, não caracteres visuais
+        description: "Em textos com acento e caracteres multibyte, funções comuns podem gerar contagem inesperada. `mb_strlen($texto, $encoding)` recebe a string e o encoding (ex.: `UTF-8`) para contar caracteres visuais corretamente."
+        descriptionTone: default
+        code: |-
+          <?php
+          $texto = "ação";
+
+          echo "strlen: " . strlen($texto) . PHP_EOL; // conta bytes: ç e ã ocupam 2 bytes cada em UTF-8
+
+          echo "mb_strlen: " . mb_strlen($texto, "UTF-8") . PHP_EOL; // Conta caracteres visuais
+        output: |-
+          strlen: 6
+          mb_strlen: 4
+        tags:
+          - php
+          - strings
+          - utf8
+          - mb_strlen
+          - acentos
+          - boas-praticas
+  - id: erros-comuns-strings
+    name: Erros comuns
+    layout: single
+    entries:
+      - title: Erros clássicos em manipulação de string
+        kicker: Pequenos detalhes que geram bug silencioso
+        description: "Os erros mais frequentes são: `strpos` com validação errada, comparação frouxa, esquecer `trim` e confundir aspas simples com duplas. Corrigir esses pontos evita comportamento inconsistente em produção."
+        descriptionTone: warn
+        contentBlocks:
+          - type: comparison-block
+            title: Errado x correto
+            columns:
+              - title: Errado
+                items:
+                  - Usar `if (strpos($texto, "api"))` e perder o caso em que a posição é `0`.
+                  - Comparar `"  admin " === "admin"` sem aplicar `trim()` antes.
+                  - Esperar interpolação em `echo 'Olá, $nome'` com aspas simples.
+              - title: Correto
+                items:
+                  - Validar busca com `strpos($texto, "api") !== false`.
+                  - Normalizar entrada antes de comparar, por exemplo `trim($valor) === "admin"`.
+                  - Usar aspas duplas quando a string precisar interpolar variável.
+        tags:
+          - php
+          - strings
+          - erros-comuns
+          - strpos
+          - trim
+          - comparacao
+        callout:
+          type: danger
+          label: "Perigo:"
+          text: bugs de string costumam parecer intermitentes porque dependem do formato exato de entrada.
+tech: php
+order: 1.5
+cardDescription: Guia prático para manipular strings no dia a dia com validação, transformação, APIs e formatação de dados.

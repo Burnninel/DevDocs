@@ -1,0 +1,156 @@
+id: javascript-modulos
+title: "JavaScript: Módulos"
+subtitle: "Organizar código em arquivos com import e export — named exports, default export e reexportação."
+searchPlaceholder: Buscar import, export, default, module ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: javascript
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Módulos ES em Node.js ou no navegador
+  description: 'No Node.js, use extensão `.mjs` ou defina `"type": "module"` no `package.json`. No navegador, use `<script type="module">`.'
+  steps:
+    - Crie dois arquivos no mesmo diretório, ex. `matematica.js` e `principal.js`.
+    - Exporte de um e importe no outro (veja os exemplos abaixo).
+    - Rode com `node principal.js` (ajuste a extensão/config conforme necessário).
+  codeLanguage: shell
+  code: node principal.js
+  callout:
+    type: hint
+    label: "Dica:"
+    text: cada arquivo de módulo tem seu próprio escopo — nada é global por padrão, diferente de scripts tradicionais carregados com `<script>` sem `type=\"module\"`.
+sections:
+  - id: export-import
+    name: Exportar e importar
+    layout: single
+    entries:
+      - title: Named export e import
+        kicker: Exporta vários valores nomeados por arquivo
+        description: Um módulo pode ter quantos named exports precisar. No import, use o mesmo nome entre chaves `{ }` — é assim que o código consumidor sabe o que está pegando.
+        descriptionTone: default
+        code: |-
+          // matematica.js
+          export function somar(a, b) {
+            return a + b;
+          }
+
+          export const PI = 3.14159;
+        tags:
+          - javascript
+          - export
+          - named-export
+          - modulo
+      - title: Importar named exports
+        kicker: "import { nome } from \"./caminho\""
+        description: Importe exatamente os nomes exportados, entre chaves. Use `as` para renomear caso o nome colida com algo já existente no arquivo.
+        descriptionTone: default
+        code: |-
+          // principal.js
+          import { somar, PI } from "./matematica.js";
+          import { somar as soma } from "./matematica.js";
+
+          console.log(somar(2, 3));
+          console.log(PI);
+        tags:
+          - javascript
+          - import
+          - named-export
+          - modulo
+      - title: Default export para o valor principal do módulo
+        kicker: Um por arquivo, importado sem chaves
+        description: "Um módulo pode ter no máximo um `export default` — normalmente a função, classe ou objeto principal do arquivo. No import, o nome escolhido pelo consumidor é livre."
+        descriptionTone: default
+        code: |-
+          // usuario.js
+          export default class Usuario {
+            constructor(nome) {
+              this.nome = nome;
+            }
+          }
+        tags:
+          - javascript
+          - export-default
+          - modulo
+          - classe
+      - title: Importar default export
+        kicker: "import qualquerNome from \"./caminho\""
+        description: O default export é importado sem chaves, e o nome local pode ser qualquer identificador válido — não precisa bater com o nome original.
+        descriptionTone: default
+        code: |-
+          // principal.js
+          import Usuario from "./usuario.js";
+
+          const ana = new Usuario("Ana");
+          console.log(ana.nome);
+        tags:
+          - javascript
+          - import
+          - export-default
+          - modulo
+  - id: organizacao
+    name: Organização de módulos
+    layout: single
+    entries:
+      - title: Combinar named e default no mesmo arquivo
+        kicker: Um módulo pode ter os dois tipos
+        description: É comum um módulo exportar um default (a peça principal) e alguns named exports auxiliares. O import combina as duas sintaxes numa linha.
+        descriptionTone: default
+        code: |-
+          // http.js
+          export default function criarCliente(baseUrl) {
+            return { baseUrl };
+          }
+
+          export const TIMEOUT_PADRAO = 5000;
+          // principal.js
+          import criarCliente, { TIMEOUT_PADRAO } from "./http.js";
+        tags:
+          - javascript
+          - export
+          - default
+          - named
+          - modulo
+      - title: Barrel file para reexportar em um só ponto
+        kicker: Um index.js que agrupa exports de vários arquivos
+        description: Um "barrel file" reexporta símbolos de vários módulos internos por um único ponto de entrada, simplificando os imports de quem consome a pasta. Use com moderação — em projetos grandes, pode dificultar tree-shaking.
+        descriptionTone: default
+        code: |-
+          // formularios/index.js
+          export { Input } from "./Input.js";
+          export { Select } from "./Select.js";
+          // principal.js
+          import { Input, Select } from "./formularios/index.js";
+        tags:
+          - javascript
+          - barrel-file
+          - reexport
+          - organizacao
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para organizar módulos
+        kicker: Named vs default, e quando reexportar
+        description: Use este mapa como referência rápida ao dividir código em arquivos.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Named export para vários valores relacionados no mesmo arquivo."
+              - "Default export para a peça única e principal de um arquivo (classe, componente, função)."
+              - "Import com chaves `{ }` para named; sem chaves para default."
+              - "`as` para renomear um import que colide com outro nome."
+              - "Barrel file (`index.js`) só quando realmente simplifica os imports de fora — não é obrigatório em toda pasta."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Cuidado:"
+            text: misturar `require`/`module.exports` (CommonJS) com `import`/`export` (ES Modules) no mesmo projeto sem configuração explícita — os dois sistemas de módulo não se misturam automaticamente.
+        tags:
+          - javascript
+          - modulos
+          - decisao
+tech: javascript
+order: 4
+cardDescription: Organizar código em módulos com named exports, default export e reexportação.

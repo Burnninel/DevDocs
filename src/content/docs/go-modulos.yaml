@@ -1,0 +1,168 @@
+id: go-modulos
+title: "Go: Módulos"
+subtitle: Guia prático para go mod init, arquivos go.mod e go.sum, adicionar dependências com go get e o algoritmo MVS no gerenciamento de versões.
+searchPlaceholder: Buscar go.mod, go.sum, go get, MVS ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Criar um módulo novo
+  kicker: go mod init
+  description: "O caminho do módulo identifica o seu código (muitas vezes um URL que possa controlar, por exemplo `github.com/user/repo`). Dentro da pasta do projeto:"
+  steps:
+    - Execute `go mod init caminho/do/modulo`.
+    - Confirme que apareceu `go.mod` na raiz.
+    - Adicione `main.go` com `package main` e `go run .` para testar.
+  codeLanguage: shell
+  code: |-
+    mkdir meu-cli && cd meu-cli
+    go mod init exemplo.local/meu-cli
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "relembre `package main` e `go run` em `Go: Primeiros passos` no hub."
+sections:
+  - id: go-mod-inicial
+    name: go.mod e raiz do módulo
+    layout: single
+    entries:
+      - title: O que o go.mod declara
+        kicker: Nome do módulo e versão mínima de Go
+        description: A primeira linha `module caminho` define o prefixo de importação dos pacotes internos. `go` grava também a versão de Go usada ao criar ou atualizar o arquivo. Comentários `// indirect` marcam dependências transitivas.
+        descriptionTone: default
+        code: |
+          module exemplo.local/meu-cli
+
+          go 1.22
+        codeLanguage: plain
+        tags:
+          - go
+          - go.mod
+          - module
+          - versao
+          - dependencia
+      - title: Importar pacotes do próprio módulo
+        kicker: Caminho após o module
+        description: Se o módulo é `exemplo.local/app`, um pacote em `./internal/auth` importa-se como `exemplo.local/app/internal/auth`. O `main` importa esse caminho completo; o arquivo em `internal/auth` declara `package auth`.
+        descriptionTone: default
+        code: |
+          // cmd/hello/main.go
+          package main
+
+          import (
+          	"fmt"
+
+          	"exemplo.local/app/internal/auth"
+          )
+
+          func main() {
+          	fmt.Println(auth.Token())
+          }
+
+          // internal/auth/auth.go
+          package auth
+
+          func Token() string {
+          	return "demo"
+          }
+        tags:
+          - go
+          - import
+          - modulo
+          - internal
+          - pacote
+  - id: dependencias
+    name: Dependências externas
+    layout: single
+    entries:
+      - title: go get para adicionar ou atualizar
+        kicker: Grava require no go.mod
+        description: "`go get exemplo.com/pkg@v1.2.3` fixa uma versão. `go get exemplo.com/pkg@latest` pede a mais recente compatível. `go get -u ./...` tenta atualizar dependências diretas do módulo."
+        descriptionTone: default
+        code: go get github.com/google/uuid@latest
+        codeLanguage: shell
+        tags:
+          - go
+          - go get
+          - dependencia
+          - require
+          - versao
+      - title: go mod tidy
+        kicker: Alinhar require com o código real
+        description: Remove linhas `require` não usadas e adiciona as que faltam após mudanças de imports. Rode após refactors grandes para manter `go.mod` limpo.
+        descriptionTone: default
+        code: go mod tidy
+        codeLanguage: shell
+        tags:
+          - go
+          - go mod tidy
+          - limpeza
+          - require
+  - id: go-sum-e-mvs
+    name: go.sum e MVS
+    layout: single
+    entries:
+      - title: Função do go.sum
+        kicker: Integridade e versões exatas
+        description: "`go.sum` guarda hashes das versões baixadas. Versione este arquivo em repositórios de aplicação para builds reprodutíveis. Bibliotecas em Go também costumam versionar `go.sum` quando há testes com módulos."
+        descriptionTone: default
+        code: |-
+          # O arquivo é mantido automaticamente por go get / go mod tidy.
+          # Não edite hashes à mão.
+        codeLanguage: shell
+        tags:
+          - go
+          - go.sum
+          - integridade
+          - checksum
+          - build
+      - title: MVS (Minimal Version Selection) em uma frase
+        kicker: Como o Go escolhe versões
+        description: "O algoritmo MVS escolhe a versão **mínima** que satisfaz todos os `require` do grafo, em vez de resolver conflitos como alguns outros ecossistemas. Na prática: listas de `require` explícitas e `go get` controlam o que sobe; surpresas são menos frequentes, mas atualizar uma dependência pode exigir `go get pacote@versao` explícito."
+        descriptionTone: default
+        code: |-
+          # Ver grafo de módulos (útil em conflitos de versão):
+          go mod graph | head
+        codeLanguage: shell
+        tags:
+          - go
+          - mvs
+          - versao
+          - grafo
+          - modulos
+        callout:
+          type: hint
+          label: "Opcional:"
+          text: workspaces com `go work` são úteis para vários módulos locais; consulte a documentação oficial quando precisar de monorepo local.
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para gerenciar dependências
+        kicker: go.mod, go.sum e os comandos certos
+        description: Use este resumo para lembrar qual comando usar sem reabrir a documentação oficial toda vez.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`go mod init caminho` para criar o módulo."
+              - "`go get pacote@versao` para adicionar ou fixar uma versão específica."
+              - "`go get pacote@latest` para pegar a mais recente compatível."
+              - "`go mod tidy` para alinhar `go.mod` com os imports reais do código."
+              - "`go.sum` garante integridade das versões baixadas; não edite à mão."
+              - "`go mod graph` para investigar conflito de versão."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: editar `go.sum` manualmente ou deixar de versioná-lo numa aplicação quebra a garantia de build reprodutível. Rode `go mod tidy` ou `go get` em vez de mexer nos arquivos diretamente.
+        tags:
+          - go
+          - go.mod
+          - go.sum
+          - decisao
+          - boas-praticas
+tech: go
+order: 16
+cardDescription: Guia prático para go mod init, go.mod, go.sum, go get, go mod tidy e visão geral do MVS.

@@ -1,0 +1,54 @@
+---
+import { Icon } from "astro-icon/components";
+import type { DocEntry } from "@/lib/docs";
+import { docUrl } from "@/lib/paths";
+
+interface Props {
+	entry: DocEntry;
+	index?: number;
+}
+const { entry, index } = Astro.props;
+const doc = entry.data;
+const href = docUrl(doc.tech, entry.id);
+const desc = doc.cardDescription ?? doc.subtitle ?? "";
+const sectionCount = doc.sections.length;
+---
+
+<a
+	href={href}
+	class="doc-card group relative flex flex-col gap-3 rounded-3xl p-6 transition-[transform,background] duration-[var(--dur-base)] ease-[var(--ease-out)] hover:-translate-y-1"
+	data-reveal
+>
+	<div class="flex items-center justify-between">
+		{
+			index !== undefined && (
+				<span class="font-mono text-xs text-faint">
+					{String(index + 1).padStart(2, "0")}
+				</span>
+			)
+		}
+		<Icon
+			name="lucide:arrow-up-right"
+			class="ml-auto size-4 text-faint transition-colors duration-[var(--dur-fast)] group-hover:text-accent"
+		/>
+	</div>
+	<h3 class="font-display text-lg leading-snug font-semibold text-ink">
+		{doc.title}
+	</h3>
+	<p class="wrap-anywhere line-clamp-3 text-sm leading-relaxed text-muted">
+		{desc}
+	</p>
+	<p class="mt-auto pt-2 font-mono text-[0.7rem] text-faint">
+		{sectionCount} {sectionCount === 1 ? "seção" : "seções"}
+	</p>
+</a>
+
+<style>
+	.doc-card {
+		background: color-mix(in oklab, var(--color-surface-1) 65%, transparent);
+	}
+	.doc-card:hover {
+		background: var(--color-surface-2);
+		box-shadow: var(--glow-accent-sm);
+	}
+</style>

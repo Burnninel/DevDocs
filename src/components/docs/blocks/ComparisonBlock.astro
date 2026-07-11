@@ -1,0 +1,53 @@
+---
+import { formatInline } from "@/lib/format";
+import type { ContentBlock } from "@/content.config";
+
+type Block = Extract<ContentBlock, { type: "comparison-block" }>;
+interface Props {
+	block: Block;
+}
+const { block } = Astro.props;
+const columns = block.columns.slice(0, 2);
+---
+
+<section class="not-prose">
+	{
+		block.title && (
+			<h4 class="mb-3 font-mono text-xs tracking-widest text-accent uppercase">
+				{block.title}
+			</h4>
+		)
+	}
+	<div class="grid gap-4 sm:grid-cols-2">
+		{
+			columns.map((col) => (
+				<article class="glass rounded-2xl p-5">
+					{col.title && (
+						<h5 class="font-display text-base font-semibold text-ink">
+							{col.title}
+						</h5>
+					)}
+					{col.description && (
+						<p
+							class="mt-1 wrap-anywhere text-sm text-muted"
+							set:html={formatInline(col.description)}
+						/>
+					)}
+					{col.items && col.items.length > 0 && (
+						<ul class="mt-3 grid gap-2">
+							{col.items.map((item) => (
+								<li class="flex gap-2.5 text-sm leading-relaxed text-ink-soft">
+									<span
+										class="mt-2 size-1.5 shrink-0 rounded-full"
+										style="background: var(--color-accent-dim)"
+									/>
+									<span class="wrap-anywhere" set:html={formatInline(item)} />
+								</li>
+							))}
+						</ul>
+					)}
+				</article>
+			))
+		}
+	</div>
+</section>

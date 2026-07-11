@@ -1,0 +1,86 @@
+---
+import { formatInline, resolveEntryCode } from "@/lib/format";
+import type { DocEntry as DocEntryType } from "@/content.config";
+import CodeBlock from "./CodeBlock.astro";
+import CodeTabs from "./CodeTabs.astro";
+import OutputBlock from "./OutputBlock.astro";
+import RunnableCode from "./RunnableCode.astro";
+import Callout from "./Callout.astro";
+import ContentBlocks from "./ContentBlocks.astro";
+
+interface Props {
+	entry: DocEntryType;
+	/** Linguagem padrão da doc, se a entry não definir a própria. */
+	fallbackLang?: string;
+	/** Valor padrão de runner para entries desta doc. */
+	defaultRunnable?: boolean;
+}
+const { entry, fallbackLang, defaultRunnable = false } = Astro.props;
+
+const { code, output, lang } = resolveEntryCode({
+	code: entry.code,
+	output: entry.output,
+	codeLanguage: entry.codeLanguage ?? fallbackLang,
+});
+const isWarn = entry.descriptionTone === "warn";
+const variants = entry.codeVariants ?? [];
+const hasVariants = variants.length > 0;
+const isRunnable = Boolean(
+	!hasVariants && code && lang === "php" && (entry.runnable ?? defaultRunnable),
+);
+---
+
+<article class="doc-entry grid gap-5">
+	<header class="grid gap-1.5">
+		{
+			entry.kicker && (
+				<p class="font-mono text-xs tracking-wide text-accent">
+					{entry.kicker}
+				</p>
+			)
+		}
+		<h3 class="font-display text-xl font-semibold text-ink sm:text-2xl">
+			{entry.title}
+		</h3>
+	</header>
+
+	{
+		entry.description && (
+			<p
+				class="wrap-anywhere max-w-[var(--reading-measure)] leading-relaxed"
+				class:list={[isWarn ? "text-tone-warn/90" : "text-ink-soft"]}
+				set:html={formatInline(entry.description)}
+			/>
+		)
+	}
+
+	{
+		hasVariants ? (
+			<CodeTabs variants={variants} />
+		) : code && isRunnable ? (
+			<RunnableCode code={code} output={output} lang={lang} />
+		) : (
+			code && <CodeBlock code={code} lang={lang} />
+		)
+	}
+	{output && !isRunnable && !hasVariants && <OutputBlock output={output} />}
+
+	<ContentBlocks blocks={entry.contentBlocks} />
+
+	{entry.callout && <Callout callout={entry.callout} />}
+
+	{
+		entry.tags && entry.tags.length > 0 && (
+			<ul class="flex flex-wrap gap-1.5 pt-1" data-pagefind-ignore>
+				{entry.tags.map((tag) => (
+					<li
+						class="rounded-full px-2 py-0.5 font-mono text-[0.68rem] text-faint"
+						style="background: color-mix(in oklab, var(--color-surface-2) 60%, transparent)"
+					>
+						{tag}
+					</li>
+				))}
+			</ul>
+		)
+	}
+</article>

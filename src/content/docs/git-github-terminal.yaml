@@ -1,0 +1,514 @@
+id: git-github-terminal
+title: Git e GitHub no Terminal
+subtitle: Referência rápida para tarefas reais do dia a dia.
+searchPlaceholder: Buscar comando ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: shell
+sections:
+  - id: base
+    name: Base
+    entries:
+      - title: Clonar repositório
+        kicker: Primeiro passo em um projeto remoto
+        description: Use para baixar um repositório do GitHub para sua máquina local.
+        descriptionTone: default
+        code: |-
+          git clone https://github.com/owner/repositorio.git
+          cd repositorio
+        tags:
+          - clone
+          - clonar
+          - repositorio
+          - github
+          - baixar
+          - remoto
+          - base
+          - iniciar
+          - projeto
+      - title: Iniciar repo local e conectar remoto
+        kicker: Projeto novo criado na máquina
+        description: Cria repositório Git local e conecta ao remoto no GitHub.
+        descriptionTone: default
+        code: |-
+          git init
+          git remote add origin https://github.com/owner/repositorio.git
+          git branch -M main
+        tags:
+          - git
+          - init
+          - remote
+          - add
+          - origin
+          - conectar
+          - remoto
+          - repositorio
+          - local
+          - main
+          - base
+      - title: Ignorar arquivos com .gitignore
+        kicker: Antes do primeiro commit do projeto
+        description: Crie o .gitignore na raiz do repositório antes de rastrear os primeiros arquivos. Um padrão por linha; # inicia comentário.
+        descriptionTone: default
+        code: |-
+          # .gitignore
+          node_modules/
+          dist/
+          .env
+          *.log
+        codeLanguage: shell
+        tags:
+          - gitignore
+          - ignorar
+          - node_modules
+          - env
+          - build
+          - base
+          - setup
+      - title: Parar de rastrear arquivo já versionado
+        kicker: Adicionar ao .gitignore não remove o que já está no histórico
+        description: Se o arquivo já foi commitado antes de entrar no .gitignore, ele continua rastreado. Remova do índice sem apagar do disco.
+        descriptionTone: warn
+        code: |-
+          echo ".env" >> .gitignore
+          git rm --cached .env
+          git commit -m "chore: para de rastrear .env"
+        tags:
+          - gitignore
+          - rm --cached
+          - rastrear
+          - remover
+          - engano
+          - base
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: isso não apaga o arquivo do histórico antigo. Para remover de commits passados (por exemplo, um segredo vazado), é preciso reescrever histórico — fora do escopo deste guia rápido.
+      - title: Conferir estado e histórico
+        kicker: Antes de commitar, puxar ou corrigir
+        description: Mostra o estado dos arquivos e os últimos commits.
+        descriptionTone: default
+        code: |-
+          git status
+          git log --oneline --graph --decorate -n 15
+        tags:
+          - status
+          - log
+          - historico
+          - conferir
+          - estado
+          - commits
+          - base
+          - diff
+          - antes
+          - commit
+          - grafico
+        callout:
+          type: hint
+          label: "Dica:"
+          text: rode isso antes de reset, merge e force push.
+      - title: Ver diferenças
+        kicker: O que mudou, linha por linha
+        description: Mostra alterações locais e alterações que já estão no stage.
+        descriptionTone: default
+        code: |-
+          git diff
+          git diff --staged
+        tags:
+          - diff
+          - diferencas
+          - staged
+          - alteracoes
+          - linhas
+          - base
+          - comparar
+  - id: fluxo-diario
+    name: Fluxo Diário
+    entries:
+      - title: Adicionar arquivos (stage)
+        kicker: Selecionar o que vai para o commit
+        description: Escolha arquivos específicos, todos os arquivos ou partes do arquivo.
+        descriptionTone: default
+        code: |-
+          git add arquivo.js
+          git add .
+          git add -p
+        tags:
+          - add
+          - stage
+          - adicionar
+          - arquivos
+          - fluxo
+          - diario
+          - patch
+      - title: Criar commit
+        kicker: Registrar alteração no histórico local
+        description: Use mensagens claras para facilitar revisão e rastreio.
+        descriptionTone: default
+        code: 'git commit -m "feat: adiciona validação no login"'
+        tags:
+          - commit
+          - criar
+          - mensagem
+          - fluxo
+          - diario
+      - title: Fazer push
+        kicker: Publicar no remoto
+        description: Envia commits locais para o repositório remoto.
+        descriptionTone: default
+        code: |-
+          git push
+          git push -u origin minha-branch
+        tags:
+          - push
+          - publicar
+          - remoto
+          - fluxo
+          - diario
+          - origin
+          - branch
+      - title: Fazer pull
+        kicker: Trazer alterações da equipe
+        description: Pode usar merge padrão ou rebase.
+        descriptionTone: default
+        code: |-
+          git pull
+          git pull --rebase
+        tags:
+          - pull
+          - rebase
+          - atualizar
+          - remoto
+          - equipe
+          - fluxo
+          - diario
+        callout:
+          type: hint
+          label: "Boas práticas:"
+          text: quando possível, prefira `--rebase` para histórico mais linear.
+  - id: branches
+    name: Branches
+    entries:
+      - title: Listar branches
+        kicker: Ver branch atual e disponíveis
+        description: Use para navegar com segurança entre contextos.
+        descriptionTone: default
+        code: |-
+          git branch
+          git branch -a
+        tags:
+          - branch
+          - listar
+          - branches
+          - atual
+          - remotas
+          - navegar
+      - title: Trocar de branch
+        kicker: Mudança de contexto de trabalho
+        description: Alterne para main ou para sua branch de trabalho.
+        descriptionTone: default
+        code: |-
+          git switch main
+          git switch minha-branch
+        tags:
+          - switch
+          - trocar
+          - branch
+          - mudar
+          - contexto
+          - branches
+          - main
+      - title: Criar nova branch
+        kicker: Iniciar feature ou correção
+        description: Já cria e troca para a branch nova.
+        descriptionTone: default
+        code: git switch -c feature/nome-da-feature
+        tags:
+          - criar
+          - branch
+          - nova
+          - switch
+          - -c
+          - feature
+          - correcao
+          - branches
+      - title: Mesclar branch
+        kicker: Integrar no fluxo principal
+        description: Atualize main antes do merge para reduzir conflito.
+        descriptionTone: default
+        code: |-
+          git switch main
+          git pull
+          git merge feature/nome-da-feature
+        tags:
+          - merge
+          - mesclar
+          - integrar
+          - main
+          - pull
+          - conflito
+          - branches
+      - title: Resolver conflito de merge
+        kicker: Quando duas alterações batem na mesma linha
+        description: O Git marca o trecho em conflito direto no arquivo. Resolva manualmente, adicione ao stage e finalize o merge com commit.
+        descriptionTone: warn
+        code: |-
+          git status                # mostra os arquivos em conflito
+          # edite os arquivos e resolva os marcadores <<<<<<< ======= >>>>>>>
+          git add arquivo-resolvido.js
+          git commit                # finaliza o merge com os marcadores já removidos
+        tags:
+          - merge
+          - conflito
+          - resolver
+          - marcadores
+          - editar
+          - branches
+        contentBlocks:
+          - type: flow-steps
+            title: Passo a passo
+            steps:
+              - Rode `git status` para ver quais arquivos estão em conflito.
+              - Abra cada arquivo e resolva os marcadores `<<<<<<<`, `=======`, `>>>>>>>`.
+              - Rode `git add` nos arquivos já resolvidos.
+              - Rode `git commit` para finalizar o merge, ou `git merge --abort` para cancelar e voltar ao estado anterior.
+        callout:
+          type: hint
+          label: "Desistir do merge:"
+          text: se o conflito ficar confuso demais, `git merge --abort` cancela e devolve a branch ao estado de antes do merge, sem perder nada.
+      - title: Apagar branch após merge
+        kicker: Limpeza local e remota
+        description: Remove branches antigas para manter o repo organizado.
+        descriptionTone: default
+        code: |-
+          git branch -d feature/nome-da-feature
+          git push origin --delete feature/nome-da-feature
+        tags:
+          - apagar
+          - branch
+          - deletar
+          - limpar
+          - remoto
+          - branches
+          - delete
+  - id: desfazer-reverter
+    name: Desfazer e Reverter
+    entries:
+      - title: Remover do stage
+        kicker: Adicionar por engano
+        description: Tira arquivo do stage sem apagar alterações locais.
+        descriptionTone: default
+        code: |-
+          git restore --staged arquivo.js
+          git restore --staged .
+        tags:
+          - restore
+          - staged
+          - remover
+          - stage
+          - engano
+          - desfazer
+          - reverter
+      - title: Descartar alteração local
+        kicker: Voltar arquivo para último commit
+        description: Use só quando tiver certeza de que não precisa das alterações atuais.
+        descriptionTone: default
+        code: git restore arquivo.js
+        tags:
+          - restore
+          - arquivo
+          - descartar
+          - alteracao
+          - local
+          - perigo
+          - desfazer
+          - reverter
+        callout:
+          type: danger
+          label: "Perigo:"
+          text: essa ação apaga as alterações locais desse arquivo.
+      - title: Desfazer commit local (sem push)
+        kicker: Corrigir commit recém feito
+        description: Escolha o nível de reversão conforme seu objetivo.
+        descriptionTone: default
+        code: |-
+          git reset --soft HEAD~1   # mantém no stage
+          git reset --mixed HEAD~1  # tira do stage
+          git reset --hard HEAD~1   # remove commit e alterações
+        tags:
+          - reset
+          - soft
+          - mixed
+          - hard
+          - desfazer
+          - commit
+          - local
+          - sem
+          - push
+          - atencao
+          - reverter
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: use `--hard` somente quando tiver certeza.
+      - title: Reverter commit já enviado (com histórico)
+        kicker: Opção segura para trabalho em equipe
+        description: Não apaga o commit antigo; cria um commit novo de reversão.
+        descriptionTone: default
+        code: |-
+          git log --oneline
+          git revert <hash_do_commit>
+          git push
+        tags:
+          - revert
+          - commit
+          - enviado
+          - historico
+          - seguro
+          - equipe
+          - desfazer
+          - reverter
+      - title: Remover commit já enviado (sem histórico)
+        kicker: Reescrita de histórico remoto
+        description: Somente em casos controlados e combinados com o time.
+        descriptionTone: warn
+        code: |-
+          git log --oneline
+          git reset --hard <hash_anterior_ao_erro>
+          git push --force-with-lease
+        tags:
+          - reset
+          - hard
+          - force
+          - with
+          - lease
+          - remover
+          - commit
+          - enviado
+          - sem
+          - historico
+          - critico
+          - destrutivo
+        callout:
+          type: danger
+          label: "Crítico:"
+          text: isso altera o histórico remoto. Evite em branch compartilhada sem alinhamento.
+  - id: tags-releases
+    name: Tags e Releases
+    entries:
+      - title: Criar tag anotada de versão
+        kicker: Marcar um commit como release
+        description: Tags anotadas guardam autor, data e mensagem. Prefira -a a tags leves quando a tag representa uma release de verdade.
+        descriptionTone: default
+        code: |-
+          git tag -a v1.2.0 -m "release: v1.2.0"
+          git push origin v1.2.0
+        tags:
+          - tag
+          - anotada
+          - versao
+          - release
+          - v1.2.0
+          - tags
+      - title: Listar e conferir tags
+        kicker: Ver o que já foi publicado
+        description: Liste as tags locais e inspecione o commit e a mensagem associados a uma tag específica.
+        descriptionTone: default
+        code: |-
+          git tag
+          git show v1.2.0
+        tags:
+          - tag
+          - listar
+          - show
+          - conferir
+          - release
+      - title: Apagar tag local e remota
+        kicker: Corrigir tag criada por engano
+        description: Remova primeiro a tag local e depois a referência no remoto — os dois comandos são independentes.
+        descriptionTone: warn
+        code: |-
+          git tag -d v1.2.0
+          git push origin --delete v1.2.0
+        tags:
+          - tag
+          - apagar
+          - deletar
+          - remoto
+          - engano
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: se alguém já baixou a tag ou uma release já foi publicada a partir dela, apagar e recriar com o mesmo nome pode causar confusão. Prefira criar uma tag nova.
+  - id: extras-frequentes
+    name: Extras Frequentes
+    entries:
+      - title: Atualizar refs remotas sem merge
+        kicker: Inspeção antes de integrar
+        description: Baixa informações do remoto sem alterar sua branch atual.
+        descriptionTone: default
+        code: git fetch --all --prune
+        tags:
+          - fetch
+          - prune
+          - refs
+          - remotas
+          - atualiza
+          - inspecao
+          - extras
+          - frequentes
+      - title: Guardar trabalho temporário (stash)
+        kicker: Trocar de branch sem commit parcial
+        description: Salva alterações e recupera depois.
+        descriptionTone: default
+        code: |-
+          git stash push -m "wip: ajuste no formulario"
+          git stash list
+          git stash pop
+        tags:
+          - stash
+          - guardar
+          - trabalho
+          - temporario
+          - trocar
+          - branch
+          - sem
+          - commit
+          - extras
+          - frequentes
+      - title: Recuperar com reflog
+        kicker: Quando algo sumiu após reset ou checkout
+        description: Encontre referências recentes e recupere em nova branch.
+        descriptionTone: default
+        code: |-
+          git reflog
+          git switch -c recuperacao <hash_do_reflog>
+        tags:
+          - reflog
+          - recuperar
+          - reset
+          - checkout
+          - hash
+          - recuperacao
+          - extras
+          - frequentes
+      - title: Ajustar último commit
+        kicker: Corrigir mensagem ou incluir arquivo esquecido
+        description: Se já houve push, evite sem alinhamento (pode exigir force push).
+        descriptionTone: warn
+        code: |-
+          git add arquivo_esquecido.js
+          git commit --amend -m "feat: mensagem corrigida"
+        tags:
+          - amend
+          - ajustar
+          - ultimo
+          - commit
+          - mensagem
+          - arquivo
+          - esquecido
+          - extras
+          - frequentes
+defaultSectionLayout: two
+tech: git
+order: 0
+cardDescription: Comandos frequentes, fluxo diário, branches, desfazer/reverter e extras úteis.

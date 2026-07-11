@@ -1,0 +1,404 @@
+id: arquitetura-mvc
+title: "Arquitetura: MVC"
+subtitle: Separar uma aplicação em Model, View e Controller para que a regra de negócio não viva no meio do HTML nem das consultas ao banco. Lido como um guia, do problema ao projeto montado.
+searchPlaceholder: Buscar Model, Controller, View, fluxo, front controller ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+readerLayout: narrative
+quickStart:
+  title: Por que separar em três
+  kicker: O padrão web mais consultado — e o mais mal aplicado
+  description: "MVC divide uma aplicação por **motivo de mudança**: a regra de negócio (Model), a apresentação (View) e a coordenação entre as duas (Controller). Quando um pedido muda de regra, você mexe no Model; quando muda de aparência, mexe na View. Sem essa divisão, os três motivos moram no mesmo arquivo e qualquer alteração arrisca quebrar as outras duas. Esta página segue um caso só — exibir um pedido — do arquivo bagunçado até o projeto organizado, com PHP conduzindo e Go aparecendo onde ensina algo diferente."
+  steps:
+    - "Comece pela Visão geral: o problema concreto e as três responsabilidades."
+    - "Explore a anatomia do projeto — clique numa camada para vê-la nas três vistas."
+    - "Desça por Model, Controller e View; troque a aba PHP/Go onde ela existir."
+  callout:
+    type: hint
+    label: "Independente de framework:"
+    text: "Laravel, Symfony, Rails ou um roteador escrito à mão seguem o mesmo MVC. O padrão está na separação de responsabilidades, não na biblioteca."
+sections:
+  - id: visao-geral
+    name: Visão geral
+    entries:
+      - title: O problema que o MVC resolve
+        kicker: Um arquivo que fala com o banco, decide a regra e imprime HTML
+        description: "Todo projeto web começa simples: um arquivo que abre a conexão, roda a consulta, aplica a regra e devolve o HTML. O código abaixo funciona — e é exatamente por isso que o problema passa despercebido. Ele tem **três motivos diferentes para mudar** vivendo juntos: trocar o banco, mudar a regra de \"pedido válido\" e reformular a página. Mexer em um arrisca os outros dois."
+        descriptionTone: warn
+        code: |-
+          <?php
+          // index.php — conexão, regra de negócio e apresentação no mesmo lugar.
+          $pdo = new PDO("mysql:host=localhost;dbname=loja", "user", "senha");
+          $id = (int) $_GET["id"];
+
+          $stmt = $pdo->prepare("SELECT total FROM pedidos WHERE id = :id");
+          $stmt->execute(["id" => $id]);
+          $total = (float) $stmt->fetchColumn();
+
+          if ($total <= 0) {
+              echo "<p>Pedido inválido</p>";
+              exit;
+          }
+
+          echo "<h1>Pedido #{$id}</h1>";
+          echo "<p>Total: R$ " . number_format($total, 2, ",", ".") . "</p>";
+        callout:
+          type: warn
+          label: "O sintoma:"
+          text: "para mudar só a aparência da página você precisa reler consulta SQL e regra de negócio no meio do caminho. Cada responsabilidade extra nesse arquivo é mais um motivo para ele quebrar."
+        tags:
+          - arquitetura
+          - mvc
+          - acoplamento
+          - separacao-de-responsabilidades
+      - title: Uma responsabilidade para cada peça
+        kicker: Model decide, View mostra, Controller liga os dois
+        description: "MVC separa aquele arquivo em três papéis com fronteiras claras. O **Model** guarda a regra e os dados — é a parte que faria sentido mesmo sem tela. A **View** só transforma dados em HTML, sem decidir nada. O **Controller** é a cola: recebe a requisição, pede ao Model e escolhe a View. Nenhum dos três invade o trabalho do outro."
+        descriptionTone: default
+        contentBlocks:
+          - type: comparison-block
+            title: O mesmo pedido, antes e depois
+            columns:
+              - title: Tudo no mesmo arquivo
+                items:
+                  - Trocar o banco obriga a reler regra e HTML junto.
+                  - A regra de negócio só roda com um servidor e um banco de pé.
+                  - Duas telas que usam o mesmo pedido duplicam a consulta e a regra.
+              - title: Separado em três papéis
+                items:
+                  - Trocar o banco mexe só na camada de dados do Model.
+                  - A regra roda num teste direto, sem HTTP nem banco.
+                  - Várias Views reaproveitam o mesmo Model sem copiar regra.
+        tags:
+          - arquitetura
+          - mvc
+          - model
+          - view
+          - controller
+      - title: MVC é uma direção, não uma pasta
+        kicker: Ter pastas Model/, View/ e Controller/ não garante nada
+        description: "O que define o MVC não é a árvore de diretórios, e sim quem depende de quem. A **View** e o **Controller** podem conhecer o **Model**; o Model nunca conhece nenhum dos dois. Se o seu Model importa o objeto de requisição HTTP ou monta HTML, a separação já quebrou — mesmo com as três pastas no lugar certo. Guarde essa direção: ela é a régua que vamos usar no resto da página."
+        descriptionTone: default
+        tags:
+          - arquitetura
+          - mvc
+          - dependencia
+          - regra-de-dependencia
+  - id: anatomia
+    name: Anatomia de um projeto MVC
+    entries:
+      - title: As três camadas, ligadas às pastas de verdade
+        kicker: Clique numa camada para acender a pasta e a responsabilidade dela
+        description: "Aqui está o mesmo caso — exibir um pedido — montado num projeto real. O diagrama mostra as camadas; a árvore mostra onde cada uma mora no disco; os cards resumem o que cada uma sabe e o que ela ignora. As três vistas estão ligadas: destaque uma camada e veja as três partes acenderem juntas."
+        descriptionTone: default
+        contentBlocks:
+          - type: architecture-explorer
+            title: Explorador MVC
+            description: A requisição entra pela porta da frente, passa pelo Controller, aciona o Model e termina numa View. Cada arquivo abaixo pertence a uma única camada.
+            shape: stack
+            hint: "Clique numa camada — no diagrama, na árvore ou num card — para destacá-la nas três vistas ao mesmo tempo."
+            layers:
+              - id: entrada
+                name: Front Controller
+                role: A porta única da aplicação — roteia a requisição para o Controller certo.
+                knows: roteamento e o Controller
+                avoids: regra de negócio e HTML
+              - id: controller
+                name: Controller
+                role: Recebe a requisição, pede dados ao Model e escolhe a View.
+                detail: Orquestra o fluxo, mas não decide regra de negócio nem monta HTML.
+                knows: Model e View
+                avoids: SQL e regra de domínio
+              - id: model
+                name: Model
+                role: A regra de negócio do pedido e o acesso aos seus dados.
+                detail: A parte que faria sentido mesmo num sistema sem web.
+                knows: as regras do domínio
+                avoids: HTTP, template e framework
+              - id: view
+                name: View
+                role: Transforma os dados que recebe em HTML, escapando a saída.
+                knows: os dados prontos que o Controller passa
+                avoids: banco de dados e regra de negócio
+            tree:
+              - label: projeto/
+                depth: 0
+                kind: dir
+              - label: public/
+                depth: 1
+                kind: dir
+              - label: index.php
+                depth: 2
+                kind: file
+                layer: entrada
+                note: roteia a requisição
+              - label: src/
+                depth: 1
+                kind: dir
+              - label: Controller/
+                depth: 2
+                kind: dir
+              - label: PedidoController.php
+                depth: 3
+                kind: file
+                layer: controller
+              - label: Model/
+                depth: 2
+                kind: dir
+              - label: Pedido.php
+                depth: 3
+                kind: file
+                layer: model
+                note: regra do pedido
+              - label: PedidoRepositorio.php
+                depth: 3
+                kind: file
+                layer: model
+                note: acesso a dados
+              - label: templates/
+                depth: 1
+                kind: dir
+              - label: pedido/
+                depth: 2
+                kind: dir
+              - label: mostrar.php
+                depth: 3
+                kind: file
+                layer: view
+                note: HTML do pedido
+        tags:
+          - arquitetura
+          - mvc
+          - estrutura-de-projeto
+          - pastas
+  - id: model
+    name: Model — onde a regra vive
+    entries:
+      - title: O Model carrega a regra, não só os dados
+        kicker: "A pergunta certa: isso faria sentido sem tela?"
+        description: "O Model é a camada mais estável porque descreve o negócio, não a tecnologia. A regra \"um pedido sem valor não pode ser confirmado\" existiria num sistema de balcão, por telefone ou na web — então ela mora no Model, não no Controller. Um erro comum é deixar o Model anêmico (só getters e setters) e espalhar a regra pelos Controllers; aí a mesma validação reaparece copiada em cada tela."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              final class Pedido
+              {
+                  public function __construct(
+                      public readonly int $id,
+                      public readonly float $total,
+                      private string $status = "pendente",
+                  ) {}
+
+                  public function confirmar(): void
+                  {
+                      if ($this->total <= 0) {
+                          throw new DomainException("Pedido sem valor não pode ser confirmado");
+                      }
+                      $this->status = "confirmado";
+                  }
+
+                  public function status(): string
+                  {
+                      return $this->status;
+                  }
+              }
+          - language: go
+            code: |-
+              type Pedido struct {
+              	ID     int
+              	Total  float64
+              	status string
+              }
+
+              func (p *Pedido) Confirmar() error {
+              	if p.Total <= 0 {
+              		return errors.New("pedido sem valor não pode ser confirmado")
+              	}
+              	p.status = "confirmado"
+              	return nil
+              }
+
+              func (p *Pedido) Status() string { return p.status }
+        callout:
+          type: hint
+          label: "A regra fica testável:"
+          text: "com a validação dentro de `Pedido`, você confere \"pedido sem valor não confirma\" instanciando o objeto direto — sem subir servidor nem banco. Essa é a maior recompensa de manter a regra no Model."
+        tags:
+          - arquitetura
+          - mvc
+          - model
+          - regra-de-negocio
+          - dominio
+      - title: O acesso a dados também é responsabilidade do Model
+        kicker: Buscar e salvar o pedido, sem contaminar o Controller
+        description: "No MVC clássico o Model abrange tanto a regra quanto a leitura e gravação dos dados. Na prática essa segunda parte costuma ficar num objeto separado — um repositório — para que o Controller peça \"o pedido 42\" sem saber se veio de MySQL, de um arquivo ou de memória. Aqui só apresentamos a ideia; o padrão completo tem página própria em `Arquitetura: Repository Pattern`."
+        descriptionTone: default
+        code: |-
+          <?php
+
+          interface PedidoRepositorio
+          {
+              public function buscar(int $id): ?Pedido;
+              public function salvar(Pedido $pedido): void;
+          }
+        callout:
+          type: hint
+          label: "Conexão fica no hub:"
+          text: "abrir o `PDO`, DSN e charset seguem o mesmo cuidado de `PHP: Conexão e Manipulação de Banco de Dados` e `Go: Banco de Dados` — o Model usa a conexão, não a configura."
+        tags:
+          - arquitetura
+          - mvc
+          - model
+          - repositorio
+          - acesso-a-dados
+  - id: controller
+    name: Controller — orquestra, não decide
+    entries:
+      - title: "O Controller é fino: recebe, pede e escolhe"
+        kicker: Se ele calcula desconto ou monta SQL, engordou demais
+        description: "O trabalho do Controller é de coordenação: ler o que veio na requisição, pedir ao Model e decidir qual View responde. Ele não valida regra de domínio nem escreve consulta — delega. Um bom teste é o tamanho: um Controller que passa de algumas linhas por ação quase sempre absorveu responsabilidade do Model. Repare que o mesmo Controller funciona igual em PHP com framework ou em Go com `net/http` — só muda como a requisição chega."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              final class PedidoController
+              {
+                  public function __construct(
+                      private PedidoRepositorio $repositorio,
+                      private Templates $view,
+                  ) {}
+
+                  public function mostrar(int $id): string
+                  {
+                      $pedido = $this->repositorio->buscar($id);
+                      if ($pedido === null) {
+                          return $this->view->render("erro", ["mensagem" => "Pedido não encontrado"]);
+                      }
+
+                      return $this->view->render("pedido/mostrar", ["pedido" => $pedido]);
+                  }
+              }
+          - language: go
+            code: |-
+              func (c PedidoController) Mostrar(w http.ResponseWriter, r *http.Request) {
+              	id := idDaRota(r)
+
+              	pedido, err := c.Repo.Buscar(id)
+              	if err != nil {
+              		c.View.Render(w, "erro", "Pedido não encontrado")
+              		return
+              	}
+
+              	c.View.Render(w, "pedido/mostrar", pedido)
+              }
+        callout:
+          type: warn
+          label: "Controller gordo:"
+          text: "no instante em que aparece um `if` de regra de negócio (calcular frete, aplicar desconto, validar CPF) dentro do Controller, mova para o Model. O Controller decide o caminho, nunca a regra."
+        tags:
+          - arquitetura
+          - mvc
+          - controller
+          - orquestracao
+  - id: view
+    name: View — só apresenta
+    entries:
+      - title: A View recebe dados prontos e devolve HTML
+        kicker: Sem consulta ao banco, sem regra — só formatação e escape
+        description: "A View é a camada mais burra de propósito: ela confia que o Controller já trouxe tudo pronto e se limita a exibir. Nada de abrir conexão ou decidir se o pedido é válido dentro do template — isso é trabalho do Model. A única inteligência aceitável aqui é de apresentação: formatar moeda, iterar uma lista e **sempre escapar** a saída para evitar injeção de HTML."
+        descriptionTone: default
+        code: |-
+          <?php /* templates/pedido/mostrar.php */ ?>
+          <h1>Pedido #<?= (int) $pedido->id ?></h1>
+          <p>Status: <?= htmlspecialchars($pedido->status()) ?></p>
+          <p>Total: R$ <?= number_format($pedido->total, 2, ",", ".") ?></p>
+        callout:
+          type: hint
+          label: "No Go, o escape vem de graça:"
+          text: "o pacote `html/template` escapa a saída por padrão — `template.Must(...).Execute(w, pedido)` já protege contra HTML injetado. Em PHP o escape é manual: `htmlspecialchars` em tudo que veio de fora."
+        tags:
+          - arquitetura
+          - mvc
+          - view
+          - template
+          - escape
+  - id: fluxo
+    name: O fluxo de uma requisição
+    entries:
+      - title: De GET /pedidos/42 até o HTML na tela
+        kicker: As três peças trabalhando numa direção só
+        description: Juntando tudo, uma requisição atravessa o MVC sempre no mesmo sentido — o Controller no meio, o Model decidindo, a View apresentando — sem que nenhuma peça invada a responsabilidade da outra.
+        descriptionTone: default
+        contentBlocks:
+          - type: flow-steps
+            title: Ciclo de exibir um pedido
+            steps:
+              - "`public/index.php` recebe `GET /pedidos/42` e roteia para `PedidoController::mostrar(42)`."
+              - O Controller pede o pedido ao repositório do Model — sem saber se é SQL ou memória.
+              - O Model devolve um objeto `Pedido` com a regra e o estado prontos.
+              - O Controller escolhe a View `pedido/mostrar` e entrega o `Pedido` a ela.
+              - A View transforma os dados em HTML, escapando a saída.
+              - O Controller devolve a resposta HTTP com o HTML gerado.
+        tags:
+          - arquitetura
+          - mvc
+          - fluxo
+          - requisicao
+  - id: decisao
+    name: Quando usar e erros comuns
+    entries:
+      - title: Quando MVC ajuda e quando é cerimônia
+        kicker: Separar custa arquivos — gaste onde há regra para proteger
+        description: MVC organiza aplicações com telas e alguma regra; num script de uma página só, dividir em três é custo sem retorno. Use o mapa para calibrar.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Aplicação web com várias telas e regra de negócio: MVC organiza sem cerimônia."
+              - "Script de uma tela, sem regra além de ler e imprimir: três arquivos são exagero."
+              - "Regra crescendo e brigando com o banco: MVC é o piso — veja `Arquitetura: Repository Pattern` e `Arquitetura: Clean Architecture`."
+              - "API sem HTML: o \"V\" vira serialização JSON; Model e Controller seguem valendo igual."
+          - type: checklist-block
+            title: Sinais de que a separação está saudável
+            items:
+              - A regra de negócio roda num teste sem importar HTTP nem template.
+              - O Controller não tem SQL nem cálculo de domínio — só coordena.
+              - A View recebe dados prontos e não decide nada além de como exibir.
+        tags:
+          - arquitetura
+          - mvc
+          - decisao
+          - boas-praticas
+      - title: Onde o MVC costuma vazar
+        kicker: Os três desvios mais frequentes, quase sempre por pressa
+        description: "A separação raramente quebra de uma vez; ela vaza aos poucos, quando uma responsabilidade escorrega para a camada errada para \"resolver rápido\"."
+        descriptionTone: warn
+        contentBlocks:
+          - type: context-block
+            title: Controller gordo
+            variant: common-error
+            label: "Evite:"
+            text: "regra de negócio dentro do Controller — calcular desconto, validar domínio, montar SQL. O Controller vira um Model disfarçado e a regra deixa de ser testável isolada."
+          - type: context-block
+            title: Model anêmico
+            variant: common-error
+            label: "Evite:"
+            text: "um Model que é só um saco de getters e setters, com a regra espalhada pelos Controllers. A mesma validação acaba copiada em cada tela e some a vantagem de ter o Model."
+          - type: context-block
+            title: Lógica na View
+            variant: common-error
+            label: "Evite:"
+            text: "consultas ao banco ou `if` de regra de negócio dentro do template. A View deve receber tudo pronto; decidir dentro do HTML esconde regra num lugar difícil de testar."
+        tags:
+          - arquitetura
+          - mvc
+          - erros-comuns
+          - acoplamento
+tech: arquitetura
+order: 1
+cardDescription: Separar Model, View e Controller por motivo de mudança — do arquivo bagunçado ao projeto montado, com um explorador interativo das camadas.

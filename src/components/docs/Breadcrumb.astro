@@ -1,0 +1,39 @@
+---
+import { Icon } from "astro-icon/components";
+import { withBase, techUrl } from "@/lib/paths";
+import { TECH_META } from "@/lib/docs";
+import type { Tech } from "@/content.config";
+
+interface Props {
+	tech: Tech;
+	docTitle: string;
+}
+const { tech, docTitle } = Astro.props;
+const meta = TECH_META[tech];
+
+const crumbs = [
+	{ label: "DevDocs", href: withBase("/") },
+	{ label: meta.short, href: techUrl(tech) },
+];
+---
+
+<nav
+	class="flex flex-wrap items-center gap-1.5 text-sm text-faint"
+	aria-label="Trilha"
+	data-pagefind-ignore
+>
+	{
+		crumbs.map((crumb) => (
+			<>
+				<a
+					href={crumb.href}
+					class="transition-colors duration-[var(--dur-fast)] hover:text-accent"
+				>
+					{crumb.label}
+				</a>
+				<Icon name="lucide:chevron-right" class="size-3.5 opacity-60" />
+			</>
+		))
+	}
+	<span class="text-muted">{docTitle}</span>
+</nav>

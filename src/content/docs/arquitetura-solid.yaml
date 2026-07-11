@@ -1,0 +1,544 @@
+id: arquitetura-solid
+title: "Arquitetura: SOLID"
+subtitle: Cinco heurísticas de design orientado a objetos que reduzem o custo de mudar código depois. Vistas juntas num sistema de notificação de pedidos só, para mostrar como elas se apoiam — não cinco exemplos soltos.
+searchPlaceholder: Buscar SRP, OCP, Liskov, ISP, DIP ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+readerLayout: narrative
+quickStart:
+  title: Cinco letras, um objetivo comum
+  kicker: Reduzir o custo de uma mudança futura
+  description: "SOLID não é uma lista de regras para seguir por decreto — é um conjunto de sinais de que uma mudança específica vai doer menos amanhã. Cada princípio ataca um tipo diferente de acoplamento, e eles se reforçam: um sistema que segue OCP quase sempre depende de DIP para funcionar. Esta página usa **um sistema só** do início ao fim — notificar o cliente quando o status de um pedido muda, por e-mail ou SMS — para que você veja as cinco letras cooperando na mesma base de código, não cinco exemplos desconexos."
+  steps:
+    - "Veja o sistema inteiro primeiro — o explorador liga cada princípio a um arquivo real."
+    - "Desça por cada letra: o sintoma que ela ataca, o que viola e o que aplica."
+    - "Troque a aba PHP/Go onde houver; a preferência sincroniza na página."
+  codeLanguage: text
+  code: |-
+    S — Single Responsibility   uma razão para mudar
+    O — Open/Closed             extensível sem editar o que já funciona
+    L — Liskov Substitution     um subtipo cumpre o contrato do tipo base
+    I — Interface Segregation   interfaces pequenas, sem métodos que ninguém usa
+    D — Dependency Inversion    dependa de abstração, não de implementação concreta
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "`Arquitetura: Clean Architecture` é DIP aplicado a um caso de uso inteiro, com repositório; `Arquitetura: MVC` usa SRP para separar Model, View e Controller."
+sections:
+  - id: visao-geral
+    name: Visão geral
+    entries:
+      - title: Heurística, não lei
+        kicker: O teste real é o sintoma, não a sigla
+        description: "Os cinco princípios nasceram de observar código que doía de mudar, não de uma teoria abstrata. Isso importa porque SOLID é fácil de aplicar errado por reflexo — criar uma interface para tudo, evitar toda herança, injetar dependência em classe que nunca vai ter uma segunda implementação. O uso certo começa pelo sintoma: você sente uma dor concreta (um teste difícil, uma mudança arriscada, um `switch` que cresce a cada release) e aí escolhe qual dos cinco ataca aquela dor específica. A seção final desta página tem um mapa sintoma → princípio para consulta rápida."
+        descriptionTone: default
+        tags:
+          - arquitetura
+          - solid
+          - heuristica
+          - principios
+      - title: Um sistema só, para ver as letras cooperando
+        kicker: Notificar o cliente quando um pedido muda de status
+        description: "Em vez de cinco trechos de código sem relação entre si, esta página usa um único sistema pequeno — notificação de pedido por e-mail ou SMS — e cada princípio aparece como uma peça real dentro dele. Isso mostra algo que exemplos isolados escondem: os princípios não competem entre si, eles se encaixam. O contrato do OCP (uma interface para canais de notificação) só existe porque o DIP diz que o serviço depende dessa interface, não das implementações concretas. E cada implementação daquele contrato só é segura de trocar porque respeita o LSP."
+        descriptionTone: default
+        tags:
+          - arquitetura
+          - solid
+          - dominio
+          - visao-geral
+  - id: sistema
+    name: O sistema de notificação, peça por peça
+    entries:
+      - title: Onde cada princípio mora no código
+        kicker: Clique numa letra para ver o arquivo e a responsabilidade dela
+        description: "O diagrama abaixo não é uma hierarquia de camadas como em MVC ou Clean Architecture — é um mapa de onde cada princípio SOLID se manifesta neste sistema específico. Clique numa letra para destacá-la no diagrama, na árvore de arquivos e no card de responsabilidade. As seções seguintes detalham cada uma, com o código completo."
+        descriptionTone: default
+        contentBlocks:
+          - type: architecture-explorer
+            title: Explorador SOLID
+            description: Um serviço de notificação de pedidos onde cada uma das cinco letras aparece como uma peça concreta, não como um exemplo isolado.
+            shape: stack
+            hint: "Clique numa letra — no diagrama, na árvore ou num card — para destacá-la nas três vistas ao mesmo tempo."
+            layers:
+              - id: srp
+                name: "S — PedidoNotificacaoService"
+                role: Decide quando notificar o cliente. Nada além disso.
+                detail: Muda só quando a regra de "quando notificar" muda — nunca por causa de um canal novo.
+                knows: o momento certo de notificar
+                avoids: como o e-mail ou o SMS são enviados de fato
+              - id: ocp
+                name: "O — Notificador (contrato)"
+                role: Aberto para novos canais, fechado para alterar canais existentes.
+                detail: Um canal novo entra como uma implementação nova, sem editar nenhum código já testado.
+                knows: a assinatura notificar(mensagem)
+                avoids: qualquer detalhe de canal específico
+              - id: lsp
+                name: "L — NotificadorEmail / NotificadorSms"
+                role: Qualquer implementação pode substituir outra sem surpreender quem chama.
+                detail: Nenhuma das duas lança exceção nem exige algo que a outra não exige.
+                knows: como enviar pelo próprio canal
+                avoids: impor uma pré-condição que as outras implementações não têm
+              - id: isp
+                name: "I — EnviaPorEmail / EnviaPorSms"
+                role: Interfaces de capacidade, pequenas — ninguém implementa método que não usa.
+                detail: Configurar SMTP e configurar gateway de SMS são contratos separados.
+                knows: só a própria capacidade de canal
+                avoids: métodos de configuração de canais que não suporta
+              - id: dip
+                name: "D — bootstrap.php"
+                role: Escolhe a implementação concreta e injeta no serviço.
+                detail: O único ponto do sistema que conhece as classes concretas ao mesmo tempo.
+                knows: todas as implementações concretas disponíveis
+                avoids: nada — é o ponto de composição, ele precisa conhecer tudo
+            tree:
+              - label: projeto/
+                depth: 0
+                kind: dir
+              - label: src/
+                depth: 1
+                kind: dir
+              - label: Pedido/
+                depth: 2
+                kind: dir
+              - label: PedidoNotificacaoService.php
+                depth: 3
+                kind: file
+                layer: srp
+                note: decide quando notificar
+              - label: Notificacao/
+                depth: 2
+                kind: dir
+              - label: Notificador.php
+                depth: 3
+                kind: file
+                layer: ocp
+                note: contrato comum
+              - label: NotificadorEmail.php
+                depth: 3
+                kind: file
+                layer: lsp
+                note: implementação e-mail
+              - label: NotificadorSms.php
+                depth: 3
+                kind: file
+                layer: lsp
+                note: implementação SMS
+              - label: EnviaPorEmail.php
+                depth: 3
+                kind: file
+                layer: isp
+                note: capacidade de e-mail
+              - label: EnviaPorSms.php
+                depth: 3
+                kind: file
+                layer: isp
+                note: capacidade de SMS
+              - label: bootstrap.php
+                depth: 1
+                kind: file
+                layer: dip
+                note: escolhe e injeta a implementação
+        tags:
+          - arquitetura
+          - solid
+          - estrutura-de-projeto
+          - visao-geral
+  - id: srp
+    name: "S — Single Responsibility"
+    entries:
+      - title: Uma razão para mudar, não um método só
+        kicker: SRP é sobre motivos de mudança, não sobre tamanho de classe
+        description: "Uma classe pequena ainda pode violar SRP se ela responde a dois motivos de mudança diferentes. No sistema de notificação, o erro comum é deixar `PedidoNotificacaoService` também montar o corpo do e-mail e chamar a biblioteca de SMTP direto — aí a classe muda tanto quando a regra de negócio (\"notificar quando confirmado\") muda quanto quando o provedor de e-mail muda. São dois motivos, duas responsabilidades, duas razões independentes para editar o mesmo arquivo."
+        descriptionTone: default
+        code: |-
+          <?php
+          // Viola SRP: decide QUANDO notificar e também COMO enviar por e-mail.
+          final class PedidoNotificacaoService
+          {
+              public function aoConfirmar(Pedido $pedido): void
+              {
+                  if ($pedido->status() !== "confirmado") {
+                      return;
+                  }
+
+                  // Monta e envia e-mail — um motivo de mudança que nada tem a
+                  // ver com "quando notificar".
+                  $corpo = "Seu pedido {$pedido->id} foi confirmado.";
+                  mail($pedido->emailCliente, "Pedido confirmado", $corpo);
+              }
+          }
+        callout:
+          type: warn
+          label: "O sintoma:"
+          text: "trocar de `mail()` para uma API de e-mail transacional obriga a reabrir a mesma classe que decide a regra de negócio de quando notificar. Duas mudanças sem relação, um único ponto de risco."
+        tags:
+          - arquitetura
+          - solid
+          - srp
+          - single-responsibility
+      - title: Separar "quando" de "como"
+        kicker: PedidoNotificacaoService decide; Notificador executa
+        description: "A versão que aplica SRP separa a decisão do envio. `PedidoNotificacaoService` só sabe **quando** notificar — a regra de negócio. Ele delega o **como** para um `Notificador`, que nem precisa existir ainda como conceito nesta seção; a interface entra na próxima. O ganho imediato: mudar a regra de \"quando notificar\" (por exemplo, notificar também ao cancelar) não toca em nada relacionado a e-mail ou SMS."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              final class PedidoNotificacaoService
+              {
+                  public function __construct(private Notificador $notificador) {}
+
+                  public function aoConfirmar(Pedido $pedido): void
+                  {
+                      if ($pedido->status() !== "confirmado") {
+                          return;
+                      }
+
+                      $this->notificador->notificar(
+                          "Seu pedido {$pedido->id} foi confirmado.",
+                      );
+                  }
+              }
+          - language: go
+            code: |-
+              type PedidoNotificacaoService struct {
+              	Notificador Notificador
+              }
+
+              func (s PedidoNotificacaoService) AoConfirmar(p Pedido) {
+              	if p.Status() != "confirmado" {
+              		return
+              	}
+              	s.Notificador.Notificar(fmt.Sprintf("Seu pedido %d foi confirmado.", p.ID))
+              }
+        contentBlocks:
+          - type: comparison-block
+            title: Antes e depois
+            columns:
+              - title: Viola SRP
+                items:
+                  - Uma classe decide a regra e monta/envia o e-mail.
+                  - Trocar de provedor de e-mail arrisca quebrar a regra de negócio junto.
+              - title: Aplica SRP
+                items:
+                  - "`PedidoNotificacaoService` só decide; `Notificador` só envia."
+                  - Trocar de provedor não toca na regra de quando notificar.
+        tags:
+          - arquitetura
+          - solid
+          - srp
+          - single-responsibility
+          - responsabilidade-unica
+  - id: ocp
+    name: "O — Open/Closed"
+    entries:
+      - title: Fechado para alterar, aberto para estender
+        kicker: Um canal novo entra como classe nova, não como if a mais
+        description: "Uma peça está \"fechada para modificação, aberta para extensão\" quando atender um caso novo significa **adicionar** uma implementação, não **editar** um `switch` que já estava testado e em produção. Aqui, o contrato `Notificador` define o que qualquer canal precisa saber fazer — sem prever quais canais vão existir no futuro."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              interface Notificador
+              {
+                  public function notificar(string $mensagem): void;
+              }
+
+              final class NotificadorEmail implements Notificador
+              {
+                  public function notificar(string $mensagem): void
+                  {
+                      mail($this->destinatario, "Atualização do pedido", $mensagem);
+                  }
+              }
+          - language: go
+            code: |-
+              type Notificador interface {
+              	Notificar(mensagem string)
+              }
+
+              type NotificadorEmail struct {
+              	Destinatario string
+              }
+
+              func (n NotificadorEmail) Notificar(mensagem string) {
+              	enviarEmail(n.Destinatario, "Atualização do pedido", mensagem)
+              }
+        callout:
+          type: hint
+          label: "O sinal de alerta:"
+          text: "se adicionar `NotificadorWhatsapp` significa abrir `PedidoNotificacaoService` e acrescentar um `elseif ($canal === \"whatsapp\")`, o código não está fechado para modificação. A correção é sempre a mesma: extrair uma nova implementação da interface, nunca ramificar um `if`."
+        tags:
+          - arquitetura
+          - solid
+          - ocp
+          - open-closed
+      - title: O segundo canal chega sem editar o primeiro
+        kicker: NotificadorSms nasce do lado, o resto do sistema nem percebe
+        description: Quando o SMS entra no sistema, ele implementa o mesmo contrato do e-mail. Nenhuma linha de `PedidoNotificacaoService` muda — só o `bootstrap.php` que escolhe qual implementação injetar (isso é o "D" do SOLID, que vem mais adiante).
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              final class NotificadorSms implements Notificador
+              {
+                  public function __construct(private string $telefone, private GatewaySms $gateway) {}
+
+                  public function notificar(string $mensagem): void
+                  {
+                      $this->gateway->enviar($this->telefone, $mensagem);
+                  }
+              }
+          - language: go
+            code: |-
+              type NotificadorSms struct {
+              	Telefone string
+              	Gateway  GatewaySms
+              }
+
+              func (n NotificadorSms) Notificar(mensagem string) {
+              	n.Gateway.Enviar(n.Telefone, mensagem)
+              }
+        contentBlocks:
+          - type: comparison-block
+            title: Antes e depois
+            columns:
+              - title: Viola OCP
+                items:
+                  - "`if ($canal === \"email\") ... elseif ($canal === \"sms\") ...` cresce a cada canal novo."
+                  - Adicionar SMS exige editar uma função que já estava testada e em produção.
+              - title: Aplica OCP
+                items:
+                  - SMS é uma classe nova que implementa `Notificador`.
+                  - "`PedidoNotificacaoService` nunca muda quando um canal novo aparece."
+        tags:
+          - arquitetura
+          - solid
+          - ocp
+          - open-closed
+          - estrategia
+  - id: lsp
+    name: "L — Liskov Substitution"
+    entries:
+      - title: Todo Notificador precisa cumprir a mesma promessa
+        kicker: Se trocar a implementação quebra quem chama, o contrato foi violado
+        description: "OCP só funciona na prática se as implementações forem realmente intercambiáveis — e é exatamente isso que o Liskov Substitution garante. `PedidoNotificacaoService` chama `notificar()` sem saber se é e-mail ou SMS por trás; para isso continuar seguro, **nenhuma** implementação pode exigir algo a mais nem lançar um erro que as outras não lançam. O exemplo clássico do livro-texto é `Quadrado` herdar de `Retangulo` e quebrar a promessa de que largura e altura mudam independentes — o princípio é o mesmo aqui, sem precisar de herança."
+        descriptionTone: default
+        code: |-
+          <?php
+          // Viola LSP: NotificadorSms exige um campo que a interface não promete,
+          // e quem chama notificar() não tem como saber disso de antemão.
+          final class NotificadorSms implements Notificador
+          {
+              public function notificar(string $mensagem): void
+              {
+                  if (strlen($mensagem) > 160) {
+                      throw new \LengthException("SMS não aceita mais de 160 caracteres");
+                  }
+                  // ...
+              }
+          }
+        callout:
+          type: warn
+          label: "O sintoma:"
+          text: "`PedidoNotificacaoService` funciona perfeitamente com `NotificadorEmail` e quebra em produção só quando alguém troca para `NotificadorSms`, porque uma mensagem longa lança uma exceção que o e-mail nunca lançaria. O contrato prometia \"envia uma mensagem\"; uma implementação decidiu prometer menos."
+        tags:
+          - arquitetura
+          - solid
+          - lsp
+          - liskov
+      - title: A promessa cabe no contrato, não na implementação mais frágil
+        kicker: Trunque, não rejeite — ou amplie o contrato para expor o limite
+        description: "Duas saídas honestas: fazer `NotificadorSms` truncar a mensagem para caber no limite do canal (a promessa vira \"envia, adaptando ao canal\"), ou tornar o limite explícito na própria interface, para que quem chama saiba que precisa respeitar. O que não vale é a implementação quebrar silenciosamente uma promessa que o contrato dá como garantida."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              final class NotificadorSms implements Notificador
+              {
+                  public function notificar(string $mensagem): void
+                  {
+                      $mensagem = mb_substr($mensagem, 0, 160);
+                      // ... envia sem lançar exceção surpresa
+                  }
+              }
+          - language: go
+            code: |-
+              func (n NotificadorSms) Notificar(mensagem string) {
+              	if len(mensagem) > 160 {
+              		mensagem = mensagem[:160]
+              	}
+              	// ... envia sem retornar um erro que o e-mail nunca retornaria
+              }
+        contentBlocks:
+          - type: comparison-block
+            title: Antes e depois
+            columns:
+              - title: Viola LSP
+                items:
+                  - "`NotificadorSms` lança exceção que `NotificadorEmail` nunca lançaria."
+                  - Código que funciona com uma implementação quebra ao trocar para a outra.
+              - title: Aplica LSP
+                items:
+                  - As duas implementações cumprem exatamente a mesma promessa.
+                  - Trocar de uma para a outra nunca surpreende quem chama.
+        tags:
+          - arquitetura
+          - solid
+          - lsp
+          - liskov
+          - substituicao
+  - id: isp
+    name: "I — Interface Segregation"
+    entries:
+      - title: Interfaces pequenas, uma por capacidade
+        kicker: Ninguém deveria implementar um método que não faz sentido para ele
+        description: "Suponha um único contrato `ConfiguravelNotificador` com `configurarSmtp()` **e** `configurarGatewaySms()`. `NotificadorEmail` seria forçado a ter um `configurarGatewaySms()` vazio (ou que lança \"não suportado\") — e vice-versa para o SMS. A correção é segregar: cada canal implementa só a interface de configuração que realmente usa. Isso é a convenção natural em Go, onde interfaces de um ou dois métodos (como `io.Reader`) são a norma, não a exceção."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              interface ConfiguravelPorSmtp
+              {
+                  public function configurarSmtp(string $host, int $porta): void;
+              }
+
+              interface ConfiguravelPorGatewaySms
+              {
+                  public function configurarGateway(GatewaySms $gateway): void;
+              }
+
+              final class NotificadorEmail implements Notificador, ConfiguravelPorSmtp
+              {
+                  public function configurarSmtp(string $host, int $porta): void { /* ... */ }
+                  public function notificar(string $mensagem): void { /* ... */ }
+              }
+
+              final class NotificadorSms implements Notificador, ConfiguravelPorGatewaySms
+              {
+                  public function configurarGateway(GatewaySms $gateway): void { /* ... */ }
+                  public function notificar(string $mensagem): void { /* ... */ }
+              }
+          - language: go
+            code: |-
+              type ConfiguravelPorSmtp interface {
+              	ConfigurarSmtp(host string, porta int)
+              }
+
+              type ConfiguravelPorGatewaySms interface {
+              	ConfigurarGateway(g GatewaySms)
+              }
+
+              type NotificadorEmail struct{ /* ... */ }
+
+              func (n *NotificadorEmail) ConfigurarSmtp(host string, porta int) { /* ... */ }
+              func (n NotificadorEmail) Notificar(mensagem string)              { /* ... */ }
+
+              // NotificadorSms nunca precisa saber que ConfigurarSmtp existe.
+        callout:
+          type: hint
+          label: "Convenção do Go:"
+          text: "a biblioteca padrão já modela ISP: `io.Reader` e `io.Writer` são interfaces de um método só, combináveis (`io.ReadWriter`) em vez de uma interface gigante de I/O."
+        tags:
+          - arquitetura
+          - solid
+          - isp
+          - interface-segregation
+          - interface
+  - id: dip
+    name: "D — Dependency Inversion"
+    entries:
+      - title: Dependa de abstração, não de implementação concreta
+        kicker: O ponto de composição é o único lugar que conhece tudo
+        description: "Repare que `PedidoNotificacaoService`, desde a seção de SRP, sempre recebeu um `Notificador` — nunca um `NotificadorEmail` direto. Essa é a inversão: o módulo de alto nível (a regra de negócio) e o módulo de baixo nível (o canal concreto) dependem os dois da mesma abstração, e nenhum depende do outro diretamente. Alguém, em algum lugar, precisa decidir qual implementação usar — esse alguém é o ponto de composição, tipicamente o `bootstrap.php` (ou `main.go`) que sobe a aplicação."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+              // bootstrap.php — o único arquivo que conhece as classes concretas.
+              $notificador = getenv("CANAL") === "sms"
+                  ? new NotificadorSms($telefone, $gatewaySms)
+                  : new NotificadorEmail($smtp);
+
+              $service = new PedidoNotificacaoService($notificador);
+          - language: go
+            code: |-
+              // main.go — o único arquivo que conhece as structs concretas.
+              var notificador Notificador
+              if os.Getenv("CANAL") == "sms" {
+              	notificador = NotificadorSms{Telefone: telefone, Gateway: gatewaySms}
+              } else {
+              	notificador = NotificadorEmail{Destinatario: email}
+              }
+
+              service := PedidoNotificacaoService{Notificador: notificador}
+        callout:
+          type: hint
+          label: "Exemplo completo:"
+          text: "`Arquitetura: Clean Architecture` aplica exatamente este princípio a um caso de uso real, com repositório de banco por trás da abstração — e nomeia esse arquivo de composição como parte da camada Frameworks & Drivers."
+        tags:
+          - arquitetura
+          - solid
+          - dip
+          - dependency-inversion
+          - injecao-de-dependencia
+  - id: decisao
+    name: Quando usar e erros comuns
+    entries:
+      - title: Qual princípio olhar quando algo dói
+        kicker: Cada letra ataca um sintoma específico
+        description: Use este mapa para identificar qual princípio explica a dor que você está sentindo no código, em vez de aplicar os cinco por decreto em tudo.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Sintoma → princípio
+            items:
+              - "Uma classe muda toda vez que um assunto diferente muda: SRP."
+              - "Adicionar um caso novo exige editar um `switch`/`if` já testado: OCP."
+              - "Um subtipo faz o código de quem chama se comportar de forma inesperada: LSP."
+              - "Uma implementação tem métodos vazios ou que lançam \"não suportado\": ISP."
+              - "A regra de negócio importa direto uma biblioteca de banco, HTTP ou fila: DIP."
+        tags:
+          - arquitetura
+          - solid
+          - decisao
+          - boas-praticas
+      - title: Aplicar SOLID como regra, não como diagnóstico
+        kicker: O oposto de acoplamento não é abstração em tudo
+        description: SOLID vira problema quando aplicado por reflexo em vez de por sintoma observado.
+        descriptionTone: warn
+        contentBlocks:
+          - type: context-block
+            title: Interface para tudo, mesmo com uma implementação só
+            variant: common-error
+            label: "Evite:"
+            text: "criar uma interface para cada classe \"só para seguir DIP\", mesmo quando não existe nem previsão de uma segunda implementação. Isso adiciona indireção sem comprar flexibilidade real — o `Notificador` desta página só se justifica porque existem, de fato, dois canais."
+          - type: context-block
+            title: Banir herança inteira por causa de LSP
+            variant: common-error
+            label: "Evite:"
+            text: "concluir que herança é sempre errada. LSP não proíbe herança — proíbe um subtipo que quebra a promessa do tipo base. Herança bem-comportada (onde o subtipo cumpre o contrato) continua válida."
+          - type: checklist-block
+            title: Pergunta de controle antes de aplicar
+            items:
+              - Existe uma dor concreta hoje (teste difícil, mudança arriscada) ou é especulação de futuro?
+              - A abstração nova tem pelo menos um caso real que a justifica?
+              - Alguém vai conseguir explicar por que essa camada existe, sem citar a sigla?
+        tags:
+          - arquitetura
+          - solid
+          - erros-comuns
+          - over-engineering
+tech: arquitetura
+order: 3
+cardDescription: Os cinco princípios SOLID vistos num sistema só de notificação de pedidos, com explorador interativo ligando cada letra a um arquivo real.

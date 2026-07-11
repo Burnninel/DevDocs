@@ -1,0 +1,456 @@
+id: php-erros-excecoes
+title: "PHP: Erros e exceções"
+subtitle: Guia prático para modelar falhas com Throwable, controlar fluxo com try/catch/finally e não vazar detalhes internos ao cliente.
+searchPlaceholder: Buscar exceção, Throwable, try/catch, throw ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Requisitos e execução no terminal
+  description: Use PHP CLI. Para trechos que simulam saída HTTP, o foco é o padrão de código; em projeto real o mesmo fluxo roda atrás de Apache, Nginx ou servidor embutido.
+  steps:
+    - Confirme o PHP com `php --version`.
+    - Crie `erros.php` e cole um exemplo desta página.
+    - Execute com `php erros.php` e observe a saída no terminal.
+    - "Para depuração linha a linha, use a documentação `PHP: Debugging` no hub."
+  codeLanguage: shell
+  code: |-
+    php --version
+    php erros.php
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "combine este guia com `PHP: Debugging` para investigar estado e com `PHP: Headers HTTP` ao retornar JSON de erro com status correto."
+sections:
+  - id: conceitos-throwable
+    name: "Conceitos: Throwable, Exception e Error"
+    layout: single
+    entries:
+      - title: Throwable unifica Exception e Error
+        kicker: Base para decidir o que capturar
+        description: A partir do PHP 7, erros fatais muitas vezes viram objetos `Error` que implementam `Throwable`, assim como `Exception`. Por isso `catch (Throwable $e)` captura quase tudo que pode ser lançado como objeto. Ainda existem avisos/notices antigos que não viram exceção até você configurar um handler; o fluxo típico de API moderna combina exceções explícitas com validação antes do processamento.
+        descriptionTone: default
+        code: |-
+          <?php
+          // Exception: falhas de regra de negócio ou contrato que você modela no código.
+          // Error: erros internos do motor (TypeError, ArgumentCountError, etc.).
+
+          function exemploThrowable(int $id): void
+          {
+              if ($id <= 0) {
+                  throw new InvalidArgumentException("ID deve ser positivo");
+              }
+
+              echo "Processado: {$id}" . PHP_EOL;
+          }
+
+          try {
+              exemploThrowable(-1);
+          } catch (Throwable $e) {
+              echo "Capturado: " . $e::class . " — " . $e->getMessage() . PHP_EOL;
+          }
+
+          try {
+              exemploThrowable(5);
+          } catch (Throwable $e) {
+              echo "Não deveria entrar aqui" . PHP_EOL;
+          }
+        output: |-
+          Capturado: InvalidArgumentException — ID deve ser positivo
+          Processado: 5
+        tags:
+          - php
+          - throwable
+          - exception
+          - error
+          - conceito
+          - base
+        callout:
+          type: hint
+          label: "Regra prática:"
+          text: em bibliotecas públicas prefira tipos específicos (`InvalidArgumentException`, etc.); em fronteira HTTP, muitas vezes você centraliza em um único tradutor para resposta JSON.
+      - title: Diferença entre erro recuperável e bug de tipo
+        kicker: Exception comunica regra; Error sinaliza uso incorreto
+        description: "`InvalidArgumentException` costuma indicar entrada inválida que o chamador pode corrigir ou exibir ao usuário. `TypeError` indica que o programa violou uma assinatura (tipo errado em chamada). Tratar os dois como `Throwable` evita página em branco, mas a mensagem enviada ao cliente deve ser genérica; detalhes ficam em log."
+        descriptionTone: default
+        code: |-
+          <?php
+          // $a: dividendo; $b: divisor
+          function dividir(float $a, float $b): float
+          {
+              if ($b === 0.0) {
+                  throw new RuntimeException("Divisor não pode ser zero");
+              }
+              return $a / $b;
+          }
+
+          try {
+              echo dividir(10, 0) . PHP_EOL;
+          } catch (RuntimeException $e) {
+              echo "Regra violada: " . $e->getMessage() . PHP_EOL;
+          }
+
+          try {
+              dividir("dez", 2); // TypeError em tempo de execução
+          } catch (Throwable $e) {
+              echo "Falha de tipo ou execução: " . $e::class . PHP_EOL;
+          }
+        output: |-
+          Regra violada: Divisor não pode ser zero
+          Falha de tipo ou execução: TypeError
+        tags:
+          - php
+          - typeerror
+          - runtimeexception
+          - regra
+          - tipo
+  - id: try-catch-finally
+    name: try, catch e finally
+    layout: single
+    entries:
+      - title: Fluxo básico e finally para limpeza
+        kicker: Garantir fechamento mesmo quando há return ou throw
+        description: O bloco `finally` executa depois de `try` e `catch`, mesmo se houver `return` dentro deles. Use para fechar recursos ou medir tempo. Múltiplos `catch` devem ir do tipo mais específico para o mais genérico.
+        descriptionTone: default
+        code: |-
+          <?php
+          function operacaoComRecurso(): string
+          {
+              $recurso = fopen("php://memory", "r+");
+              if ($recurso === false) {
+                  throw new RuntimeException("Não foi possível abrir recurso");
+              }
+
+              try {
+                  fwrite($recurso, "dados");
+                  rewind($recurso);
+                  $conteudo = stream_get_contents($recurso);
+                  if ($conteudo === false || $conteudo === "") {
+                      throw new RuntimeException("Leitura vazia");
+                  }
+                  return strtoupper($conteudo);
+              } catch (Throwable $e) {
+                  echo "Erro durante uso: " . $e->getMessage() . PHP_EOL;
+                  throw $e;
+              } finally {
+                  fclose($recurso);
+                  echo "Recurso fechado." . PHP_EOL;
+              }
+          }
+
+          try {
+              echo "Resultado: " . operacaoComRecurso() . PHP_EOL;
+          } catch (Throwable) {
+              echo "Operação abortada." . PHP_EOL;
+          }
+        output: |-
+          Recurso fechado.
+          Resultado: DADOS
+        tags:
+          - php
+          - try
+          - catch
+          - finally
+          - fluxo
+          - recurso
+      - title: Múltiplos catch e ordem correta
+        kicker: Do específico para o genérico
+        description: O PHP avalia `catch` na ordem declarada. Coloque `InvalidArgumentException` antes de `Exception` e ambos antes de `Throwable` se misturar tipos. Um `catch` genérico no fim evita silêncio acidental em blocos vazios.
+        descriptionTone: warn
+        code: |-
+          <?php
+          function validarEmail(string $email): void
+          {
+              if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                  throw new InvalidArgumentException("E-mail inválido");
+              }
+          }
+
+          try {
+              validarEmail("sem-arroba");
+          } catch (InvalidArgumentException $e) {
+              echo "Entrada: " . $e->getMessage() . PHP_EOL;
+          } catch (Exception $e) {
+              echo "Outra Exception: " . $e->getMessage() . PHP_EOL;
+          } catch (Throwable $e) {
+              echo "Demais falhas: " . $e::class . PHP_EOL;
+          }
+        output: "Entrada: E-mail inválido"
+        tags:
+          - php
+          - catch
+          - ordem
+          - invalidargumentexception
+          - exception
+        callout:
+          type: warn
+          label: "Evite:"
+          text: "`catch (Throwable $e) { }` vazio: engole falhas e dificulta diagnóstico. Registre ou relance."
+  - id: lancar-customizar
+    name: Lançar e customizar exceções
+    layout: single
+    entries:
+      - title: throw e classes de exceção do domínio
+        kicker: Mensagens claras para log; códigos estáveis para API
+        description: Use `throw` quando uma pré-condição falha ou um serviço externo retorna estado inaceitável. Classes próprias estendendo `Exception` permitem propriedades extras (código de erro de negócio) sem acoplar mensagem humana ao contrato da API.
+        descriptionTone: default
+        code: |-
+          <?php
+          final class PagamentoRecusadoException extends Exception
+          {
+              public string $codigoGateway;
+
+              public function __construct(
+                  string $message = "Pagamento recusado",
+                  string $codigoGateway = "DECLINED",
+                  int $code = 0,
+                  ?Throwable $previous = null
+              ) {
+                  $this->codigoGateway = $codigoGateway;
+                  parent::__construct($message, $code, $previous);
+              }
+          }
+
+          function cobrarCartao(bool $aprovado): void
+          {
+              if (!$aprovado) {
+                  throw new PagamentoRecusadoException(
+                      "Gateway retornou recusa",
+                      "GW_402"
+                  );
+              }
+          }
+
+          try {
+              cobrarCartao(false);
+          } catch (PagamentoRecusadoException $e) {
+              echo $e->getMessage() . " | código: " . $e->codigoGateway . PHP_EOL;
+          }
+        output: "Gateway retornou recusa | código: GW_402"
+        tags:
+          - php
+          - throw
+          - custom
+          - dominio
+          - exception
+  - id: encadear-relancar
+    name: Encadear e relançar
+    layout: single
+    entries:
+      - title: Exception anterior e wrapping
+        kicker: Preservar causa ao traduzir erro de baixo nível
+        description: Passe a exceção original como `$previous` ao criar uma nova. Assim o stack trace completo permanece em `$e->getPrevious()` e ferramentas de log mostram a cadeia. Relançar com `throw $e` após log local também é comum.
+        descriptionTone: default
+        code: |-
+          <?php
+          function camadaBaixa(): never
+          {
+              throw new RuntimeException("Falha de rede simulada");
+          }
+
+          function camadaAlta(): never
+          {
+              try {
+                  camadaBaixa();
+              } catch (Throwable $e) {
+                  throw new RuntimeException("Serviço indisponível", 0, $e);
+              }
+          }
+
+          try {
+              camadaAlta();
+          } catch (Throwable $e) {
+              echo "Topo: " . $e->getMessage() . PHP_EOL;
+              $prev = $e->getPrevious();
+              if ($prev instanceof Throwable) {
+                  echo "Causa: " . $prev->getMessage() . PHP_EOL;
+              }
+          }
+        output: |-
+          Topo: Serviço indisponível
+          Causa: Falha de rede simulada
+        tags:
+          - php
+          - previous
+          - chain
+          - wrap
+          - causa
+  - id: apis-json
+    name: APIs e JSON de erro
+    layout: single
+    entries:
+      - title: Padronizar corpo de erro sem expor stack
+        kicker: Cliente recebe código estável; log guarda detalhe
+        description: "Em APIs, combine código HTTP adequado (4xx validação, 5xx falha interna) com JSON com campos como `error`, `code` e opcionalmente `details` controlados. Não envie `getTraceAsString()` ao cliente. Para cabeçalhos e status, alinhe com `PHP: Headers HTTP com header()`; para `json_encode`, flags e `JsonException`, use `PHP: JSON (encode e decode)` no hub."
+        descriptionTone: default
+        code: |-
+          <?php
+          function respostaErroJson(int $statusHttp, string $codigo, string $mensagemPublica, ?string $detalheLog = null): string
+          {
+              if ($detalheLog !== null) {
+                  error_log("[api] {$codigo}: {$detalheLog}");
+              }
+
+              $payload = [
+                  "ok" => false,
+                  "error" => [
+                      "code" => $codigo,
+                      "message" => $mensagemPublica,
+                  ],
+              ];
+
+              return json_encode($payload, JSON_THROW_ON_ERROR);
+          }
+
+          try {
+              throw new InvalidArgumentException("Campo obrigatório ausente: nome");
+          } catch (InvalidArgumentException $e) {
+              $json = respostaErroJson(400, "VALIDATION_ERROR", "Dados inválidos", $e->getMessage());
+              echo $json . PHP_EOL;
+          }
+        output: '{"ok":false,"error":{"code":"VALIDATION_ERROR","message":"Dados inválidos"}}'
+        tags:
+          - php
+          - api
+          - json
+          - http
+          - erro
+          - seguranca
+        callout:
+          type: hint
+          label: "Lembrete:"
+          text: "defina `Content-Type: application/json` e o status antes do corpo (doc de headers); use a doc de JSON para serialização consistente e validação após decode."
+  - id: producao-desenvolvimento
+    name: Produção vs desenvolvimento
+    layout: single
+    entries:
+      - title: display_errors, log_errors e o que o cliente vê
+        kicker: Desenvolvimento verboso; produção contida
+        description: Em desenvolvimento, `display_errors=On` ajuda. Em produção, desligue exibição de erros ao usuário final e use `log_errors` com destino seguro. Handlers globais (`set_exception_handler`) podem converter qualquer exceção não capturada em resposta 500 padronizada.
+        descriptionTone: warn
+        code: |-
+          <?php
+          // Exemplo didático: em produção você configuraria via php.ini ou bootstrap.
+          // ini_set("display_errors", "0");
+          // ini_set("log_errors", "1");
+
+          function tratarNaoCapturada(Throwable $e): void
+          {
+              error_log("Não capturada: " . $e->getMessage());
+              http_response_code(500);
+              header("Content-Type: application/json; charset=UTF-8");
+              echo json_encode([
+                  "ok" => false,
+                  "error" => ["code" => "INTERNAL", "message" => "Erro interno"],
+              ]);
+          }
+
+          // set_exception_handler("tratarNaoCapturada"); // ative no front controller real
+
+          echo "Handler registrado no bootstrap da aplicação." . PHP_EOL;
+        output: Handler registrado no bootstrap da aplicação.
+        tags:
+          - php
+          - producao
+          - display_errors
+          - log
+          - handler
+        callout:
+          type: danger
+          label: "Crítico:"
+          text: nunca exponha caminhos de arquivo, queries SQL completas ou segredos em JSON ou HTML de erro em produção.
+  - id: boas-praticas
+    name: Boas práticas
+    layout: single
+    entries:
+      - title: Quando exceção e quando retorno de resultado
+        kicker: Exceção para fluxo excecional; resultado para caminhos normais
+        description: Exceções custam e quebram o fluxo linear; use para situações que não deveriam ocorrer se o contrato fosse respeitado. Para "não encontrado" em consultas frequentes, alguns times preferem `null` ou tipo `Result` em vez de exceção. O importante é ser consistente no projeto.
+        descriptionTone: default
+        code: |-
+          <?php
+          function buscarUsuario(?int $id): ?array
+          {
+              if ($id === null) {
+                  return null; // caminho esperado: sem id, sem usuário
+              }
+              if ($id <= 0) {
+                  throw new InvalidArgumentException("ID inválido");
+              }
+              return ["id" => $id, "nome" => "Ana"];
+          }
+
+          var_export(buscarUsuario(null));
+          echo PHP_EOL;
+          var_export(buscarUsuario(7));
+          echo PHP_EOL;
+          try {
+              var_export(buscarUsuario(-3));
+          } catch (InvalidArgumentException $e) {
+              echo "Erro: " . $e->getMessage();
+          }
+        output: |-
+          NULL
+          array (
+            'id' => 7,
+            'nome' => 'Ana',
+          )
+          Erro: ID inválido
+        tags:
+          - php
+          - boas-praticas
+          - retorno
+          - excecao
+          - contrato
+  - id: erros-comuns
+    name: Erros comuns
+    layout: single
+    entries:
+      - title: Capturar largo demais e engolir a falha
+        kicker: Throwable genérico sem log nem relançamento
+        description: Capturar `Throwable` e não fazer nada útil mascara bugs. Outro padrão ruim é converter tudo em mensagem genérica sem identificador de correlação para achar o evento no log.
+        descriptionTone: warn
+        code: |-
+          <?php
+          // Ruim: silencia o problema.
+          function exemploRuim(): void
+          {
+              try {
+                  throw new RuntimeException("falha real");
+              } catch (Throwable) {
+                  // vazio
+              }
+          }
+
+          // Melhor: registrar e transformar em erro de sistema conhecido.
+          function exemploMelhor(): void
+          {
+              try {
+                  throw new RuntimeException("falha real");
+              } catch (Throwable $e) {
+                  $id = "9f3a2c1b"; // id fixo para o exemplo na documentação
+                  error_log("[{$id}] " . $e->getMessage());
+                  throw new RuntimeException("Operação falhou (ref {$id})", 0, $e);
+              }
+          }
+
+          try {
+              exemploMelhor();
+          } catch (RuntimeException $e) {
+              echo $e->getMessage() . PHP_EOL;
+          }
+        output: Operação falhou (ref 9f3a2c1b)
+        tags:
+          - php
+          - erros-comuns
+          - catch
+          - log
+          - correlacao
+        callout:
+          type: hint
+          label: "Correção:"
+          text: o exemplo imprime uma referência; em produção retorne esse id ao cliente e guarde stack só no servidor.
+tech: php
+order: 5
+cardDescription: Guia prático para try/catch, Throwable, APIs JSON de erro, produção vs desenvolvimento e boas práticas.

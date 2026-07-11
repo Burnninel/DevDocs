@@ -1,0 +1,213 @@
+id: go-http
+title: "Go: HTTP"
+subtitle: "Guia prático para net/http: Handlers, Server com timeouts, cliente com contexto e integração com JSON."
+searchPlaceholder: Buscar Handler, ListenAndServe, Client, Request ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Cliente contra servidor de teste
+  kicker: Sem portas fixas
+  description: "Use `httptest.NewServer` para testar handlers sem abrir portas manuais. Corpo JSON combina com `Go: JSON` no hub; prazos com `Go: Context`."
+  steps:
+    - Módulo com `go mod init`.
+    - Cole o exemplo em `main.go` e `go run .`.
+  codeLanguage: go
+  code: |-
+    package main
+
+    import (
+    	"fmt"
+    	"io"
+    	"net/http"
+    	"net/http/httptest"
+    )
+
+    func main() {
+    	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+    		fmt.Fprint(w, "ola")
+    	})
+    	srv := httptest.NewServer(h)
+    	defer srv.Close()
+    	resp, err := http.Get(srv.URL)
+    	if err != nil {
+    		panic(err)
+    	}
+    	defer resp.Body.Close()
+    	body, _ := io.ReadAll(resp.Body)
+    	fmt.Println(resp.StatusCode, string(body))
+    }
+  output: 200 ola
+  callout:
+    type: hint
+    label: "Segurança:"
+    text: em produção defina `ReadHeaderTimeout`, `ReadTimeout` e `WriteTimeout` no `http.Server` para evitar clientes lentos (ver seção Servidor).
+sections:
+  - id: servidor-basico
+    name: Servidor HTTP
+    layout: single
+    entries:
+      - title: http.Server com timeouts
+        kicker: Preferível a ListenAndServe nu
+        description: "`http.ListenAndServe` é conveniente mas não expõe timeouts. Um `http.Server` explícito permite `ReadHeaderTimeout` (recomendado desde Go 1.8) e limites de leitura/escrita."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"log"
+          	"net/http"
+          	"time"
+          )
+
+          func main() {
+          	mux := http.NewServeMux()
+          	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+          		w.WriteHeader(http.StatusOK)
+          	})
+          	srv := &http.Server{
+          		Addr:              ":8080",
+          		Handler:           mux,
+          		ReadHeaderTimeout: 2 * time.Second,
+          		ReadTimeout:       5 * time.Second,
+          		WriteTimeout:      10 * time.Second,
+          		IdleTimeout:       60 * time.Second,
+          	}
+          	if err := srv.ListenAndServe(); err != nil {
+          		log.Fatal(err)
+          	}
+          }
+        codeLanguage: go
+        tags:
+          - go
+          - http
+          - Server
+          - timeout
+          - ListenAndServe
+        callout:
+          type: warn
+          label: "Nota:"
+          text: este exemplo bloqueia em `ListenAndServe`; não o copie exatamente como está em testes sem goroutine ou `httptest`.
+      - title: Request.Context no handler
+        kicker: Cancelamento do cliente
+        description: "Use `ctx := r.Context()` antes de chamar serviços lentos ou banco de dados. Quando o cliente fecha a conexão, `ctx` cancela e você pode abortar trabalho (ver `Go: Context`)."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"net/http"
+          	"net/http/httptest"
+          )
+
+          func main() {
+          	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		_ = r.Context()
+          		fmt.Fprint(w, r.Method)
+          	})
+          	srv := httptest.NewServer(h)
+          	defer srv.Close()
+          	resp, _ := http.Get(srv.URL)
+          	defer resp.Body.Close()
+          	fmt.Println(resp.StatusCode)
+          }
+        output: "200"
+        tags:
+          - go
+          - http
+          - Context
+          - handler
+          - Request
+  - id: cliente-http
+    name: Cliente e erros
+    layout: single
+    entries:
+      - title: Cliente com timeout total
+        kicker: http.Client.Timeout
+        description: "`Timeout` cobre handshake, redirecionamentos e leitura do corpo (até `io.EOF`). Para controlar só a fase de requisição, combine `http.NewRequestWithContext` com `context.WithTimeout`."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"net/http"
+          	"time"
+          )
+
+          func main() {
+          	c := &http.Client{Timeout: 2 * time.Second}
+          	_, err := c.Get("http://example.invalid")
+          	fmt.Println(err != nil)
+          }
+        output: "true"
+        tags:
+          - go
+          - http
+          - Client
+          - Timeout
+          - rede
+      - title: JSON em respostas HTTP
+        kicker: encoding/json + Header
+        description: "Defina `Content-Type: application/json` antes de escrever o corpo. Erros de serialização devem mapear para 500 e mensagem controlada (ver `Go: Erros` e `Go: JSON`)."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          	"net/http"
+          	"net/http/httptest"
+          )
+
+          func main() {
+          	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+          		_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+          	})
+          	srv := httptest.NewServer(h)
+          	defer srv.Close()
+          	resp, _ := http.Get(srv.URL)
+          	defer resp.Body.Close()
+          	fmt.Println(resp.Header.Get("Content-Type"))
+          }
+        output: application/json; charset=utf-8
+        tags:
+          - go
+          - http
+          - json
+          - Header
+          - api
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para servidor e cliente HTTP
+        kicker: Timeouts, contexto e resposta JSON
+        description: Use este resumo para não esquecer os pontos que mais custam caro em produção sob carga.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`http.Server` explícito com `ReadHeaderTimeout`/`ReadTimeout`/`WriteTimeout`, em vez de `ListenAndServe` nu."
+              - "`r.Context()` no handler para respeitar cancelamento do cliente."
+              - "`http.Client{Timeout: ...}` para limitar o tempo total da requisição."
+              - "`Content-Type` definido antes de escrever o corpo da resposta."
+              - "`httptest.NewServer` para testar handler sem porta fixa (ver `Go: Testes`)."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: usar o cliente padrão do pacote (`http.Get`/`http.Post`, sem timeout) direto em produção, ou esquecer `defer resp.Body.Close()`. Conexão não fechada nem liberada vaza recurso sob carga.
+        tags:
+          - go
+          - http
+          - decisao
+          - boas-praticas
+tech: go
+order: 26
+cardDescription: "Guia prático para net/http: servidor com timeouts, cliente, Request.Context e JSON."

@@ -1,0 +1,245 @@
+id: go-erros
+title: "Go: Erros"
+subtitle: Guia prático para modelar falhas com o tipo error, wrapping com fmt.Errorf, errors.Is e errors.As, e quando evitar panic.
+searchPlaceholder: Buscar error, wrap, errors.Is, panic ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Testar exemplos desta página
+  kicker: Go instalado
+  description: Os trechos são pacotes `main` completos. Guarde cada bloco em `main.go` dentro de um módulo (`go mod init ...`) e execute `go run .`.
+  steps:
+    - Confirme `go version`.
+    - Crie pasta, `go mod init exemplo.local/erros-demo`, cole um exemplo, `go run .`.
+  codeLanguage: shell
+  code: |-
+    go version
+    go mod init exemplo.local/erros-demo
+    go run .
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "valores nil e funções que retornam `(T, error)` combinam com `Go: Tipos e valores` no hub."
+sections:
+  - id: error-basico
+    name: O tipo error e nil
+    layout: single
+    entries:
+      - title: errors.New e fmt.Errorf
+        kicker: Mensagens simples
+        description: "`error` é uma interface com método `Error() string`. `errors.New` cria um erro constante. `fmt.Errorf` formata mensagens; com `%w` você pode encadear (wrap) outro erro."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"errors"
+          	"fmt"
+          )
+
+          func main() {
+          	e := errors.New("falha base")
+          	fmt.Println(e)
+          	fmt.Println(fmt.Errorf("contexto: %w", e))
+          }
+        output: |-
+          falha base
+          contexto: falha base
+        tags:
+          - go
+          - error
+          - errors.New
+          - fmt.Errorf
+          - interface
+      - title: Padrão (T, error) e if err != nil
+        kicker: Fluxo explícito
+        description: Funções que podem falhar retornam `error` como último valor. O chamador compara com `nil`. Não há exceções genéricas; o fluxo é linear e visível.
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"errors"
+          	"fmt"
+          )
+
+          func parseId(s string) (int, error) {
+          	if s == "" {
+          		return 0, errors.New("id vazio")
+          	}
+          	return 10, nil
+          }
+
+          func main() {
+          	if _, err := parseId(""); err != nil {
+          		fmt.Println("erro:", err)
+          		return
+          	}
+          	fmt.Println("ok")
+          }
+        output: "erro: id vazio"
+        tags:
+          - go
+          - error
+          - nil
+          - if err
+          - idioma
+  - id: wrap-is-as
+    name: Wrapping, Is e As
+    layout: single
+    entries:
+      - title: fmt.Errorf com %w
+        kicker: Preservar erro de origem
+        description: Use `%w` para encadear (wrap) um erro dentro de outro. Desde o Go 1.20 é possível usar mais de um `%w` no mesmo `fmt.Errorf` (o erro resultante passa a ter `Unwrap() []error`). Cadeias permitem que `errors.Is` e `errors.As` encontrem o erro sentinela ou um tipo concreto no fundo da pilha.
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"errors"
+          	"fmt"
+          )
+
+          var ErrNotFound = errors.New("não encontrado")
+
+          func load() error {
+          	return fmt.Errorf("camada db: %w", ErrNotFound)
+          }
+
+          func main() {
+          	err := load()
+          	fmt.Println(errors.Is(err, ErrNotFound))
+          }
+        output: "true"
+        tags:
+          - go
+          - wrap
+          - fmt.Errorf
+          - errors.Is
+          - sentinela
+      - title: errors.As para tipos customizados
+        kicker: Inspecionar struct de erro
+        description: "`errors.As` percorre a cadeia e preenche o destino se algum erro implementa o tipo. Útil para ler campos (código HTTP, código interno) sem depender só da string."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"errors"
+          	"fmt"
+          )
+
+          type HTTPError struct {
+          	Status int
+          }
+
+          func (e HTTPError) Error() string {
+          	return fmt.Sprintf("http %d", e.Status)
+          }
+
+          func main() {
+          	err := HTTPError{Status: 404}
+          	var he HTTPError
+          	if errors.As(err, &he) {
+          		fmt.Println(he.Status)
+          	}
+          }
+        output: "404"
+        tags:
+          - go
+          - errors.As
+          - tipo
+          - http
+  - id: panic-defer
+    name: panic, recover e boas práticas
+    layout: single
+    entries:
+      - title: Quando panic é aceitável
+        kicker: Programação defensiva, não fluxo normal
+        description: "`panic` interrompe a goroutine atual. Use para invariantes que nunca deveriam falhar (bug interno) ou durante init. Em bibliotecas e handlers HTTP, retorne `error` em vez de panic para condições esperadas (validação, I/O)."
+        descriptionTone: warn
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	defer func() {
+          		if r := recover(); r != nil {
+          			fmt.Println("recovered:", r)
+          		}
+          	}()
+          	panic("bug inesperado")
+          }
+        output: "recovered: bug inesperado"
+        tags:
+          - go
+          - panic
+          - recover
+          - boas praticas
+        callout:
+          type: danger
+          label: "Evite:"
+          text: usar panic para validação de requisição HTTP ou entrada de usuário; modele com `error` e status adequado.
+      - title: defer e limpeza com erro
+        kicker: Fechar recursos
+        description: "`defer` empilha chamadas que executam ao sair da função (return ou panic). Combine com funções que retornam erro para fechar arquivos; em código avançado, funções nomeadas e `defer` ajudam a sobrescrever o `return err`."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"os"
+          )
+
+          func main() {
+          	f, err := os.CreateTemp("", "demo")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer os.Remove(f.Name())
+          	defer f.Close()
+          	fmt.Fprintln(f, "dados")
+          	fmt.Println("gravado")
+          }
+        output: gravado
+        tags:
+          - go
+          - defer
+          - os
+          - limpeza
+          - recurso
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para modelar falhas
+        kicker: error, wrap e quando usar panic
+        description: Use este resumo para escolher rápido entre retornar erro, encadear contexto ou usar panic.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`errors.New` para erro constante simples."
+              - "`fmt.Errorf` com `%w` para adicionar contexto sem perder o erro original."
+              - "`errors.Is` para comparar com um erro sentinela conhecido."
+              - "`errors.As` para extrair um tipo de erro customizado da cadeia."
+              - "`panic`/`recover` só para bug interno ou invariante quebrada, nunca para validação de entrada."
+              - "`defer` para fechar recurso, mesmo quando a função retorna erro."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: usar `panic` para erro esperado (entrada inválida, arquivo ausente) em vez de retornar `error`. Isso tira do chamador a chance de decidir o que fazer com a falha.
+        tags:
+          - go
+          - error
+          - panic
+          - decisao
+          - boas-praticas
+tech: go
+order: 18
+cardDescription: Guia prático para error, errors.New, fmt.Errorf com %w, errors.Is, errors.As, defer e panic.

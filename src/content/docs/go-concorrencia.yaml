@@ -1,0 +1,171 @@
+id: go-concorrencia
+title: "Go: Concorrência"
+subtitle: Guia prático para goroutines, sync.WaitGroup, Mutex, canais e select, com lembretes de cancelamento e fugas de goroutine.
+searchPlaceholder: Buscar goroutine, WaitGroup, Mutex, channel, select ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Duas goroutines e WaitGroup
+  kicker: Esperar trabalho paralelo
+  description: "`go f()` inicia uma goroutine. `WaitGroup` conta tarefas: `Add` antes de iniciar, `Done` ao terminar, `Wait` bloqueia até zero. Combine com `Go: Context` para cancelar trabalho longo."
+  steps:
+    - Módulo com `go mod init`.
+    - Cole o exemplo em `main.go` e `go run .`.
+  codeLanguage: go
+  code: |-
+    package main
+
+    import (
+    	"fmt"
+    	"sync"
+    )
+
+    func main() {
+    	var wg sync.WaitGroup
+    	wg.Add(1)
+    	go func() {
+    		defer wg.Done()
+    		fmt.Println("worker")
+    	}()
+    	wg.Wait()
+    	fmt.Println("fim")
+    }
+  output: |-
+    worker
+    fim
+  callout:
+    type: warn
+    label: "Goroutine leak:"
+    text: se `Wait` nunca corre ou um canal nunca fecha, goroutines podem ficar presas. Propague `context.Context` e respeite `ctx.Done()` em loops longos.
+sections:
+  - id: mutex-e-race
+    name: Mutex e memória compartilhada
+    layout: single
+    entries:
+      - title: sync.Mutex para contador
+        kicker: Exclusão mútua
+        description: Protege seções críticas com `Lock`/`Unlock`; prefira `defer mu.Unlock()` logo após `Lock` para liberar mesmo com `panic`. Para leituras paralelas, avalie `sync.RWMutex`.
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"sync"
+          )
+
+          func main() {
+          	var mu sync.Mutex
+          	var n int
+          	var wg sync.WaitGroup
+          	for i := 0; i < 100; i++ {
+          		wg.Add(1)
+          		go func() {
+          			defer wg.Done()
+          			mu.Lock()
+          			n++
+          			mu.Unlock()
+          		}()
+          	}
+          	wg.Wait()
+          	fmt.Println(n)
+          }
+        output: "100"
+        tags:
+          - go
+          - Mutex
+          - sync
+          - race
+          - concorrencia
+      - title: go vet e data races
+        kicker: Detector opcional em testes
+        description: Rode `go test -race ./...` em integração para detectar acessos não sincronizados. Não substitui o design correto de locks ou canais.
+        descriptionTone: default
+        code: go test -race ./...
+        codeLanguage: shell
+        tags:
+          - go
+          - race
+          - go test
+          - vet
+  - id: canais-e-select
+    name: Canais e select
+    layout: single
+    entries:
+      - title: Canal sem buffer e sincronização
+        kicker: Envio bloqueia até recebimento
+        description: "`make(chan int)` cria canal síncrono: emissor e receptor encontram-se no mesmo instante. Útil para sinalizar conclusão ou passar posse de dados."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	ch := make(chan string)
+          	go func() { ch <- "ok" }()
+          	fmt.Println(<-ch)
+          }
+        output: ok
+        tags:
+          - go
+          - channel
+          - goroutine
+          - sync
+      - title: select com default não bloqueante
+        kicker: Múltiplas fontes
+        description: "`select` escolhe um `case` pronto; se vários estiverem prontos, escolha é pseudoaleatória. `default` evita bloquear quando nenhum case está pronto."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import "fmt"
+
+          func main() {
+          	ch := make(chan int, 1)
+          	ch <- 1
+          	select {
+          	case v := <-ch:
+          		fmt.Println(v)
+          	default:
+          		fmt.Println("sem dados")
+          	}
+          }
+        output: "1"
+        tags:
+          - go
+          - select
+          - channel
+          - default
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para concorrência segura
+        kicker: WaitGroup, Mutex, canais e select
+        description: Use este resumo para escolher rápido a ferramenta certa e lembrar do risco de goroutine presa.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`go func()` para iniciar trabalho concorrente."
+              - "`sync.WaitGroup` para esperar um grupo de goroutines terminar."
+              - "`sync.Mutex`/`RWMutex` para proteger estado compartilhado entre goroutines."
+              - "`chan` sem buffer para sincronizar; com buffer para desacoplar produtor e consumidor."
+              - "`select` com `default` para não bloquear quando nenhum canal está pronto."
+              - "`go test -race ./...` para detectar acesso não sincronizado em CI."
+          - type: context-block
+            title: Armadilha comum
+            variant: common-error
+            label: "Cuidado:"
+            text: iniciar goroutine sem plano de término. Se `WaitGroup.Wait()` nunca roda ou um canal nunca fecha, a goroutine fica presa (leak) — propague `context.Context` e respeite `ctx.Done()` em loops longos.
+        tags:
+          - go
+          - concorrencia
+          - decisao
+          - boas-praticas
+tech: go
+order: 23
+cardDescription: Guia prático para goroutines, WaitGroup, Mutex, canais e select, com notas sobre leaks e cancelamento.

@@ -1,0 +1,725 @@
+id: go-api-json
+title: "Go: API JSON com net/http"
+subtitle: "Capstone prático para montar uma API JSON pequena com roteamento, validação, respostas consistentes, database/sql e autenticação simples."
+searchPlaceholder: Buscar API, JSON, rota, middleware, token ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: go
+defaultSectionLayout: single
+quickStart:
+  title: Como testar uma API local
+  kicker: net/http embutido, sem framework
+  description: "Os exemplos combinam `net/http`, `encoding/json` e o padrão de `Go: Banco de Dados`. Rode localmente com o servidor embutido do Go."
+  steps:
+    - "Módulo com `go mod init` (ver `Go: Módulos`)."
+    - Cole os exemplos em `main.go`.
+    - Execute `go run .`.
+    - Teste com `curl http://localhost:8080/health`.
+  codeLanguage: shell
+  code: |-
+    go run .
+    curl http://localhost:8080/health
+  callout:
+    type: hint
+    label: "Documentação relacionada:"
+    text: "`Go: HTTP`, `Go: JSON`, `Go: Banco de Dados`, `Go: Erros` e `Go: Context` são as peças que esta página combina."
+sections:
+  - id: contrato
+    name: Contrato da API
+    layout: single
+    entries:
+      - title: Definir rotas, métodos e formato de resposta
+        kicker: Antes do código, o contrato
+        description: Uma API pequena fica mais fácil de manter quando cada rota tem método, entrada, status e resposta esperados definidos antes de escrever o handler.
+        descriptionTone: default
+        code: |-
+          GET  /health
+            200 {"ok": true}
+
+          GET  /usuarios
+            200 {"data": [{"id": 1, "nome": "Ana"}]}
+
+          POST /usuarios
+            body {"nome": "Ana", "email": "ana@email.com"}
+            201 {"data": {"id": 1, "nome": "Ana", "email": "ana@email.com"}}
+
+          erros
+            400 {"error": {"message": "Dados inválidos"}}
+            401 {"error": {"message": "Não autorizado"}}
+            404 {"error": {"message": "Rota não encontrada"}}
+        codeLanguage: text
+        tags:
+          - go
+          - api
+          - contrato
+          - http
+          - json
+      - title: Estrutura mínima de pastas
+        kicker: internal/ protege o que não é API pública do módulo
+        description: "Separe o ponto de entrada (`cmd/api`) do código de domínio e infraestrutura (`internal/`). O compilador impede que outro módulo importe pacotes dentro de `internal/`."
+        descriptionTone: default
+        code: |-
+          app/
+            go.mod
+            cmd/
+              api/
+                main.go
+            internal/
+              httpapi/
+                response.go
+                routes.go
+              store/
+                usuario.go
+        codeLanguage: shell
+        tags:
+          - go
+          - api
+          - estrutura
+          - internal
+          - cmd
+        callout:
+          type: hint
+          label: "internal/:"
+          text: pacotes sob internal/ só podem ser importados por código dentro do mesmo módulo — bom limite natural para código que não deve virar API pública do seu próprio projeto.
+  - id: entrada-saida
+    name: Entrada e resposta JSON
+    layout: single
+    entries:
+      - title: Função única para responder JSON
+        kicker: Header, status e encode no mesmo lugar
+        description: Centralize a resposta JSON para não repetir header, status code e `Encode` em cada handler.
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          	"net/http"
+          	"net/http/httptest"
+          )
+
+          func writeJSON(w http.ResponseWriter, status int, payload any) {
+          	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+          	w.WriteHeader(status)
+          	_ = json.NewEncoder(w).Encode(payload)
+          }
+
+          func main() {
+          	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+          	})
+          	srv := httptest.NewServer(h)
+          	defer srv.Close()
+
+          	resp, err := http.Get(srv.URL)
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer resp.Body.Close()
+          	fmt.Println(resp.StatusCode, resp.Header.Get("Content-Type"))
+          }
+        output: 200 application/json; charset=utf-8
+        tags:
+          - go
+          - api
+          - json
+          - writeJSON
+          - header
+      - title: Ler e validar body JSON
+        kicker: DisallowUnknownFields para entrada externa
+        description: "Decodifique com `json.NewDecoder` e `DisallowUnknownFields()` para rejeitar campos inesperados. Entrada externa nunca é confiável — valide antes de repassar para a regra."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          	"io"
+          	"net/http"
+          	"net/http/httptest"
+          	"strings"
+          )
+
+          type criarUsuarioInput struct {
+          	Nome  string `json:"nome"`
+          	Email string `json:"email"`
+          }
+
+          func decodeStrict(r *http.Request, dst any) error {
+          	dec := json.NewDecoder(r.Body)
+          	dec.DisallowUnknownFields()
+          	return dec.Decode(dst)
+          }
+
+          func main() {
+          	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		var in criarUsuarioInput
+          		if err := decodeStrict(r, &in); err != nil {
+          			w.WriteHeader(http.StatusBadRequest)
+          			_ = json.NewEncoder(w).Encode(map[string]string{"error": "JSON inválido"})
+          			return
+          		}
+          		_ = json.NewEncoder(w).Encode(map[string]string{"nome": in.Nome})
+          	})
+          	srv := httptest.NewServer(h)
+          	defer srv.Close()
+
+          	resp, err := http.Post(srv.URL, "application/json", strings.NewReader(`{"nome":"Ana","email":"ana@email.com"}`))
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer resp.Body.Close()
+          	body, _ := io.ReadAll(resp.Body)
+          	fmt.Print(string(body))
+          }
+        output: |-
+          {"nome":"Ana"}
+        tags:
+          - go
+          - api
+          - json
+          - decode
+          - validacao
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: validar presença de campo não basta. Em API real, valide formato, tamanho, domínio e permissões antes de persistir.
+      - title: Recuperar de panic num middleware central
+        kicker: Log interno, mensagem externa controlada
+        description: "Um `recover` num middleware evita que um `panic` em qualquer handler derrube o servidor inteiro. Registre o detalhe internamente e responda uma mensagem genérica ao cliente."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          	"io"
+          	"log"
+          	"net/http"
+          	"net/http/httptest"
+          )
+
+          func recoverMiddleware(next http.Handler) http.Handler {
+          	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		defer func() {
+          			if rec := recover(); rec != nil {
+          				log.Println("panic recuperado:", rec)
+          				w.Header().Set("Content-Type", "application/json; charset=utf-8")
+          				w.WriteHeader(http.StatusInternalServerError)
+          				_ = json.NewEncoder(w).Encode(map[string]string{"error": "erro interno"})
+          			}
+          		}()
+          		next.ServeHTTP(w, r)
+          	})
+          }
+
+          func main() {
+          	quebrado := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		panic("falha inesperada")
+          	})
+          	srv := httptest.NewServer(recoverMiddleware(quebrado))
+          	defer srv.Close()
+
+          	resp, err := http.Get(srv.URL)
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer resp.Body.Close()
+          	body, _ := io.ReadAll(resp.Body)
+          	fmt.Println(resp.StatusCode)
+          	fmt.Print(string(body))
+          }
+        output: |-
+          500
+          {"error":"erro interno"}
+        tags:
+          - go
+          - api
+          - recover
+          - panic
+          - middleware
+  - id: roteamento
+    name: Roteamento e middleware
+    layout: single
+    entries:
+      - title: ServeMux com padrão método + path
+        kicker: Go 1.22+ dispensa router externo em APIs pequenas
+        description: "Desde Go 1.22, `http.NewServeMux` aceita padrões `MÉTODO /rota/{param}` e `r.PathValue` lê os parâmetros — suficiente para uma API pequena sem depender de um pacote de terceiros."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"io"
+          	"net/http"
+          	"net/http/httptest"
+          )
+
+          func main() {
+          	mux := http.NewServeMux()
+          	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+          		fmt.Fprint(w, "ok")
+          	})
+          	mux.HandleFunc("GET /usuarios/{id}", func(w http.ResponseWriter, r *http.Request) {
+          		fmt.Fprint(w, "usuario "+r.PathValue("id"))
+          	})
+
+          	srv := httptest.NewServer(mux)
+          	defer srv.Close()
+
+          	resp, err := http.Get(srv.URL + "/usuarios/7")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer resp.Body.Close()
+          	body, _ := io.ReadAll(resp.Body)
+          	fmt.Print(string(body))
+          }
+        output: usuario 7
+        tags:
+          - go
+          - api
+          - ServeMux
+          - roteamento
+          - PathValue
+        callout:
+          type: hint
+          label: "Versão:"
+          text: o roteamento por método + padrão exige Go 1.22 ou superior; em versões anteriores, o mux compara só o path.
+      - title: Middleware como função pura
+        kicker: func(http.Handler) http.Handler encadeável
+        description: "Middleware em Go é só uma função que recebe um `Handler` e retorna outro. Encadeie funções puras (`logging(auth(mux))`) em vez de aprender a API de um framework de middleware."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"io"
+          	"log"
+          	"net/http"
+          	"net/http/httptest"
+          )
+
+          func logging(next http.Handler) http.Handler {
+          	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		log.Printf("%s %s", r.Method, r.URL.Path)
+          		next.ServeHTTP(w, r)
+          	})
+          }
+
+          func main() {
+          	mux := http.NewServeMux()
+          	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+          		fmt.Fprint(w, "ok")
+          	})
+
+          	srv := httptest.NewServer(logging(mux))
+          	defer srv.Close()
+
+          	resp, err := http.Get(srv.URL + "/health")
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer resp.Body.Close()
+          	body, _ := io.ReadAll(resp.Body)
+          	fmt.Print(string(body))
+          }
+        output: ok
+        tags:
+          - go
+          - api
+          - middleware
+          - logging
+          - handler
+  - id: persistencia
+    name: Persistência com database/sql
+    layout: single
+    entries:
+      - title: Repository pequeno para isolar SQL
+        kicker: Handler não precisa conhecer detalhe do banco
+        description: "Coloque SQL numa struct dedicada que recebe `*sql.DB`. Isso deixa o handler focado em HTTP e facilita trocar consulta, paginação ou banco depois (mesmo padrão de `Go: Banco de Dados`)."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import "database/sql"
+
+          type Usuario struct {
+          	ID    int    `json:"id"`
+          	Nome  string `json:"nome"`
+          	Email string `json:"email"`
+          }
+
+          type UsuarioRepository struct {
+          	db *sql.DB
+          }
+
+          func NovoUsuarioRepository(db *sql.DB) *UsuarioRepository {
+          	return &UsuarioRepository{db: db}
+          }
+
+          func (r *UsuarioRepository) Listar() ([]Usuario, error) {
+          	rows, err := r.db.Query("SELECT id, nome, email FROM usuarios ORDER BY id DESC")
+          	if err != nil {
+          		return nil, err
+          	}
+          	defer rows.Close()
+
+          	var usuarios []Usuario
+          	for rows.Next() {
+          		var u Usuario
+          		if err := rows.Scan(&u.ID, &u.Nome, &u.Email); err != nil {
+          			return nil, err
+          		}
+          		usuarios = append(usuarios, u)
+          	}
+          	return usuarios, rows.Err()
+          }
+
+          func (r *UsuarioRepository) Criar(nome, email string) (Usuario, error) {
+          	res, err := r.db.Exec("INSERT INTO usuarios (nome, email) VALUES (?, ?)", nome, email)
+          	if err != nil {
+          		return Usuario{}, err
+          	}
+          	id, err := res.LastInsertId()
+          	if err != nil {
+          		return Usuario{}, err
+          	}
+          	return Usuario{ID: int(id), Nome: nome, Email: email}, nil
+          }
+
+          func main() {}
+        tags:
+          - go
+          - api
+          - database/sql
+          - repository
+          - sql
+      - title: Endpoint de criação com validação
+        kicker: Body JSON -> validação -> resposta 201
+        description: "O handler decodifica, valida e responde com o status correto. Este exemplo usa um id fixo para ficar autocontido; num handler real, o id viria de `repository.Criar(...)` contra o banco (ver entry anterior)."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"encoding/json"
+          	"fmt"
+          	"io"
+          	"net/http"
+          	"net/http/httptest"
+          	"strings"
+          )
+
+          type criarUsuarioInput struct {
+          	Nome  string `json:"nome"`
+          	Email string `json:"email"`
+          }
+
+          type usuarioResposta struct {
+          	ID    int    `json:"id"`
+          	Nome  string `json:"nome"`
+          	Email string `json:"email"`
+          }
+
+          func main() {
+          	mux := http.NewServeMux()
+          	mux.HandleFunc("POST /usuarios", func(w http.ResponseWriter, r *http.Request) {
+          		var in criarUsuarioInput
+          		if err := json.NewDecoder(r.Body).Decode(&in); err != nil || in.Nome == "" {
+          			w.WriteHeader(http.StatusBadRequest)
+          			_ = json.NewEncoder(w).Encode(map[string]string{"error": "dados inválidos"})
+          			return
+          		}
+
+          		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+          		w.WriteHeader(http.StatusCreated)
+          		_ = json.NewEncoder(w).Encode(map[string]usuarioResposta{
+          			"data": {ID: 11, Nome: in.Nome, Email: in.Email},
+          		})
+          	})
+
+          	srv := httptest.NewServer(mux)
+          	defer srv.Close()
+
+          	resp, err := http.Post(srv.URL+"/usuarios", "application/json", strings.NewReader(`{"nome":"Ana","email":"ana@email.com"}`))
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer resp.Body.Close()
+          	body, _ := io.ReadAll(resp.Body)
+          	fmt.Println(resp.StatusCode)
+          	fmt.Print(string(body))
+          }
+        output: |-
+          201
+          {"data":{"id":11,"nome":"Ana","email":"ana@email.com"}}
+        tags:
+          - go
+          - api
+          - post
+          - validacao
+          - json
+  - id: seguranca
+    name: Segurança mínima
+    layout: single
+    entries:
+      - title: Autenticação simples com Bearer token
+        kicker: Comparação em tempo constante
+        description: "Para API interna pequena, um Bearer token pode ser suficiente. Compare com `subtle.ConstantTimeCompare` (não `==`) para não vazar informação de tempo, e mantenha o segredo fora do código versionado."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"crypto/subtle"
+          	"fmt"
+          	"io"
+          	"net/http"
+          	"net/http/httptest"
+          	"strings"
+          )
+
+          func exigirToken(esperado string) func(http.Handler) http.Handler {
+          	return func(next http.Handler) http.Handler {
+          		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          			token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+          			if subtle.ConstantTimeCompare([]byte(token), []byte(esperado)) != 1 {
+          				w.WriteHeader(http.StatusUnauthorized)
+          				fmt.Fprint(w, `{"error":"não autorizado"}`)
+          				return
+          			}
+          			next.ServeHTTP(w, r)
+          		})
+          	}
+          }
+
+          func main() {
+          	protegido := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		fmt.Fprint(w, "acesso liberado")
+          	})
+          	srv := httptest.NewServer(exigirToken("segredo-123")(protegido))
+          	defer srv.Close()
+
+          	req, _ := http.NewRequest(http.MethodGet, srv.URL, nil)
+          	req.Header.Set("Authorization", "Bearer errado")
+          	resp, err := http.DefaultClient.Do(req)
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer resp.Body.Close()
+          	body, _ := io.ReadAll(resp.Body)
+          	fmt.Println(resp.StatusCode)
+          	fmt.Print(string(body))
+          }
+        output: |-
+          401
+          {"error":"não autorizado"}
+        tags:
+          - go
+          - api
+          - bearer
+          - token
+          - autorizacao
+        callout:
+          type: danger
+          label: "Perigo:"
+          text: não coloque token fixo no código versionado. Leia de variável de ambiente (`os.Getenv`) ou de um cofre de segredo do provedor.
+      - title: Limitar tamanho do payload
+        kicker: http.MaxBytesReader antes de decodificar
+        description: "Rejeite corpo grande demais antes de gastar memória decodificando. `http.MaxBytesReader` interrompe a leitura assim que o limite é ultrapassado."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"fmt"
+          	"io"
+          	"net/http"
+          	"net/http/httptest"
+          	"strings"
+          )
+
+          func main() {
+          	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		r.Body = http.MaxBytesReader(w, r.Body, 10) // limite pequeno só para o exemplo
+          		if _, err := io.ReadAll(r.Body); err != nil {
+          			w.WriteHeader(http.StatusRequestEntityTooLarge)
+          			fmt.Fprint(w, "payload muito grande")
+          			return
+          		}
+          		fmt.Fprint(w, "ok")
+          	})
+          	srv := httptest.NewServer(h)
+          	defer srv.Close()
+
+          	resp, err := http.Post(srv.URL, "application/json", strings.NewReader(`{"nome":"um nome bem maior que dez bytes"}`))
+          	if err != nil {
+          		panic(err)
+          	}
+          	defer resp.Body.Close()
+          	body, _ := io.ReadAll(resp.Body)
+          	fmt.Println(resp.StatusCode)
+          	fmt.Print(string(body))
+          }
+        output: |-
+          413
+          payload muito grande
+        tags:
+          - go
+          - api
+          - MaxBytesReader
+          - payload
+          - seguranca
+  - id: exemplo-completo
+    name: Exemplo completo
+    layout: single
+    entries:
+      - title: main.go com fluxo completo
+        kicker: Logging, recover, auth e rotas numa cadeia explícita
+        description: "Este esqueleto mostra a ordem saudável: logging por fora, recover logo depois, autenticação antes das rotas protegidas, e `writeJSON` centralizando toda resposta. Não roda de verdade nesta página (bloqueia em `ListenAndServe`); use como referência para colar num `main.go` real."
+        descriptionTone: default
+        code: |-
+          package main
+
+          import (
+          	"crypto/subtle"
+          	"encoding/json"
+          	"log"
+          	"net/http"
+          	"strings"
+          	"time"
+          )
+
+          type usuarioInput struct {
+          	Nome  string `json:"nome"`
+          	Email string `json:"email"`
+          }
+
+          func writeJSON(w http.ResponseWriter, status int, payload any) {
+          	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+          	w.WriteHeader(status)
+          	_ = json.NewEncoder(w).Encode(payload)
+          }
+
+          func logging(next http.Handler) http.Handler {
+          	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		log.Println(r.Method, r.URL.Path)
+          		next.ServeHTTP(w, r)
+          	})
+          }
+
+          func recoverMiddleware(next http.Handler) http.Handler {
+          	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          		defer func() {
+          			if rec := recover(); rec != nil {
+          				log.Println("panic recuperado:", rec)
+          				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "erro interno"})
+          			}
+          		}()
+          		next.ServeHTTP(w, r)
+          	})
+          }
+
+          func exigirToken(esperado string) func(http.Handler) http.Handler {
+          	return func(next http.Handler) http.Handler {
+          		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          			token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+          			if subtle.ConstantTimeCompare([]byte(token), []byte(esperado)) != 1 {
+          				writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "não autorizado"})
+          				return
+          			}
+          			next.ServeHTTP(w, r)
+          		})
+          	}
+          }
+
+          func main() {
+          	mux := http.NewServeMux()
+
+          	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+          		writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+          	})
+
+          	mux.HandleFunc("POST /usuarios", func(w http.ResponseWriter, r *http.Request) {
+          		var in usuarioInput
+          		dec := json.NewDecoder(r.Body)
+          		dec.DisallowUnknownFields()
+          		if err := dec.Decode(&in); err != nil || in.Nome == "" {
+          			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "dados inválidos"})
+          			return
+          		}
+          		writeJSON(w, http.StatusCreated, map[string]usuarioInput{"data": in})
+          	})
+
+          	// Em produção, rotas públicas (como /health) costumam ficar fora da
+          	// cadeia de autenticação; aqui tudo passa pela mesma cadeia por simplicidade.
+          	var handler http.Handler = mux
+          	handler = exigirToken("troque-por-variavel-de-ambiente")(handler)
+          	handler = recoverMiddleware(handler)
+          	handler = logging(handler)
+
+          	srv := &http.Server{
+          		Addr:              ":8080",
+          		Handler:           handler,
+          		ReadHeaderTimeout: 2 * time.Second,
+          		ReadTimeout:       5 * time.Second,
+          		WriteTimeout:      10 * time.Second,
+          	}
+
+          	if err := srv.ListenAndServe(); err != nil {
+          		log.Fatal(err)
+          	}
+          }
+        tags:
+          - go
+          - api
+          - front-controller
+          - json
+          - exemplo-completo
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Checklist para uma API Go pequena
+        kicker: O mínimo que evita bagunça cedo
+        description: Uma API sem framework ainda precisa de contrato, erro consistente, validação e fronteiras claras.
+        descriptionTone: default
+        contentBlocks:
+          - type: checklist-block
+            title: Antes de publicar
+            items:
+              - "Defina contrato de rotas, status e payload antes de implementar."
+              - "Centralize resposta JSON numa função (`writeJSON`)."
+              - "Valide o body decodificado antes de chamar repository ou banco."
+              - "Use placeholder `?` para todo dado externo em SQL."
+              - "Recupere de panic num middleware central, sem vazar detalhe para o cliente."
+              - "Configure timeouts do `http.Server` (`ReadHeaderTimeout`, `ReadTimeout`, `WriteTimeout`)."
+              - "Mantenha segredo (token, DSN) fora do código versionado."
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`writeJSON` para centralizar header + status + encode."
+              - "`http.NewServeMux` com padrão `MÉTODO /rota` (Go 1.22+) para roteamento sem framework."
+              - "Middleware como `func(http.Handler) http.Handler`, encadeado explicitamente."
+              - "`database/sql` + repository pequeno para isolar SQL do handler."
+              - "`subtle.ConstantTimeCompare` para comparar token sem vazar tempo de resposta."
+              - "Framework quando rotas, middlewares e autenticação crescerem além do que a stdlib cobre com conforto."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Evite:"
+            text: expor stack trace ou mensagem de erro do driver de banco na resposta HTTP. Registre o detalhe com `log.Println` e responda ao cliente uma mensagem genérica com o status HTTP correto.
+        tags:
+          - go
+          - api
+          - json
+          - decisao
+          - checklist
+tech: go
+order: 28
+cardDescription: "Capstone para montar uma API JSON pequena em Go, conectando HTTP, JSON, roteamento, database/sql e segurança mínima."

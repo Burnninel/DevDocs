@@ -1,0 +1,46 @@
+---
+import { Icon } from "astro-icon/components";
+---
+
+{/* Preenchido/atualizado pelo doc-reader conforme a seção ativa. */}
+<nav
+	class="mt-4 grid gap-3 sm:grid-cols-2"
+	aria-label="Navegação entre seções"
+	data-pagefind-ignore
+>
+	<button
+		type="button"
+		data-pager-prev
+		hidden
+		class="pager-btn group text-left"
+	>
+		<span class="flex items-center gap-1.5 font-mono text-[0.68rem] tracking-widest text-faint uppercase">
+			<Icon name="lucide:arrow-left" class="size-3.5" /> Anterior
+		</span>
+		<span data-pager-label class="mt-1 block font-display text-ink"></span>
+	</button>
+	<button
+		type="button"
+		data-pager-next
+		hidden
+		class="pager-btn group text-right sm:col-start-2"
+	>
+		<span class="flex items-center justify-end gap-1.5 font-mono text-[0.68rem] tracking-widest text-faint uppercase">
+			Próxima <Icon name="lucide:arrow-right" class="size-3.5" />
+		</span>
+		<span data-pager-label class="mt-1 block font-display text-ink"></span>
+	</button>
+</nav>
+
+<style>
+	.pager-btn {
+		border-radius: var(--radius-lg);
+		padding: 1rem 1.25rem;
+		background: color-mix(in oklab, var(--color-surface-1) 70%, transparent);
+		transition: background var(--dur-fast) var(--ease-out);
+		cursor: pointer;
+	}
+	.pager-btn:hover {
+		background: var(--color-surface-2);
+	}
+</style>

@@ -1,0 +1,194 @@
+/* Fontes self-hosted (offline + GH Pages, sem CDN externo) */
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/onest";
+@import "@fontsource-variable/jetbrains-mono";
+
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* Modo escuro é o único modo — sem toggle de tema. */
+
+@layer base {
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
+
+	html {
+		scroll-behavior: smooth;
+		-webkit-text-size-adjust: 100%;
+		background-color: var(--color-base);
+	}
+
+	body {
+		margin: 0;
+		min-height: 100dvh;
+		background-color: var(--color-base);
+		color: var(--color-ink-soft);
+		font-family: var(--font-sans);
+		font-size: 1rem;
+		line-height: 1.65;
+		font-synthesis-weight: none;
+		text-rendering: optimizeLegibility;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4 {
+		font-family: var(--font-display);
+		color: var(--color-ink);
+		font-weight: 600;
+		line-height: 1.1;
+		letter-spacing: -0.02em;
+		text-wrap: balance;
+	}
+
+	p {
+		text-wrap: pretty;
+	}
+
+	code,
+	kbd,
+	samp,
+	pre {
+		font-family: var(--font-mono);
+		font-feature-settings: "liga" 0;
+	}
+
+	a {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+		border-radius: 4px;
+	}
+
+	::selection {
+		background: color-mix(in oklab, var(--color-accent) 32%, transparent);
+		color: var(--color-ink);
+	}
+
+	/* Scrollbar sutil e coerente com o tema fosco */
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: var(--color-surface-3) transparent;
+	}
+	*::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+	*::-webkit-scrollbar-thumb {
+		background: var(--color-surface-3);
+		border-radius: 999px;
+		border: 2px solid transparent;
+		background-clip: content-box;
+	}
+	*::-webkit-scrollbar-thumb:hover {
+		background: var(--color-hairline);
+		background-clip: content-box;
+	}
+}
+
+@layer components {
+	/*
+	 * Superfície "glass": separa áreas por tom + blur, nunca por borda.
+	 * Realce sutil interno via inset em vez de box-shadow de framework.
+	 */
+	.glass {
+		background: var(--glass-tint);
+		backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+		-webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+		box-shadow: inset 0 1px 0 0
+			color-mix(in oklab, white 5%, transparent);
+	}
+
+	/*
+	 * Variante "bolha de vidro": sem cor de preenchimento, contorno inteiro
+	 * simulado por sombra (nunca border) + leve profundidade. Para chrome de
+	 * navegação (ex.: sidebar de seções) que deve ficar "solto", não em card.
+	 */
+	.glass-outline {
+		background: transparent;
+		backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+		-webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+		box-shadow:
+			inset 0 1px 0 0 color-mix(in oklab, white 6%, transparent),
+			0 0 0 1px color-mix(in oklab, white 5%, transparent),
+			0 24px 48px -28px rgba(0, 0, 0, 0.55);
+	}
+
+	/* Contenção de overflow: código/tabelas rolam dentro de si mesmos. */
+	.scroll-x {
+		overflow-x: auto;
+		overflow-y: hidden;
+		overscroll-behavior-x: contain;
+	}
+
+	/* Texto que nunca estoura o container. */
+	.wrap-anywhere {
+		overflow-wrap: anywhere;
+		word-break: normal;
+	}
+
+	/*
+	 * Troca de seção (modo `panels`): com JS (.reader-js) só a seção ativa
+	 * aparece. Sem JS, todas ficam visíveis — melhor para acessibilidade e para
+	 * a indexação estática do Pagefind (que roda sobre o HTML sem JS executado).
+	 * O modo `narrative` (docs de arquitetura) nunca esconde: as seções viram
+	 * capítulos empilhados numa página só.
+	 */
+	.reader-js [data-reader-mode="panels"] [data-section-panel]:not(.is-active) {
+		display: none;
+	}
+
+	/*
+	 * Leitura em narrativa: capítulos empilhados, separados por respiro + um
+	 * filete sutilíssimo (nunca borda de card). A barra lateral vira índice com
+	 * scroll-spy (ver `scripts/doc-reader.ts`).
+	 */
+	.doc-panels-narrative > [data-section-panel] {
+		scroll-margin-top: calc(var(--nav-h) + 1.5rem);
+		padding-top: 3.5rem;
+		margin-top: 3.5rem;
+		border-top: 1px solid
+			color-mix(in oklab, var(--color-hairline) 70%, transparent);
+	}
+	.doc-panels-narrative > [data-section-panel]:first-child {
+		padding-top: 0;
+		margin-top: 0;
+		border-top: none;
+	}
+
+	/*
+	 * Revelações da zona de descoberta: elementos só são pré-ocultados quando
+	 * a animação está ativa (.discovery-anim). Sem JS ou com reduced-motion,
+	 * permanecem visíveis.
+	 */
+	.discovery-anim [data-reveal] {
+		opacity: 0;
+		transform: translateY(24px);
+		will-change: opacity, transform;
+	}
+}
+
+/* Respeito global a prefers-reduced-motion (Lenis/GSAP checam via composable). */
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}

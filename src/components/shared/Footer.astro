@@ -1,0 +1,19 @@
+---
+import { withBase } from "@/lib/paths";
+const year = new Date().getFullYear();
+---
+
+<footer class="mx-auto max-w-7xl px-5 py-12" data-pagefind-ignore>
+	<div
+		class="flex flex-col items-start justify-between gap-4 pt-8 sm:flex-row sm:items-center"
+		style="background: linear-gradient(var(--color-hairline), var(--color-hairline)) no-repeat top / 100% 1px"
+	>
+		<p class="font-display text-sm text-muted">
+			<a href={withBase("/")} class="text-ink">DevDocs</a> — biblioteca pessoal de
+			consulta.
+		</p>
+		<p class="font-mono text-xs text-faint">
+			{year} · construído com Astro, Vue e leituras foscas.
+		</p>
+	</div>
+</footer>

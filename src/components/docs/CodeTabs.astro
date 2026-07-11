@@ -1,0 +1,90 @@
+---
+/**
+ * Mesmo trecho de código em várias linguagens, em abas (ex.: PHP e Go num doc
+ * conceitual de arquitetura). Reaproveita CodeBlock/OutputBlock por variante.
+ *
+ * Progressive enhancement: sem JS, todas as variantes ficam visíveis empilhadas
+ * (bom para acessibilidade e para a indexação estática do Pagefind). Com JS
+ * (`.reader-js`), só a variante ativa aparece; a troca é sincronizada por
+ * linguagem entre todos os blocos da página (ver `scripts/doc-reader.ts`).
+ */
+import { resolveEntryCode } from "@/lib/format";
+import CodeBlock from "./CodeBlock.astro";
+import OutputBlock from "./OutputBlock.astro";
+import type { DocEntry as DocEntryType } from "@/content.config";
+
+interface Props {
+	variants: NonNullable<DocEntryType["codeVariants"]>;
+}
+const { variants } = Astro.props;
+
+const displayName: Record<string, string> = {
+	php: "PHP",
+	go: "Go",
+	javascript: "JavaScript",
+	typescript: "TypeScript",
+	sql: "SQL",
+};
+
+const resolved = variants.map((v) => {
+	const { code, output, lang } = resolveEntryCode({
+		code: v.code,
+		output: v.output,
+		codeLanguage: v.language,
+	});
+	const label = v.label ?? displayName[lang] ?? lang;
+	return { code, output, lang, label };
+});
+---
+
+<div class="code-tabs not-prose grid gap-3" data-code-tabs>
+	<div
+		class="code-tabs-bar flex flex-wrap items-center gap-1"
+		role="tablist"
+		aria-label="Linguagem do exemplo"
+	>
+		{
+			resolved.map((v, i) => (
+				<button
+					type="button"
+					role="tab"
+					data-code-tab
+					data-lang={v.lang}
+					aria-selected={i === 0 ? "true" : "false"}
+					tabindex={i === 0 ? 0 : -1}
+					class="code-tab cursor-pointer rounded-lg px-3 py-1.5 font-mono text-xs tracking-wide text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent"
+				>
+					{v.label}
+				</button>
+			))
+		}
+	</div>
+
+	{
+		resolved.map((v, i) => (
+			<div
+				data-code-tab-panel
+				data-lang={v.lang}
+				class:list={["code-tab-panel grid gap-3", i === 0 && "is-active"]}
+			>
+				<CodeBlock code={v.code} lang={v.lang} />
+				{v.output && <OutputBlock output={v.output} />}
+			</div>
+		))
+	}
+</div>
+
+<style is:global>
+	/*
+	 * Com JS (.reader-js) só a variante ativa aparece; sem JS ficam todas
+	 * visíveis (Pagefind indexa as duas linguagens). Espelha o gate de seções.
+	 */
+	.reader-js [data-code-tab-panel]:not(.is-active) {
+		display: none;
+	}
+
+	.code-tab[aria-selected="true"] {
+		color: var(--color-accent);
+		background: var(--accent-soft);
+	}
+</style>

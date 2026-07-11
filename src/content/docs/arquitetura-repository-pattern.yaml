@@ -1,0 +1,497 @@
+id: arquitetura-repository-pattern
+title: "Arquitetura: Repository Pattern"
+subtitle: Uma porta única entre a regra de negócio e o banco — trocável por uma lista em memória no teste, sem mudar quem a usa. Guia completo, com PHP conduzindo o exemplo e Go na aba ao lado.
+searchPlaceholder: Buscar repository, interface, fake, in-memory ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: php
+readerLayout: narrative
+quickStart:
+  title: O problema que o Repository resolve
+  kicker: Query espalhada vira teste lento e mudança arriscada
+  description: "Sem uma porta única para os dados, a mesma consulta SQL se repete em controllers, jobs e testes — cada cópia levemente diferente da anterior. Testar a regra de negócio exige um banco de verdade populado, o que deixa a suíte lenta e frágil. O Repository Pattern concentra o acesso a um tipo de dado atrás de uma **interface**: uma implementação real fala com o banco, e uma implementação fake guarda tudo em memória para o teste. Quem usa a interface nunca percebe a troca."
+  steps:
+    - "Veja o sintoma: a mesma query reescrita em lugares diferentes do projeto."
+    - "Explore a anatomia — clique numa peça para ver o arquivo e a responsabilidade dela."
+    - "Desça por Interface, Implementação real e Fake de teste; troque a aba PHP/Go onde houver."
+  callout:
+    type: hint
+    label: "Parente próximo:"
+    text: "este é o mesmo padrão citado em `Arquitetura: Clean Architecture` (o `PedidoRepositorio` dos Casos de Uso) e em `Arquitetura: MVC` (o acesso a dados do Model). Aqui o foco é o repositório em si, com mais profundidade."
+sections:
+  - id: visao-geral
+    name: Visão geral
+    entries:
+      - title: O sintoma — a mesma query em três lugares
+        kicker: Testar a regra de negócio, aqui, obriga a ter um banco populado
+        description: "Antes de existir uma porta única, é comum a mesma pergunta ao banco — \"esse pedido está pendente?\" — aparecer reescrita em pontos diferentes do projeto, cada cópia um pouco diferente da anterior. O problema não é só duplicação: é que **qualquer teste que toque essa regra também precisa de um banco de verdade**, com tabela criada e dados inseridos antes de rodar."
+        descriptionTone: warn
+        code: |-
+          <?php
+          // Controller
+          function pedidoPendenteExiste(PDO $pdo, int $id): bool
+          {
+              $stmt = $pdo->prepare("SELECT id FROM pedidos WHERE id = :id AND status = 'pendente'");
+              $stmt->execute(["id" => $id]);
+              return (bool) $stmt->fetch();
+          }
+
+          // Job de notificação — mesma tabela, quase a mesma query, escrita de novo.
+          function pedidosPendentesParaNotificar(PDO $pdo): array
+          {
+              $stmt = $pdo->query("SELECT * FROM pedidos WHERE status = 'pendente'");
+              return $stmt->fetchAll(PDO::FETCH_ASSOC);
+          }
+        callout:
+          type: warn
+          label: "O sintoma:"
+          text: "se a tabela `pedidos` aparece em `SELECT`s espalhados por controllers, jobs e testes, trocar uma coluna — ou de banco — vira uma caça ao tesouro pelo projeto inteiro."
+        tags:
+          - arquitetura
+          - repository-pattern
+          - acoplamento
+          - duplicacao
+      - title: Uma porta única, duas portas atrás dela
+        kicker: Quem usa o repositório nunca sabe qual implementação está por trás
+        description: "O Repository Pattern define uma **interface** que representa o que se pode fazer com uma coleção de um tipo de dado — buscar, listar, salvar — sem dizer como. Em produção, uma implementação fala com o banco de verdade. No teste, outra guarda tudo numa lista em memória. As duas obedecem ao mesmo contrato; quem chama o repositório não muda uma linha entre os dois cenários."
+        descriptionTone: default
+        contentBlocks:
+          - type: comparison-block
+            title: Acesso direto vs Repository
+            columns:
+              - title: Direto ao banco
+                items:
+                  - Cada lugar que precisa do dado escreve a própria query.
+                  - Testar exige banco de verdade ou simular PDO/`*sql.DB` linha a linha.
+                  - Trocar de banco vira caçar todo `SELECT` do projeto.
+              - title: Com Repository
+                items:
+                  - Uma porta concentra as queries de um tipo de dado.
+                  - Testar troca a implementação real por uma lista em memória.
+                  - Trocar de banco é reescrever uma implementação; a interface não muda.
+        tags:
+          - arquitetura
+          - repository-pattern
+          - interface
+          - abstracao
+  - id: anatomia
+    name: Anatomia de um repositório
+    entries:
+      - title: Três peças, uma interface no meio
+        kicker: Clique numa peça para vê-la no diagrama, na árvore e no card
+        description: "O consumidor (um caso de uso ou Controller) só conhece a interface `PedidoRepositorio`. Por trás dela vivem duas implementações — a real, que fala com o banco, e a fake, usada só em teste — mapeadas para a mesma responsabilidade \"Implementação\" na árvore. Clicar em qualquer peça acende os arquivos e o card relacionados."
+        descriptionTone: default
+        contentBlocks:
+          - type: architecture-explorer
+            title: Explorador Repository Pattern
+            description: O consumidor depende só da interface. As duas implementações — produção e teste — obedecem ao mesmo contrato sem depender uma da outra.
+            shape: stack
+            hint: "Clique numa peça — no diagrama, na árvore ou num card — para destacá-la nas três vistas ao mesmo tempo."
+            layers:
+              - id: consumidor
+                name: Consumidor
+                role: O caso de uso ou Controller que precisa buscar, listar ou salvar pedidos.
+                detail: Só conhece a assinatura da interface — nunca a implementação por trás.
+                knows: a interface PedidoRepositorio
+                avoids: PDO, database/sql e qualquer detalhe de armazenamento
+              - id: interface
+                name: PedidoRepositorio (contrato)
+                role: A porta única — declara buscar, listar e salvar, sem dizer como.
+                detail: Nasce do que a regra de negócio precisa perguntar, não da estrutura da tabela.
+                knows: as assinaturas dos métodos
+                avoids: qualquer implementação concreta
+              - id: implementacao
+                name: Implementação
+                role: Concretiza o contrato — em produção com o banco, em teste com uma lista em memória.
+                detail: As duas versões abaixo são intercambiáveis; nenhuma depende da outra.
+                knows: como buscar e salvar de verdade (banco ou memória)
+                avoids: quem é o consumidor que está chamando
+            tree:
+              - label: projeto/
+                depth: 0
+                kind: dir
+              - label: src/
+                depth: 1
+                kind: dir
+              - label: Aplicacao/
+                depth: 2
+                kind: dir
+              - label: PedidoService.php
+                depth: 3
+                kind: file
+                layer: consumidor
+                note: usa a interface
+              - label: PedidoRepositorio.php
+                depth: 3
+                kind: file
+                layer: interface
+                note: contrato
+              - label: Infra/
+                depth: 2
+                kind: dir
+              - label: PedidoRepositorioPdo.php
+                depth: 3
+                kind: file
+                layer: implementacao
+                note: produção — fala com o banco
+              - label: tests/
+                depth: 1
+                kind: dir
+              - label: PedidoRepositorioMemoria.php
+                depth: 2
+                kind: file
+                layer: implementacao
+                note: teste — guarda em memória
+              - label: PedidoServiceTest.php
+                depth: 2
+                kind: file
+                note: usa a fake acima
+        tags:
+          - arquitetura
+          - repository-pattern
+          - estrutura-de-projeto
+          - pastas
+      - title: A forma dos dados usada nos exemplos
+        kicker: Só dados; a regra de negócio fica no Model/Entity, não aqui
+        description: "Todos os exemplos desta página assumem um `Pedido` simples, com id, total e status. O Repository Pattern não decide como o status muda — isso é responsabilidade do Model (veja `Arquitetura: MVC`) ou da Entity (veja `Arquitetura: Clean Architecture`). Ele só cuida de como o dado entra e sai."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              final class Pedido
+              {
+                  public function __construct(
+                      public readonly int $id,
+                      public readonly float $total,
+                      public string $status = "pendente",
+                  ) {}
+              }
+          - language: go
+            code: |-
+              type Pedido struct {
+              	ID     int
+              	Total  float64
+              	Status string
+              }
+        tags:
+          - arquitetura
+          - repository-pattern
+          - modelo
+          - dados
+  - id: interface
+    name: Interface antes da implementação
+    entries:
+      - title: PedidoRepositorio declara o contrato primeiro
+        kicker: A interface nasce de quem vai usá-la, não do banco
+        description: "Defina a interface pensando no que a regra de negócio precisa perguntar aos dados — buscar um, listar um subconjunto, salvar — e só depois escreva quem implementa. Isso evita que a interface vire um espelho de tabela SQL, com um método para cada coluna que alguém um dia quis filtrar. Cada método deve responder a uma pergunta real do domínio, não a uma operação genérica de CRUD."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              interface PedidoRepositorio
+              {
+                  public function buscar(int $id): ?Pedido;
+                  /** @return Pedido[] */
+                  public function listarPendentes(): array;
+                  public function salvar(Pedido $pedido): void;
+              }
+          - language: go
+            code: |-
+              type PedidoRepositorio interface {
+              	Buscar(id int) (*Pedido, error)
+              	ListarPendentes() ([]Pedido, error)
+              	Salvar(p *Pedido) error
+              }
+        callout:
+          type: hint
+          label: "Um método por pergunta:"
+          text: "`listarPendentes()` existe porque o negócio pergunta \"quais pedidos estão pendentes?\" com frequência — não porque a tabela tem uma coluna `status`. Se amanhã surgir \"quais pedidos são de hoje?\", isso vira um novo método, não um parâmetro genérico de filtro."
+        tags:
+          - arquitetura
+          - repository-pattern
+          - interface
+          - contrato
+  - id: implementacao
+    name: Implementação real com o banco
+    entries:
+      - title: PedidoRepositorioPdo fala com o banco de verdade
+        kicker: Só esta camada conhece SQL
+        description: "A implementação real traduz o contrato da interface em queries. Nada fora dela precisa saber a estrutura da tabela `pedidos` — nem sequer que existe uma tabela; poderia ser uma API externa ou um arquivo. O nome do arquivo (`PedidoRepositorioPdo` em PHP, `PedidoRepositorioSQL` em Go) já avisa qual tecnologia está por trás, mas quem chama através da interface não precisa saber disso."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              final class PedidoRepositorioPdo implements PedidoRepositorio
+              {
+                  public function __construct(private PDO $pdo) {}
+
+                  public function buscar(int $id): ?Pedido
+                  {
+                      $stmt = $this->pdo->prepare("SELECT id, total, status FROM pedidos WHERE id = :id");
+                      $stmt->execute(["id" => $id]);
+                      $linha = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                      return $linha
+                          ? new Pedido((int) $linha["id"], (float) $linha["total"], $linha["status"])
+                          : null;
+                  }
+
+                  public function listarPendentes(): array
+                  {
+                      $stmt = $this->pdo->query("SELECT id, total, status FROM pedidos WHERE status = 'pendente'");
+                      return array_map(
+                          fn(array $linha) => new Pedido((int) $linha["id"], (float) $linha["total"], $linha["status"]),
+                          $stmt->fetchAll(PDO::FETCH_ASSOC),
+                      );
+                  }
+
+                  public function salvar(Pedido $pedido): void
+                  {
+                      $stmt = $this->pdo->prepare("UPDATE pedidos SET status = :status WHERE id = :id");
+                      $stmt->execute(["status" => $pedido->status, "id" => $pedido->id]);
+                  }
+              }
+          - language: go
+            code: |-
+              type PedidoRepositorioSQL struct {
+              	DB *sql.DB
+              }
+
+              func (r PedidoRepositorioSQL) Buscar(id int) (*Pedido, error) {
+              	var p Pedido
+              	row := r.DB.QueryRow("SELECT id, total, status FROM pedidos WHERE id = ?", id)
+              	if err := row.Scan(&p.ID, &p.Total, &p.Status); err != nil {
+              		if errors.Is(err, sql.ErrNoRows) {
+              			return nil, nil
+              		}
+              		return nil, err
+              	}
+              	return &p, nil
+              }
+
+              func (r PedidoRepositorioSQL) ListarPendentes() ([]Pedido, error) {
+              	rows, err := r.DB.Query("SELECT id, total, status FROM pedidos WHERE status = 'pendente'")
+              	if err != nil {
+              		return nil, err
+              	}
+              	defer rows.Close()
+
+              	var pendentes []Pedido
+              	for rows.Next() {
+              		var p Pedido
+              		if err := rows.Scan(&p.ID, &p.Total, &p.Status); err != nil {
+              			return nil, err
+              		}
+              		pendentes = append(pendentes, p)
+              	}
+              	return pendentes, rows.Err()
+              }
+
+              func (r PedidoRepositorioSQL) Salvar(p *Pedido) error {
+              	_, err := r.DB.Exec("UPDATE pedidos SET status = ? WHERE id = ?", p.Status, p.ID)
+              	return err
+              }
+        callout:
+          type: hint
+          label: "Conexão e transação:"
+          text: "abrir a conexão, DSN, charset e transações seguem o hub — ver `PHP: Conexão e Manipulação de Banco de Dados` e `Go: Banco de Dados` para esse detalhe, que não se repete aqui."
+        tags:
+          - arquitetura
+          - repository-pattern
+          - pdo
+          - database-sql
+          - sql
+  - id: fake-testes
+    name: Fake em memória para testes
+    entries:
+      - title: PedidoRepositorioMemoria troca o banco por um mapa
+        kicker: Mesma interface, zero I/O
+        description: "A implementação de teste guarda os pedidos numa estrutura em memória e implementa exatamente o mesmo contrato que a implementação real. Nenhum teste que a usa precisa de banco, rede ou arquivo — e por isso roda em milissegundos, não segundos. Repare que ela não é um mock genérico: é uma implementação completa e funcional da interface, só que sem I/O."
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+
+              final class PedidoRepositorioMemoria implements PedidoRepositorio
+              {
+                  /** @var array<int, Pedido> */
+                  private array $pedidos = [];
+
+                  /** @param Pedido[] $pedidosIniciais */
+                  public function __construct(array $pedidosIniciais = [])
+                  {
+                      foreach ($pedidosIniciais as $pedido) {
+                          $this->pedidos[$pedido->id] = $pedido;
+                      }
+                  }
+
+                  public function buscar(int $id): ?Pedido
+                  {
+                      return $this->pedidos[$id] ?? null;
+                  }
+
+                  public function listarPendentes(): array
+                  {
+                      return array_values(array_filter(
+                          $this->pedidos,
+                          fn(Pedido $p) => $p->status === "pendente",
+                      ));
+                  }
+
+                  public function salvar(Pedido $pedido): void
+                  {
+                      $this->pedidos[$pedido->id] = $pedido;
+                  }
+              }
+          - language: go
+            code: |-
+              type PedidoRepositorioMemoria struct {
+              	pedidos map[int]*Pedido
+              }
+
+              func NovoPedidoRepositorioMemoria(iniciais ...*Pedido) *PedidoRepositorioMemoria {
+              	r := &PedidoRepositorioMemoria{pedidos: map[int]*Pedido{}}
+              	for _, p := range iniciais {
+              		r.pedidos[p.ID] = p
+              	}
+              	return r
+              }
+
+              func (r *PedidoRepositorioMemoria) Buscar(id int) (*Pedido, error) {
+              	return r.pedidos[id], nil
+              }
+
+              func (r *PedidoRepositorioMemoria) ListarPendentes() ([]Pedido, error) {
+              	var pendentes []Pedido
+              	for _, p := range r.pedidos {
+              		if p.Status == "pendente" {
+              			pendentes = append(pendentes, *p)
+              		}
+              	}
+              	return pendentes, nil
+              }
+
+              func (r *PedidoRepositorioMemoria) Salvar(p *Pedido) error {
+              	r.pedidos[p.ID] = p
+              	return nil
+              }
+        tags:
+          - arquitetura
+          - repository-pattern
+          - fake
+          - in-memory
+          - teste
+      - title: Testando sem banco
+        kicker: PHPUnit e testing padrão, nenhum dos dois toca disco
+        description: Com a fake, o teste vira um assert direto sobre uma lista — sem fixture de banco, sem transação para desfazer no fim. O consumidor (`PedidoService`) recebe a fake no lugar da implementação real e nem percebe a diferença.
+        descriptionTone: default
+        codeVariants:
+          - language: php
+            code: |-
+              <?php
+              declare(strict_types=1);
+
+              use PHPUnit\Framework\TestCase;
+
+              final class PedidoRepositorioMemoriaTest extends TestCase
+              {
+                  public function testListaSoPendentes(): void
+                  {
+                      $repositorio = new PedidoRepositorioMemoria([
+                          new Pedido(1, 150.0, "pendente"),
+                          new Pedido(2, 80.0, "confirmado"),
+                      ]);
+
+                      $pendentes = $repositorio->listarPendentes();
+
+                      self::assertCount(1, $pendentes);
+                      self::assertSame(1, $pendentes[0]->id);
+                  }
+              }
+          - language: go
+            code: |-
+              func TestListaSoPendentes(t *testing.T) {
+              	repositorio := NovoPedidoRepositorioMemoria(
+              		&Pedido{ID: 1, Total: 150, Status: "pendente"},
+              		&Pedido{ID: 2, Total: 80, Status: "confirmado"},
+              	)
+
+              	pendentes, err := repositorio.ListarPendentes()
+              	if err != nil {
+              		t.Fatal(err)
+              	}
+              	if len(pendentes) != 1 || pendentes[0].ID != 1 {
+              		t.Fatalf("esperava 1 pendente com id 1, obteve %+v", pendentes)
+              	}
+              }
+        callout:
+          type: hint
+          label: "Documentação relacionada:"
+          text: "`PHP: Testes com PHPUnit` e `Go: Testing` cobrem fixtures, data providers e organização de suíte além deste exemplo pontual."
+        tags:
+          - arquitetura
+          - repository-pattern
+          - teste
+          - phpunit
+          - testing
+  - id: decisao
+    name: Quando usar e erros comuns
+    entries:
+      - title: Quando compensa abrir essa porta
+        kicker: A interface só vale se alguém trocar o que está atrás dela
+        description: Use este mapa para decidir se um repositório compensa o investimento nesse projeto específico — a interface tem custo de escrita, e nem todo CRUD precisa dela.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Mais de uma implementação plausível (banco real + fake de teste, ou dois bancos): a interface se paga."
+              - "Regra de negócio precisa de teste rápido, sem subir banco: a fake em memória resolve isso direto."
+              - "Já existe um ORM com Query Builder: o repositório pode envolvê-lo, sem reexpor os métodos do ORM na interface."
+              - "CRUD trivial de uma tela, sem teste automatizado à vista: acesso direto ao PDO/database-sql pode bastar."
+          - type: checklist-block
+            title: Como manter o repositório útil
+            items:
+              - A interface devolve e recebe tipos do domínio, nunca array cru nem objeto de biblioteca externa.
+              - Cada método corresponde a uma pergunta real do domínio, não a um CRUD genérico copiado de tabela.
+              - Antes de confiar numa assinatura simples, leia a query por trás — ela pode esconder um N+1.
+        tags:
+          - arquitetura
+          - repository-pattern
+          - decisao
+          - boas-praticas
+      - title: Onde o Repository perde o propósito
+        kicker: Continua parecendo um repositório, mas parou de proteger alguém
+        description: Estes três desvios são os que mais aparecem quando o padrão é copiado sem o motivo por trás dele.
+        descriptionTone: warn
+        contentBlocks:
+          - type: context-block
+            title: Repository virando DAO genérico
+            variant: common-error
+            label: "Evite:"
+            text: "um método `salvar(array $dadosCrus)` que aceita qualquer estrutura solta, sem tipo do domínio. Isso vira uma camada fina sobre SQL — perde o tipo, a intenção e o motivo de existir."
+          - type: context-block
+            title: Vazar o Query Builder do ORM
+            variant: common-error
+            label: "Evite:"
+            text: "um método que devolve o `Builder`/`QueryBuilder` da biblioteca de ORM na interface, obrigando quem chama a conhecer a biblioteca por trás. Isso anula o propósito de esconder o banco."
+          - type: context-block
+            title: N+1 escondido atrás da interface
+            variant: common-error
+            label: "Evite:"
+            text: "um `listarPendentes()` que por dentro chama `buscar($id)` pedido por pedido dentro de um laço, em vez de uma única query. A assinatura parece limpa, mas esconde uma consulta por item."
+        tags:
+          - arquitetura
+          - repository-pattern
+          - erros-comuns
+          - dao
+          - n+1
+tech: arquitetura
+order: 4
+cardDescription: Uma interface entre a regra de negócio e o banco, trocável por uma fake em memória no teste — com explorador interativo das três peças, em PHP e Go.

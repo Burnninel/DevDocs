@@ -1,0 +1,18 @@
+---
+// Barra fina de progresso de leitura; largura controlada via transform pelo
+// doc-reader. Fica logo abaixo da navbar.
+---
+
+<div
+	class="pointer-events-none fixed inset-x-0 z-40 h-0.5"
+	style="top: var(--nav-h)"
+	aria-hidden="true"
+	data-pagefind-ignore
+>
+	<div
+		data-progress-bar
+		class="h-full origin-left"
+		style="transform: scaleX(0); background: linear-gradient(90deg, var(--color-accent-dim), var(--color-accent-strong)); transition: transform 90ms linear"
+	>
+	</div>
+</div>

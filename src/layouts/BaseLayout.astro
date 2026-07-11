@@ -1,0 +1,52 @@
+---
+import { ClientRouter } from "astro:transitions";
+import CommandPalette from "@/components/search/CommandPalette.vue";
+import "@/styles/globals.css";
+
+interface Props {
+	title: string;
+	description?: string;
+	/** Zona de leitura desliga o smooth-scroll global do Lenis. */
+	zone?: "discovery" | "reading";
+}
+
+const {
+	title,
+	description = "DevDocs — biblioteca pessoal de documentações técnicas para consulta rápida.",
+	zone = "reading",
+} = Astro.props;
+
+const fullTitle = title === "DevDocs" ? title : `${title} · DevDocs`;
+---
+
+<!doctype html>
+<html lang="pt-BR" data-zone={zone}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="color-scheme" content="dark" />
+		<meta name="theme-color" content="#0d0e11" />
+		<title>{fullTitle}</title>
+		<meta name="description" content={description} />
+		<link
+			rel="icon"
+			href={`${import.meta.env.BASE_URL}favicon.svg`}
+			type="image/svg+xml"
+		/>
+		{/* Marca JS-disponível antes do primeiro paint (evita flash das seções). */}
+		<script is:inline>
+			document.documentElement.classList.add("reader-js");
+		</script>
+		<ClientRouter />
+	</head>
+	<body>
+		<div class="pointer-events-none fixed inset-x-0 top-0 h-[40vh] -z-10"
+			style="background: var(--halo-accent)">
+		</div>
+		<slot />
+		{/* Modal sob demanda: sem representação em SSR, então client-only evita
+		hidratação (e qualquer mismatch). */}
+		<CommandPalette client:only="vue" />
+	</body>
+</html>
