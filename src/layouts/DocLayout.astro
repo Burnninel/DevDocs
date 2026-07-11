@@ -7,14 +7,15 @@ import DocProgress from "@/components/docs/DocProgress.astro";
 interface Props {
 	title: string;
 	description?: string;
+	accentStyle?: string;
 }
-const { title, description } = Astro.props;
+const { title, description, accentStyle } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description} zone="reading">
 	<Navbar />
-	<DocProgress />
-	<div class="pt-[var(--nav-h)]">
+	<DocProgress accentStyle={accentStyle} />
+	<div class="pt-[var(--nav-h)]" style={accentStyle}>
 		<slot />
 	</div>
 	<Footer />

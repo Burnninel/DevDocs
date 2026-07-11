@@ -1,6 +1,18 @@
 ---
 // Barra fina de progresso de leitura; largura controlada via transform pelo
 // doc-reader. Fica logo abaixo da navbar.
+interface Props {
+	accentStyle?: string;
+}
+const { accentStyle } = Astro.props;
+const progressStyle = [
+	accentStyle,
+	"transform: scaleX(0)",
+	"background: linear-gradient(90deg, var(--color-accent-dim), var(--color-accent-strong))",
+	"transition: transform 90ms linear",
+]
+	.filter(Boolean)
+	.join("; ");
 ---
 
 <div
@@ -12,7 +24,7 @@
 	<div
 		data-progress-bar
 		class="h-full origin-left"
-		style="transform: scaleX(0); background: linear-gradient(90deg, var(--color-accent-dim), var(--color-accent-strong)); transition: transform 90ms linear"
+		style={progressStyle}
 	>
 	</div>
 </div>

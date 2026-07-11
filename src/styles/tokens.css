@@ -20,10 +20,14 @@
 	--color-muted: #9aa1ad; /* secundário */
 	--color-faint: #6a7280; /* terciário / legendas */
 
-	/* ---- Accent fosco (cobre/âmbar dessaturado — nunca neon) ---- */
-	--color-accent: #c9976b;
-	--color-accent-strong: #d8a878;
-	--color-accent-dim: #a97b52;
+	/* ---- Accent fosco do produto (azul névoa — técnico, nunca neon) ---- */
+	--color-accent: #86c8f4;
+	--color-accent-strong: #b3ddff;
+	--color-accent-dim: #5f96bd;
+
+	/* ---- Marca atual do logo (mantida separada do accent editorial) ---- */
+	--color-brand-mark: #c9976b;
+	--color-brand-mark-strong: #d8a878;
 
 	/* ---- Tons semânticos de callout (foscos) ---- */
 	--color-tone-hint: #7bb7a6; /* teal suave (dica) */

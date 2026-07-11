@@ -6,7 +6,7 @@ import SectionNav from "@/components/docs/SectionNav.astro";
 import SectionPager from "@/components/docs/SectionPager.astro";
 import QuickStart from "@/components/docs/QuickStart.astro";
 import Entry from "@/components/docs/Entry.astro";
-import { getAllDocs } from "@/lib/docs";
+import { getAllDocs, TECH_META, techAccentVars } from "@/lib/docs";
 import { docParam } from "@/lib/paths";
 
 export const getStaticPaths = (async () => {
@@ -22,9 +22,10 @@ const doc = entry.data;
 const navSections = doc.sections.map((s) => ({ id: s.id, name: s.name }));
 const readerMode = doc.readerLayout ?? "panels";
 const isNarrative = readerMode === "narrative";
+const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 ---
 
-<DocLayout title={doc.title} description={doc.subtitle}>
+<DocLayout title={doc.title} description={doc.subtitle} accentStyle={accentStyle}>
 	<div
 		class="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:py-12"
 	>

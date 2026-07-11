@@ -17,8 +17,7 @@ export interface TechMeta {
 	icon: string;
 	/**
 	 * Hue de marca calibrado para o fundo escuro (luminoso, não neon). Aplicado
-	 * de forma escopada na home (ícone + link da tech) via `--tech-accent`; o
-	 * âmbar global (`--color-accent`) segue valendo para todo o chrome do site.
+	 * de forma escopada em cards, landings e páginas de leitura da tecnologia.
 	 */
 	accent: string;
 }
@@ -200,6 +199,23 @@ export function docShortTitle(doc: DocEntry): string {
 	const { title, tech } = doc.data;
 	const prefix = `${TECH_META[tech].label}: `;
 	return title.startsWith(prefix) ? title.slice(prefix.length) : title;
+}
+
+/**
+ * Escopo visual de uma tecnologia. Reusa os tokens globais já consumidos pelos
+ * componentes, mas só dentro do container que recebe este style.
+ */
+export function techAccentVars(accent: string): string {
+	return [
+		`--color-accent: ${accent}`,
+		`--color-accent-strong: color-mix(in oklab, ${accent} 72%, white)`,
+		`--color-accent-dim: color-mix(in oklab, ${accent} 72%, black)`,
+		`--accent-soft: color-mix(in oklab, ${accent} 16%, transparent)`,
+		`--accent-faint: color-mix(in oklab, ${accent} 8%, transparent)`,
+		`--glow-accent: 0 0 60px -12px color-mix(in oklab, ${accent} 45%, transparent)`,
+		`--glow-accent-sm: 0 0 24px -8px color-mix(in oklab, ${accent} 40%, transparent)`,
+		`--halo-accent: radial-gradient(60% 60% at 50% 0%, color-mix(in oklab, ${accent} 12%, transparent), transparent 70%)`,
+	].join("; ");
 }
 
 /** Techs válidas (type guard). */
