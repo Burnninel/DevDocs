@@ -15,6 +15,12 @@ export interface TechMeta {
 	tagline: string;
 	/** Ícone Iconify (astro-icon). */
 	icon: string;
+	/**
+	 * Hue de marca calibrado para o fundo escuro (luminoso, não neon). Aplicado
+	 * de forma escopada na home (ícone + link da tech) via `--tech-accent`; o
+	 * âmbar global (`--color-accent`) segue valendo para todo o chrome do site.
+	 */
+	accent: string;
 }
 
 export const TECH_META: Record<Tech, TechMeta> = {
@@ -23,35 +29,104 @@ export const TECH_META: Record<Tech, TechMeta> = {
 		short: "PHP",
 		tagline: "Do dia a dia ao back-end: dados, APIs, sessões e segurança.",
 		icon: "simple-icons:php",
+		accent: "#a9b4e6",
 	},
 	go: {
 		label: "Go",
 		short: "Go",
 		tagline: "Fundamentos idiomáticos, concorrência e biblioteca padrão.",
 		icon: "simple-icons:go",
+		accent: "#5dc9e2",
 	},
 	git: {
 		label: "Git & GitHub",
 		short: "Git",
 		tagline: "Fluxo de terminal, branches e desfazer com confiança.",
 		icon: "simple-icons:git",
+		accent: "#e8825a",
+	},
+	javascript: {
+		label: "JavaScript",
+		short: "JS",
+		tagline: "A linguagem da web: tipos, funções, assíncrono e o DOM.",
+		icon: "simple-icons:javascript",
+		accent: "#e8c34a",
 	},
 	vue: {
 		label: "Vue",
 		short: "Vue",
 		tagline: "Componentes, reatividade e composição — em breve.",
 		icon: "simple-icons:vuedotjs",
+		accent: "#5fc98e",
 	},
 	arquitetura: {
 		label: "Arquitetura",
 		short: "Arq",
 		tagline: "Padrões, camadas e decisões de estrutura — independentes de linguagem.",
 		icon: "lucide:layers",
+		accent: "#c58bd6",
 	},
 };
 
-/** Ordem de exibição das tecnologias na home. */
-export const TECH_ORDER: Tech[] = ["php", "go", "arquitetura", "git", "vue"];
+/**
+ * Ordem de exibição das tecnologias. Determina a ordem **dentro** de cada
+ * categoria na home (JS antes de Vue no Front-end, PHP antes de Go no Back-end).
+ */
+export const TECH_ORDER: Tech[] = [
+	"php",
+	"go",
+	"javascript",
+	"vue",
+	"arquitetura",
+	"git",
+];
+
+/**
+ * Categorias da home. São um agrupamento **visual** (faixas), não um nível de
+ * navegação: cada tech continua a um clique da home e nenhuma URL muda. Uma tech
+ * pertence a exatamente uma categoria (ver `TECH_CATEGORY`). UI/UX, no futuro,
+ * entra em `conceitos` ao lado de `arquitetura`.
+ */
+export type Category = "backend" | "frontend" | "conceitos" | "ferramentas";
+
+export interface CategoryMeta {
+	/** Rótulo da faixa (eyebrow). */
+	label: string;
+	/**
+	 * `stack`: linguagens/frameworks que se estuda — faixa + techs em grade de
+	 * 2 colunas com chips de docs. `reference`: consulta transversal (arquitetura,
+	 * git) — linhas compactas no rodapé, sem chips. Ao crescer para várias techs,
+	 * uma `reference` pode ser promovida a `stack` (só trocar o campo).
+	 */
+	variant: "stack" | "reference";
+	/** Marca a categoria como recém-adicionada (pílula "novo" na faixa). */
+	isNew?: boolean;
+}
+
+export const CATEGORY_META: Record<Category, CategoryMeta> = {
+	backend: { label: "Back-end", variant: "stack" },
+	frontend: { label: "Front-end", variant: "stack", isNew: true },
+	conceitos: { label: "Conceitos", variant: "reference" },
+	ferramentas: { label: "Ferramentas", variant: "reference" },
+};
+
+/** Ordem das faixas na home. */
+export const CATEGORY_ORDER: Category[] = [
+	"backend",
+	"frontend",
+	"conceitos",
+	"ferramentas",
+];
+
+/** A qual categoria cada tech pertence. */
+export const TECH_CATEGORY: Record<Tech, Category> = {
+	php: "backend",
+	go: "backend",
+	javascript: "frontend",
+	vue: "frontend",
+	arquitetura: "conceitos",
+	git: "ferramentas",
+};
 
 function byOrder(a: DocEntry, b: DocEntry): number {
 	return (a.data.order ?? 0) - (b.data.order ?? 0);
@@ -82,6 +157,49 @@ export async function getDocsGroupedByTech(): Promise<
 		}
 	}
 	return groups;
+}
+
+export interface TechGroup {
+	tech: Tech;
+	meta: TechMeta;
+	docs: DocEntry[];
+}
+
+export interface CategoryGroup {
+	category: Category;
+	meta: CategoryMeta;
+	/** Techs desta categoria que têm ao menos uma doc, na ordem de `TECH_ORDER`. */
+	groups: TechGroup[];
+}
+
+/**
+ * Docs agrupadas por categoria e, dentro, por tech (para as faixas da home).
+ * Reusa `getDocsGroupedByTech()` — herda a ordem de `TECH_ORDER` e o filtro de
+ * "só techs com ≥1 doc". Categorias sem nenhuma tech populada são omitidas.
+ */
+export async function getDocsGroupedByCategory(): Promise<CategoryGroup[]> {
+	const techGroups = await getDocsGroupedByTech();
+	const result: CategoryGroup[] = [];
+	for (const category of CATEGORY_ORDER) {
+		const groups = techGroups.filter(
+			(g) => TECH_CATEGORY[g.tech] === category,
+		);
+		if (groups.length > 0) {
+			result.push({ category, meta: CATEGORY_META[category], groups });
+		}
+	}
+	return result;
+}
+
+/**
+ * Título curto para os chips da home: remove o prefixo `"<Label>: "` do título
+ * (ex.: "PHP: Fundamentos" → "Fundamentos"), já que o chip vive sob o bloco da
+ * própria tech. Se o título não tiver esse prefixo, devolve-o inteiro.
+ */
+export function docShortTitle(doc: DocEntry): string {
+	const { title, tech } = doc.data;
+	const prefix = `${TECH_META[tech].label}: `;
+	return title.startsWith(prefix) ? title.slice(prefix.length) : title;
 }
 
 /** Techs válidas (type guard). */

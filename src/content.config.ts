@@ -188,11 +188,20 @@ const quickStartSchema = z.object({
 export type QuickStart = z.infer<typeof quickStartSchema>;
 
 /**
- * Tecnologias suportadas. `vue` fica pronto para conteúdo futuro.
- * `arquitetura` é uma categoria conceitual (independente de linguagem): MVC,
- * Clean Architecture, SOLID, etc., com exemplos em PHP e Go no mesmo doc.
+ * Tecnologias suportadas. `javascript` e `vue` ficam prontos para o conteúdo de
+ * front-end (JS primeiro, Vue depois). `arquitetura` é uma categoria conceitual
+ * (independente de linguagem): MVC, Clean Architecture, SOLID, etc., com
+ * exemplos em PHP e Go no mesmo doc. O agrupamento por categoria na home
+ * (Back-end, Front-end, Conceitos, Ferramentas) vive em `src/lib/docs.ts`.
  */
-export const TECHS = ["git", "php", "go", "vue", "arquitetura"] as const;
+export const TECHS = [
+	"git",
+	"php",
+	"go",
+	"javascript",
+	"vue",
+	"arquitetura",
+] as const;
 export type Tech = (typeof TECHS)[number];
 
 const docs = defineCollection({

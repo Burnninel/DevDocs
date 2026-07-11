@@ -1,0 +1,68 @@
+---
+import { Icon } from "astro-icon/components";
+import type { TechGroup, CategoryMeta } from "@/lib/docs";
+import { techUrl } from "@/lib/paths";
+
+interface Props {
+	group: TechGroup;
+	/** Categoria à qual a tech pertence (etiqueta discreta à direita). */
+	categoryMeta: CategoryMeta;
+}
+const { group, categoryMeta } = Astro.props;
+const { tech, meta, docs } = group;
+---
+
+<a
+	href={techUrl(tech)}
+	class="ref-row group"
+	id={tech}
+	style={`--tech-accent: ${meta.accent}`}
+	data-reveal
+>
+	<span class="ref-icon grid size-10 shrink-0 place-items-center rounded-xl">
+		<Icon name={meta.icon} class="size-5" />
+	</span>
+
+	<div class="min-w-0">
+		<div class="flex items-center gap-2.5">
+			<h3 class="font-display text-base font-semibold text-ink">{meta.label}</h3>
+			<span class="font-mono text-[0.6rem] tracking-[0.14em] text-faint uppercase">
+				{categoryMeta.label}
+			</span>
+		</div>
+		<p class="mt-0.5 truncate text-sm text-muted">{meta.tagline}</p>
+	</div>
+
+	<span class="ref-more ml-auto flex shrink-0 items-center gap-1.5 font-mono text-xs">
+		{docs.length} {docs.length === 1 ? "guia" : "guias"}
+		<Icon
+			name="lucide:arrow-right"
+			class="size-3.5 transition-transform duration-[var(--dur-fast)] group-hover:translate-x-0.5"
+		/>
+	</span>
+</a>
+
+<style>
+	.ref-row {
+		display: flex;
+		align-items: center;
+		gap: 0.85rem;
+		scroll-margin-top: var(--nav-h);
+		background: color-mix(in oklab, var(--color-surface-1) 55%, transparent);
+		border-radius: var(--radius-md);
+		padding: 0.85rem 1rem;
+		transition: background var(--dur-fast) var(--ease-out);
+	}
+	.ref-row:hover {
+		background: var(--color-surface-2);
+	}
+
+	.ref-icon {
+		color: var(--tech-accent);
+		background: color-mix(in oklab, var(--tech-accent) 14%, transparent);
+	}
+
+	.ref-more {
+		color: var(--tech-accent);
+	}
+</style>

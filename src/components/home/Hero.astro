@@ -4,11 +4,20 @@ interface Props {
 	title: string;
 	lead: string;
 	stats?: { value: string; label: string }[];
+	/** A home privilegia acesso rápido ao catálogo; as landings mantêm o respiro amplo. */
+	variant?: "default" | "compact";
 }
-const { kicker, title, lead, stats = [] } = Astro.props;
+const { kicker, title, lead, stats = [], variant = "default" } = Astro.props;
 ---
 
-<header class="relative mx-auto max-w-7xl px-5 pt-20 pb-16 sm:pt-28 sm:pb-24">
+<header
+	class:list={[
+		"relative mx-auto max-w-7xl px-5",
+		variant === "compact"
+			? "pt-16 pb-12 sm:pt-20 sm:pb-16"
+			: "pt-20 pb-16 sm:pt-28 sm:pb-24",
+	]}
+>
 	<p
 		class="font-mono text-sm tracking-widest text-accent uppercase"
 		data-reveal

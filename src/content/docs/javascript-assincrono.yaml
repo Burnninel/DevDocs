@@ -1,0 +1,201 @@
+id: javascript-assincrono
+title: "JavaScript: Assíncrono"
+subtitle: "Callbacks, Promises, async/await e como lidar com erros em código assíncrono."
+searchPlaceholder: Buscar promise, async, await, then, catch, fetch ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: javascript
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Node.js ou console do navegador
+  description: Os exemplos são autocontidos. Rode com Node.js no terminal ou cole no console do navegador. Exemplos com `fetch` precisam de navegador ou Node 18+.
+  steps:
+    - Crie um arquivo `assincrono.js`.
+    - Cole um exemplo por vez.
+    - Rode com `node assincrono.js`.
+  codeLanguage: shell
+  code: node assincrono.js
+  callout:
+    type: hint
+    label: "Dica:"
+    text: código assíncrono não bloqueia o restante do script — por isso a ordem dos `console.log` pode surpreender quem está começando.
+sections:
+  - id: callbacks-promises
+    name: Callbacks e Promises
+    layout: single
+    entries:
+      - title: Callback tradicional
+        kicker: Função passada para ser chamada depois
+        description: Um callback é uma função passada como argumento para ser executada quando uma operação assíncrona termina. É o padrão mais antigo — hoje, Promises e async/await resolvem o mesmo problema com código mais legível.
+        descriptionTone: default
+        code: |-
+          function buscarUsuario(id, callback) {
+            setTimeout(() => {
+              callback({ id, nome: "Ana" });
+            }, 0);
+          }
+
+          buscarUsuario(1, (usuario) => {
+            console.log(usuario);
+          });
+        tags:
+          - javascript
+          - callback
+          - assincrono
+          - settimeout
+      - title: Criar e consumir uma Promise
+        kicker: resolve, reject, then, catch
+        description: Uma `Promise` representa um valor que estará disponível no futuro. `resolve` entrega sucesso; `reject` entrega erro. `.then()` trata o sucesso e `.catch()` trata a falha.
+        descriptionTone: default
+        code: |-
+          function buscarUsuario(id) {
+            return new Promise((resolve, reject) => {
+              if (id <= 0) {
+                reject(new Error("id inválido"));
+                return;
+              }
+              resolve({ id, nome: "Ana" });
+            });
+          }
+
+          buscarUsuario(1)
+            .then((usuario) => console.log(usuario))
+            .catch((erro) => console.error(erro.message));
+        tags:
+          - javascript
+          - promise
+          - resolve
+          - reject
+          - then
+      - title: Promise.all para rodar em paralelo
+        kicker: Espera todas as Promises resolverem
+        description: "`Promise.all` recebe um array de Promises e resolve quando todas terminam, retornando um array com os resultados na mesma ordem. Se qualquer uma rejeitar, `Promise.all` rejeita imediatamente."
+        descriptionTone: default
+        code: |-
+          const buscarPreco = (produto) => Promise.resolve(`${produto}: R$10`);
+
+          Promise.all([buscarPreco("caneca"), buscarPreco("caderno")]).then(
+            (resultados) => console.log(resultados),
+          );
+        tags:
+          - javascript
+          - promise-all
+          - paralelo
+          - assincrono
+  - id: async-await
+    name: async/await
+    layout: single
+    entries:
+      - title: async e await para código assíncrono legível
+        kicker: Parece código síncrono, mas não bloqueia
+        description: "Uma função `async` sempre retorna uma Promise. Dentro dela, `await` pausa a execução da função (não do programa inteiro) até a Promise resolver, deixando o código sequencial mais fácil de ler que encadear `.then()`."
+        descriptionTone: default
+        code: |-
+          function buscarUsuario(id) {
+            return Promise.resolve({ id, nome: "Ana" });
+          }
+
+          async function mostrarUsuario(id) {
+            const usuario = await buscarUsuario(id);
+            console.log(usuario);
+          }
+
+          mostrarUsuario(1);
+        tags:
+          - javascript
+          - async
+          - await
+          - promise
+      - title: try/catch para tratar erro assíncrono
+        kicker: Substitui o .catch() dentro de função async
+        description: Dentro de uma função `async`, envolva `await` em `try/catch` para tratar rejeições da mesma forma que erros síncronos — mais direto que encadear `.catch()`.
+        descriptionTone: default
+        code: |-
+          function buscarUsuario(id) {
+            return id > 0
+              ? Promise.resolve({ id, nome: "Ana" })
+              : Promise.reject(new Error("id inválido"));
+          }
+
+          async function mostrarUsuario(id) {
+            try {
+              const usuario = await buscarUsuario(id);
+              console.log(usuario);
+            } catch (erro) {
+              console.error("Falhou:", erro.message);
+            }
+          }
+
+          mostrarUsuario(-1);
+        tags:
+          - javascript
+          - try-catch
+          - async
+          - erro
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: sem `try/catch` (ou `.catch()` externo), uma Promise rejeitada dentro de uma função `async` gera uma "unhandled promise rejection" — trate sempre o caminho de erro.
+  - id: fetch
+    name: Buscar dados com fetch
+    layout: single
+    entries:
+      - title: fetch com async/await
+        kicker: Requisição HTTP nativa do navegador (e do Node 18+)
+        description: "`fetch` retorna uma Promise que resolve com a resposta HTTP. Chame `.json()` (também assíncrono) para ler o corpo como JSON. Combine com `try/catch` para tratar falha de rede."
+        descriptionTone: default
+        code: |-
+          async function buscarPosts() {
+            try {
+              const resposta = await fetch("https://api.exemplo.com/posts");
+
+              if (!resposta.ok) {
+                throw new Error(`HTTP ${resposta.status}`);
+              }
+
+              const posts = await resposta.json();
+              console.log(posts);
+            } catch (erro) {
+              console.error("Falha ao buscar posts:", erro.message);
+            }
+          }
+        tags:
+          - javascript
+          - fetch
+          - http
+          - json
+          - api
+        callout:
+          type: hint
+          label: "Dica:"
+          text: "`fetch` só rejeita a Promise em falha de rede — uma resposta `404` ou `500` ainda é \"sucesso\" para o `fetch`; sempre confira `resposta.ok` ou `resposta.status` manualmente."
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para código assíncrono
+        kicker: Qual ferramenta usar em cada caso
+        description: Use este mapa como referência rápida ao lidar com operações que não terminam na mesma linha.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "Callback só em APIs antigas que exigem esse padrão (ex.: `setTimeout`)."
+              - "Promise (`.then`/`.catch`) para expor uma operação assíncrona de forma composável."
+              - "`async`/`await` para consumir Promises com leitura sequencial."
+              - "`try/catch` dentro de função `async` no lugar de `.catch()` encadeado."
+              - "`Promise.all` para rodar operações independentes em paralelo."
+              - "Sempre confira `resposta.ok` em `fetch` — status de erro HTTP não rejeita a Promise."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Cuidado:"
+            text: esquecer o `await` antes de uma chamada assíncrona faz a variável guardar a Promise pendente em vez do valor resolvido — o bug só aparece quando o código tenta usar esse valor.
+        tags:
+          - javascript
+          - assincrono
+          - decisao
+tech: javascript
+order: 3
+cardDescription: Callbacks, Promises, async/await e tratamento de erro em código assíncrono.

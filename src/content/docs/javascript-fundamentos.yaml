@@ -1,0 +1,232 @@
+id: javascript-fundamentos
+title: "JavaScript: Fundamentos"
+subtitle: "Guia prático para começar em JavaScript: variáveis, tipos, operadores e controle de fluxo."
+searchPlaceholder: Buscar let, const, typeof, ===, if, switch ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: javascript
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Node.js ou console do navegador
+  description: Os exemplos são autocontidos. Rode com Node.js no terminal ou cole no console do navegador (F12 → Console).
+  steps:
+    - Verifique a versão com `node --version`.
+    - Crie um arquivo `fundamentos.js`.
+    - Cole um exemplo por vez.
+    - Rode com `node fundamentos.js`.
+  codeLanguage: shell
+  code: |-
+    node --version
+    node fundamentos.js
+  callout:
+    type: hint
+    label: "Dica:"
+    text: use `console.log()` para inspecionar valores; no navegador, o painel Console mostra o mesmo resultado.
+sections:
+  - id: variaveis-tipos
+    name: Variáveis e tipos
+    layout: single
+    entries:
+      - title: let e const para declarar variáveis
+        kicker: Prefira const; use let só quando o valor muda
+        description: "`const` declara uma variável cuja referência não pode ser reatribuída; `let` permite reatribuição. Comece sempre com `const` e troque para `let` só quando precisar mudar o valor depois."
+        descriptionTone: default
+        code: |-
+          const nome = "Ana";
+          let idade = 30;
+
+          idade = 31;
+
+          console.log(nome, idade);
+        output: Ana 31
+        tags:
+          - javascript
+          - let
+          - const
+          - variavel
+          - declaracao
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: evite `var` em código novo — seu escopo de função (não de bloco) causa bugs sutis em loops e condicionais.
+      - title: Tipos primitivos e typeof
+        kicker: string, number, boolean, undefined, null
+        description: JavaScript é dinamicamente tipado. Use `typeof` para inspecionar o tipo de um valor em tempo de execução — útil em validações e depuração.
+        descriptionTone: default
+        code: |-
+          const texto = "DevDocs";
+          const numero = 42;
+          const ativo = true;
+          let semValor;
+          const vazio = null;
+
+          console.log(typeof texto, typeof numero, typeof ativo);
+          console.log(typeof semValor, typeof vazio);
+        output: |-
+          string number boolean
+          undefined object
+        tags:
+          - javascript
+          - tipos
+          - typeof
+          - undefined
+          - "null"
+        callout:
+          type: hint
+          label: "Curiosidade:"
+          text: "`typeof null` retorna `\"object\"` — é um erro histórico da linguagem, não um bug do seu código."
+      - title: Template literals para strings dinâmicas
+        kicker: Crase (`) e ${expressão}
+        description: Template literals interpolam variáveis e expressões diretamente na string, e suportam múltiplas linhas sem concatenação manual.
+        descriptionTone: default
+        code: |-
+          const nome = "Ana";
+          const idade = 30;
+
+          const mensagem = `${nome} tem ${idade} anos.`;
+          console.log(mensagem);
+        output: Ana tem 30 anos.
+        tags:
+          - javascript
+          - template-literal
+          - string
+          - interpolacao
+  - id: operadores-comparacao
+    name: Operadores e comparação
+    layout: single
+    entries:
+      - title: Comparação estrita evita conversão de tipo
+        kicker: "=== e !== como padrão"
+        description: "`==` converte tipos antes de comparar, o que gera resultados inesperados. Prefira `===` e `!==`, que comparam valor e tipo juntos."
+        descriptionTone: warn
+        code: |-
+          console.log("10" == 10);
+          console.log("10" === 10);
+          console.log(0 === false);
+        output: |-
+          true
+          false
+          false
+        tags:
+          - javascript
+          - comparacao
+          - estrito
+          - igualdade
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: comparação frouxa (`==`) é uma fonte comum de bugs discretos; use `===`/`!==` por padrão.
+      - title: Coalescência nula e optional chaining
+        kicker: "?? para fallback, ?. para acesso seguro"
+        description: "`??` retorna o valor da direita só quando o da esquerda é `null` ou `undefined` (diferente de `||`, que também troca valores falsy como `0` ou `\"\"`). `?.` evita erro ao acessar propriedade de um valor que pode não existir."
+        descriptionTone: default
+        code: |-
+          const config = { tema: null, limite: 0 };
+
+          const tema = config.tema ?? "escuro";
+          const limite = config.limite ?? 10;
+
+          console.log(tema, limite);
+          console.log(config.usuario?.nome ?? "visitante");
+        output: |-
+          escuro 0
+          visitante
+        tags:
+          - javascript
+          - nullish-coalescing
+          - optional-chaining
+          - fallback
+  - id: controle-fluxo
+    name: Controle de fluxo
+    layout: single
+    entries:
+      - title: if, else if e else
+        kicker: Escolher caminho por condição
+        description: Use `if` quando a decisão depende de uma condição booleana. Ordene do caso mais específico para o mais geral.
+        descriptionTone: default
+        code: |-
+          const nota = 8;
+
+          if (nota >= 9) {
+            console.log("Excelente");
+          } else if (nota >= 7) {
+            console.log("Aprovado");
+          } else {
+            console.log("Revisar conteúdo");
+          }
+        output: Aprovado
+        tags:
+          - javascript
+          - if
+          - else
+          - condicao
+      - title: switch para várias ações por caso
+        kicker: Compara por igualdade estrita
+        description: "`switch` compara com `===` e é útil quando cada caso executa mais de um comando. Use `break` para evitar queda para o próximo caso."
+        descriptionTone: default
+        code: |-
+          const perfil = "editor";
+
+          switch (perfil) {
+            case "admin":
+              console.log("Acesso total");
+              break;
+            case "editor":
+              console.log("Pode publicar");
+              break;
+            default:
+              console.log("Leitura");
+          }
+        output: Pode publicar
+        tags:
+          - javascript
+          - switch
+          - break
+          - caso
+      - title: Operador ternário para expressão curta
+        kicker: "condição ? seVerdadeiro : seFalso"
+        description: Use o ternário para escolher entre dois valores numa expressão simples. Para lógica com mais de uma condição, prefira `if`/`else` — encadear ternários prejudica a leitura.
+        descriptionTone: default
+        code: |-
+          const idade = 20;
+          const status = idade >= 18 ? "maior" : "menor";
+
+          console.log(status);
+        output: maior
+        tags:
+          - javascript
+          - ternario
+          - condicao
+          - expressao
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental dos fundamentos
+        kicker: Escolher a construção certa
+        description: Use este mapa como referência rápida ao montar ou revisar um script inicial.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`const` por padrão; `let` só quando o valor precisa mudar."
+              - "`typeof` para checar o tipo em tempo de execução."
+              - "Template literals (`` ` ``) em vez de concatenar com `+`."
+              - "`===`/`!==` para comparação segura de valor e tipo."
+              - "`??` para fallback de `null`/`undefined`; `?.` para acesso seguro."
+              - "`if` para condição booleana; `switch` para vários casos por valor."
+              - "Ternário só para expressão simples de dois caminhos."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Cuidado:"
+            text: "`==` e `||` fazem conversão/queda para valores falsy (`0`, `\"\"`, `null`); prefira `===` e `??` quando o valor `0` ou string vazia for válido no seu domínio."
+        tags:
+          - javascript
+          - fundamentos
+          - decisao
+          - referencia
+tech: javascript
+order: 0
+cardDescription: Porta de entrada do JavaScript com variáveis, tipos, operadores e controle de fluxo.

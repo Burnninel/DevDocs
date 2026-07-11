@@ -1,0 +1,288 @@
+id: javascript-arrays-iteracao
+title: "JavaScript: Arrays e Iteração"
+subtitle: "Criar, percorrer e transformar arrays com map, filter, reduce e desestruturação."
+searchPlaceholder: Buscar map, filter, reduce, find, spread, destructuring ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: javascript
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Node.js ou console do navegador
+  description: Os exemplos são autocontidos. Rode com Node.js no terminal ou cole no console do navegador.
+  steps:
+    - Crie um arquivo `arrays.js`.
+    - Cole um exemplo por vez.
+    - Rode com `node arrays.js`.
+  codeLanguage: shell
+  code: node arrays.js
+  callout:
+    type: hint
+    label: "Dica:"
+    text: "métodos como `map`, `filter` e `reduce` sempre retornam um novo array ou valor — o array original não é modificado."
+sections:
+  - id: criar-percorrer
+    name: Criar e percorrer
+    layout: single
+    entries:
+      - title: Criar array e acessar por índice
+        kicker: "[] e .length"
+        description: Arrays em JavaScript são listas ordenadas e de tamanho dinâmico. O índice começa em `0`; `.length` dá o total de itens.
+        descriptionTone: default
+        code: |-
+          const frutas = ["maçã", "banana", "uva"];
+
+          console.log(frutas[0]);
+          console.log(frutas.length);
+        output: |-
+          maçã
+          3
+        tags:
+          - javascript
+          - array
+          - indice
+          - length
+      - title: for...of para percorrer valores
+        kicker: Iteração idiomática de array
+        description: "`for...of` percorre os valores de um array (ou qualquer iterável) sem precisar gerenciar índice manualmente. Prefira a `forEach` quando quiser usar `break`/`continue`."
+        descriptionTone: default
+        code: |-
+          const numeros = [10, 20, 30];
+
+          for (const n of numeros) {
+            console.log(n);
+          }
+        output: |-
+          10
+          20
+          30
+        tags:
+          - javascript
+          - for-of
+          - loop
+          - iteracao
+      - title: forEach para efeito colateral por item
+        kicker: Quando não precisa de novo array
+        description: "`forEach` executa uma função para cada item, mas não retorna um array novo (retorna `undefined`). Use quando o objetivo é um efeito colateral, como imprimir ou acumular fora do array."
+        descriptionTone: default
+        code: |-
+          const nomes = ["Ana", "Bruno"];
+
+          nomes.forEach((nome, i) => {
+            console.log(`${i}: ${nome}`);
+          });
+        output: |-
+          0: Ana
+          1: Bruno
+        tags:
+          - javascript
+          - foreach
+          - callback
+          - indice
+  - id: transformar
+    name: Transformar com map, filter e reduce
+    layout: single
+    entries:
+      - title: map para transformar cada item
+        kicker: Um array novo, mesmo tamanho
+        description: "`map` aplica uma função a cada item e retorna um array novo com os resultados, na mesma ordem e tamanho do original."
+        descriptionTone: default
+        code: |-
+          const numeros = [1, 2, 3];
+          const dobrados = numeros.map((n) => n * 2);
+
+          console.log(dobrados);
+        output: "[ 2, 4, 6 ]"
+        tags:
+          - javascript
+          - map
+          - transformacao
+          - callback
+      - title: filter para manter só o que passa na condição
+        kicker: Um array novo, tamanho igual ou menor
+        description: "`filter` retorna um array novo só com os itens em que a função de teste retorna `true`."
+        descriptionTone: default
+        code: |-
+          const idades = [15, 22, 17, 30];
+          const maiores = idades.filter((idade) => idade >= 18);
+
+          console.log(maiores);
+        output: "[ 22, 30 ]"
+        tags:
+          - javascript
+          - filter
+          - condicao
+          - callback
+      - title: reduce para acumular um único valor
+        kicker: Soma, contagem ou objeto único a partir do array
+        description: "`reduce` percorre o array acumulando um resultado. O segundo argumento é o valor inicial do acumulador — sem ele, o primeiro item do array vira o inicial, o que é arriscado em array vazio."
+        descriptionTone: default
+        code: |-
+          const precos = [10, 25, 5];
+          const total = precos.reduce((acumulado, preco) => acumulado + preco, 0);
+
+          console.log(total);
+        output: "40"
+        tags:
+          - javascript
+          - reduce
+          - acumulador
+          - soma
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: sempre passe o valor inicial (segundo argumento) em `reduce` — evita erro quando o array estiver vazio.
+      - title: Encadear map e filter
+        kicker: Ler como um pipeline de dados
+        description: "`map`, `filter` e `reduce` podem ser encadeados. Cada método é independente e retorna um array novo, então o encadeamento não modifica os arrays intermediários."
+        descriptionTone: default
+        code: |-
+          const pedidos = [
+            { produto: "Caneca", preco: 25, ativo: true },
+            { produto: "Caderno", preco: 15, ativo: false },
+            { produto: "Mochila", preco: 120, ativo: true },
+          ];
+
+          const totalAtivos = pedidos
+            .filter((p) => p.ativo)
+            .map((p) => p.preco)
+            .reduce((soma, preco) => soma + preco, 0);
+
+          console.log(totalAtivos);
+        output: "145"
+        tags:
+          - javascript
+          - pipeline
+          - encadeamento
+          - map
+          - filter
+          - reduce
+  - id: buscar-testar
+    name: Buscar e testar condições
+    layout: single
+    entries:
+      - title: find e findIndex para localizar um item
+        kicker: Primeiro item que combina, ou undefined
+        description: "`find` retorna o primeiro item que satisfaz a condição (ou `undefined` se nenhum combinar). `findIndex` retorna a posição (ou `-1`)."
+        descriptionTone: default
+        code: |-
+          const usuarios = [
+            { id: 1, nome: "Ana" },
+            { id: 2, nome: "Bruno" },
+          ];
+
+          const usuario = usuarios.find((u) => u.id === 2);
+          console.log(usuario);
+        output: "{ id: 2, nome: 'Bruno' }"
+        tags:
+          - javascript
+          - find
+          - findindex
+          - busca
+      - title: some e every para testar o array inteiro
+        kicker: Retornam boolean
+        description: "`some` retorna `true` se ao menos um item passa na condição. `every` retorna `true` só se todos passarem."
+        descriptionTone: default
+        code: |-
+          const notas = [8, 9, 6, 10];
+
+          console.log(notas.some((n) => n < 7));
+          console.log(notas.every((n) => n >= 6));
+        output: |-
+          true
+          true
+        tags:
+          - javascript
+          - some
+          - every
+          - condicao
+      - title: includes para checar presença de valor
+        kicker: Mais direto que indexOf para boolean
+        description: "`includes` verifica se um valor exato está no array e retorna `true`/`false` — mais legível que comparar `indexOf` com `-1`."
+        descriptionTone: default
+        code: |-
+          const permissoes = ["ler", "editar"];
+
+          console.log(permissoes.includes("editar"));
+          console.log(permissoes.includes("excluir"));
+        output: |-
+          true
+          false
+        tags:
+          - javascript
+          - includes
+          - busca
+          - boolean
+  - id: espalhar-desestruturar
+    name: Spread e desestruturação
+    layout: single
+    entries:
+      - title: Spread para copiar e combinar arrays
+        kicker: "...array"
+        description: O operador spread (`...`) expande os itens de um array. Útil para copiar sem referência compartilhada, combinar arrays ou adicionar itens sem `push`.
+        descriptionTone: default
+        code: |-
+          const base = [1, 2];
+          const copia = [...base];
+          const combinado = [...base, 3, 4];
+
+          console.log(copia);
+          console.log(combinado);
+        output: |-
+          [ 1, 2 ]
+          [ 1, 2, 3, 4 ]
+        tags:
+          - javascript
+          - spread
+          - copia
+          - imutabilidade
+      - title: Desestruturação de array
+        kicker: Extrair posições nomeando variáveis
+        description: Desestruturação extrai valores de um array para variáveis por posição. Vírgula vazia pula uma posição; `...resto` captura os itens restantes.
+        descriptionTone: default
+        code: |-
+          const cores = ["vermelho", "verde", "azul"];
+          const [primeira, , terceira] = cores;
+          const [principal, ...outras] = cores;
+
+          console.log(primeira, terceira);
+          console.log(principal, outras);
+        output: |-
+          vermelho azul
+          vermelho [ 'verde', 'azul' ]
+        tags:
+          - javascript
+          - destructuring
+          - desestruturacao
+          - array
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para escolher o método certo
+        kicker: Qual método usar em cada situação
+        description: Use este mapa como referência rápida ao trabalhar com listas de dados.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`for...of`/`forEach` quando só precisa percorrer, sem gerar array novo."
+              - "`map` quando precisa transformar cada item mantendo o tamanho."
+              - "`filter` quando precisa manter só alguns itens."
+              - "`reduce` quando precisa de um único valor acumulado (some, contagem, objeto)."
+              - "`find`/`findIndex` para localizar um item específico."
+              - "`some`/`every` para perguntas booleanas sobre o array inteiro."
+              - "Spread (`...`) para copiar/combinar sem mutar o original."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Cuidado:"
+            text: "`forEach` não retorna array novo — encadear `.map()` depois de `.forEach()` falha, porque `forEach` retorna `undefined`."
+        tags:
+          - javascript
+          - arrays
+          - decisao
+          - referencia
+tech: javascript
+order: 1
+cardDescription: Criar, percorrer e transformar arrays com map, filter, reduce, find e desestruturação.

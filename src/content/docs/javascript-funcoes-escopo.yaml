@@ -1,0 +1,250 @@
+id: javascript-funcoes-escopo
+title: "JavaScript: Funções e Escopo"
+subtitle: "Declarar funções, arrow functions, parâmetros, escopo de bloco e closures."
+searchPlaceholder: Buscar function, arrow, escopo, closure, this ou palavra...
+shortcutHint: "Atalho: pressione / para focar a busca."
+codeLanguage: javascript
+defaultSectionLayout: single
+quickStart:
+  title: Como testar os exemplos desta documentação
+  kicker: Node.js ou console do navegador
+  description: Os exemplos são autocontidos. Rode com Node.js no terminal ou cole no console do navegador.
+  steps:
+    - Crie um arquivo `funcoes.js`.
+    - Cole um exemplo por vez.
+    - Rode com `node funcoes.js`.
+  codeLanguage: shell
+  code: node funcoes.js
+  callout:
+    type: hint
+    label: "Dica:"
+    text: prefira arrow functions para callbacks curtos e funções nomeadas (`function`) para lógica reutilizável com nome próprio.
+sections:
+  - id: declarar-funcoes
+    name: Declarar funções
+    layout: single
+    entries:
+      - title: function declaration
+        kicker: Tem hoisting — pode ser chamada antes da declaração
+        description: Uma `function` nomeada é içada (hoisted) para o topo do escopo, então pode ser chamada em qualquer ponto do arquivo/bloco, mesmo antes de sua declaração no código.
+        descriptionTone: default
+        code: |-
+          console.log(somar(2, 3));
+
+          function somar(a, b) {
+            return a + b;
+          }
+        output: "5"
+        tags:
+          - javascript
+          - function
+          - declaracao
+          - hoisting
+      - title: Arrow function para expressões curtas
+        kicker: "(parâmetros) => expressão"
+        description: Arrow functions são concisas e não têm hoisting — a variável precisa existir antes de ser chamada. São a escolha padrão para callbacks.
+        descriptionTone: default
+        code: |-
+          const dobrar = (n) => n * 2;
+          const saudacao = (nome) => `Olá, ${nome}!`;
+
+          console.log(dobrar(4));
+          console.log(saudacao("Ana"));
+        output: |-
+          8
+          Olá, Ana!
+        tags:
+          - javascript
+          - arrow-function
+          - expressao
+          - callback
+      - title: Função anônima como expressão
+        kicker: "const f = function () { ... }"
+        description: Uma function expression atribuída a uma variável não tem hoisting da função em si — só a variável é içada (como `undefined`, se `let`/`const`, fica em zona morta temporal).
+        descriptionTone: default
+        code: |-
+          const multiplicar = function (a, b) {
+            return a * b;
+          };
+
+          console.log(multiplicar(3, 4));
+        output: "12"
+        tags:
+          - javascript
+          - function-expression
+          - anonima
+  - id: parametros
+    name: Parâmetros
+    layout: single
+    entries:
+      - title: Parâmetros padrão
+        kicker: "parâmetro = valorPadrão"
+        description: Um parâmetro com valor padrão assume esse valor quando o argumento correspondente não é passado (ou é `undefined`).
+        descriptionTone: default
+        code: |-
+          function saudacao(nome = "visitante") {
+            return `Olá, ${nome}!`;
+          }
+
+          console.log(saudacao());
+          console.log(saudacao("Bruno"));
+        output: |-
+          Olá, visitante!
+          Olá, Bruno!
+        tags:
+          - javascript
+          - parametro
+          - default
+          - valor-padrao
+      - title: Rest parameters para número variável de argumentos
+        kicker: "...args agrupa os argumentos restantes em array"
+        description: Rest parameters coletam qualquer quantidade de argumentos extras num array. Deve ser o último parâmetro da função.
+        descriptionTone: default
+        code: |-
+          function somarTodos(...numeros) {
+            return numeros.reduce((total, n) => total + n, 0);
+          }
+
+          console.log(somarTodos(1, 2, 3, 4));
+        output: "10"
+        tags:
+          - javascript
+          - rest-parameters
+          - argumentos
+          - reduce
+  - id: escopo
+    name: Escopo de bloco
+    layout: single
+    entries:
+      - title: let e const respeitam escopo de bloco
+        kicker: "{ } cria um novo escopo"
+        description: "`let` e `const` só existem dentro do bloco `{ }` onde foram declarados — diferente de `var`, que ignora blocos e vaza para o escopo da função inteira."
+        descriptionTone: default
+        code: |-
+          if (true) {
+            let mensagem = "dentro do bloco";
+            console.log(mensagem);
+          }
+
+          console.log(typeof mensagem);
+        output: |-
+          dentro do bloco
+          undefined
+        tags:
+          - javascript
+          - escopo
+          - bloco
+          - let
+        callout:
+          type: warn
+          label: "Atenção:"
+          text: usar `var` no lugar de `let` faria `mensagem` vazar para fora do `if`, o que costuma causar bugs difíceis de rastrear em código maior.
+      - title: let em loop cria uma variável por iteração
+        kicker: Cada callback captura seu próprio valor
+        description: "Com `let`, cada volta do loop tem sua própria variável — importante ao criar closures (como callbacks) dentro de um loop. Com `var`, todas compartilhariam a última variável."
+        descriptionTone: default
+        code: |-
+          const callbacks = [];
+
+          for (let i = 0; i < 3; i++) {
+            callbacks.push(() => console.log(i));
+          }
+
+          callbacks.forEach((fn) => fn());
+        output: |-
+          0
+          1
+          2
+        tags:
+          - javascript
+          - let
+          - loop
+          - closure
+  - id: closures
+    name: Closures
+    layout: single
+    entries:
+      - title: Closure captura variável do escopo externo
+        kicker: A função "lembra" do ambiente onde foi criada
+        description: Uma closure é uma função que continua acessando variáveis do escopo onde foi definida, mesmo depois que esse escopo já terminou de executar. É a base de contadores, memoização e encapsulamento de estado privado.
+        descriptionTone: default
+        code: |-
+          function criarContador() {
+            let contagem = 0;
+
+            return function () {
+              contagem++;
+              return contagem;
+            };
+          }
+
+          const contador = criarContador();
+
+          console.log(contador());
+          console.log(contador());
+          console.log(contador());
+        output: |-
+          1
+          2
+          3
+        tags:
+          - javascript
+          - closure
+          - estado
+          - encapsulamento
+      - title: this em function tradicional vs arrow function
+        kicker: Arrow function não tem this próprio
+        description: Uma `function` tradicional define seu próprio `this` conforme como é chamada. Uma arrow function não tem `this` próprio — ela usa o `this` do escopo onde foi criada, o que evita bugs comuns em callbacks de métodos de objeto.
+        descriptionTone: default
+        code: |-
+          const contador = {
+            valor: 0,
+            incrementar: function () {
+              setTimeout(() => {
+                this.valor++;
+                console.log(this.valor);
+              }, 0);
+            },
+          };
+
+          contador.incrementar();
+        tags:
+          - javascript
+          - this
+          - arrow-function
+          - contexto
+        callout:
+          type: hint
+          label: "Dica:"
+          text: "se o callback dentro de `incrementar` fosse `function` tradicional em vez de arrow, `this` dentro dele não apontaria mais para `contador` — por isso arrow functions são a escolha padrão para callbacks que precisam do `this` externo."
+  - id: decisao-rapida
+    name: Decisão Rápida
+    layout: single
+    entries:
+      - title: Atalho mental para funções e escopo
+        kicker: Qual forma escolher em cada caso
+        description: Use este mapa como referência rápida ao escrever ou revisar funções.
+        descriptionTone: default
+        contentBlocks:
+          - type: reference-card
+            title: Mapa de decisão
+            items:
+              - "`function` nomeada para lógica reutilizável que pode precisar de hoisting."
+              - "Arrow function para callbacks curtos e para preservar o `this` externo."
+              - "Parâmetro padrão em vez de checar `undefined` manualmente."
+              - "Rest parameters (`...args`) quando a quantidade de argumentos varia."
+              - "`let`/`const` em vez de `var` para respeitar escopo de bloco."
+              - "Closure quando precisar de estado privado sem criar uma classe."
+          - type: context-block
+            title: Erro comum
+            variant: common-error
+            label: "Cuidado:"
+            text: usar `function` tradicional dentro de um método quando o callback precisa do `this` do objeto externo — o `this` muda de contexto e passa a apontar para o chamador do callback (ou `undefined` em modo estrito), não para o objeto.
+        tags:
+          - javascript
+          - funcoes
+          - escopo
+          - decisao
+tech: javascript
+order: 2
+cardDescription: Declarar funções, arrow functions, parâmetros, escopo de bloco e closures.
