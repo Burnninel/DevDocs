@@ -16,7 +16,7 @@ const sectionCount = doc.sections.length;
 
 <a
 	href={href}
-	class="doc-card group relative flex flex-col gap-3 rounded-3xl p-6 transition-[transform,background] duration-[var(--dur-base)] ease-[var(--ease-out)] hover:-translate-y-1"
+	class="doc-card group relative flex flex-col gap-3 rounded-3xl p-6 transition-[transform,background] duration-base ease-out hover:-translate-y-1"
 	data-reveal
 >
 	<div class="flex items-center justify-between">
@@ -29,7 +29,7 @@ const sectionCount = doc.sections.length;
 		}
 		<Icon
 			name="lucide:arrow-up-right"
-			class="ml-auto size-4 text-faint transition-colors duration-[var(--dur-fast)] group-hover:text-accent"
+			class="ml-auto size-4 text-faint transition-colors duration-fast group-hover:text-accent"
 		/>
 	</div>
 	<h3 class="font-display text-lg leading-snug font-semibold text-ink">

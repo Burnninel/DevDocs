@@ -22,7 +22,7 @@ const { sections, class: className = "" } = Astro.props;
 						href={`#${section.id}`}
 						data-section-link={section.id}
 						data-active={i === 0 ? "" : undefined}
-						class="section-link block rounded-xl px-3 py-2 text-sm whitespace-nowrap transition-colors duration-[var(--dur-fast)] lg:whitespace-normal"
+						class="section-link block rounded-xl px-3 py-2 text-sm whitespace-nowrap transition-colors duration-fast lg:whitespace-normal"
 					>
 						{section.name}
 					</a>

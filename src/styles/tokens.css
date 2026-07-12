@@ -58,6 +58,11 @@
 	--radius-xl: 1.875rem; /* 30px */
 	--radius-2xl: 2.5rem; /* 40px */
 
+	/* ---- Aliases semânticos para utilitários Tailwind v4 ---- */
+	--spacing-nav: var(--nav-h);
+	--spacing-doc-sticky: calc(var(--nav-h) + 1.5rem);
+	--container-reading: var(--reading-measure);
+
 	/* ---- Motion (durações + easings premium) ---- */
 	--ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 	--ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -66,6 +71,8 @@
 	--dur-base: 280ms;
 	--dur-slow: 520ms;
 	--dur-story: 900ms;
+	--transition-duration-fast: var(--dur-fast);
+	--transition-duration-base: var(--dur-base);
 }
 
 /*

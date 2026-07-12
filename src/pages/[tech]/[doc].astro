@@ -32,7 +32,7 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 	>
 		<!-- Navegação de seções: barra sticky no mobile, sidebar no desktop -->
 		<aside
-			class="sticky top-[var(--nav-h)] z-30 -mx-5 min-w-0 self-start px-5 py-3 lg:top-[calc(var(--nav-h)+1.5rem)] lg:mx-0 lg:px-0 lg:py-0"
+			class="sticky top-nav z-30 -mx-5 min-w-0 self-start px-5 py-3 lg:top-doc-sticky lg:mx-0 lg:px-0 lg:py-0"
 		>
 			<div
 				class="glass-outline scroll-x rounded-2xl p-2 lg:overflow-visible lg:p-4"
@@ -42,7 +42,7 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 		</aside>
 
 		<main class="min-w-0">
-			<span data-doc-top class="block scroll-mt-[var(--nav-h)]"></span>
+			<span data-doc-top class="block scroll-mt-nav"></span>
 			<Breadcrumb tech={doc.tech} docTitle={doc.title} />
 
 			<header class="mt-5 mb-8">
@@ -56,7 +56,7 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 						</h1>
 						{
 							doc.subtitle && (
-								<p class="mt-4 max-w-[var(--reading-measure)] text-lg text-muted">
+								<p class="mt-4 max-w-reading text-lg text-muted">
 									{doc.subtitle}
 								</p>
 							)
@@ -80,7 +80,7 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 						>
 							<h2
 								id={section.id}
-								class="mb-6 scroll-mt-[calc(var(--nav-h)+1.5rem)] font-display text-2xl font-semibold text-ink"
+								class="mb-6 scroll-mt-doc-sticky font-display text-2xl font-semibold text-ink"
 							>
 								{section.name}
 							</h2>

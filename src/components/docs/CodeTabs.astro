@@ -52,7 +52,7 @@ const resolved = variants.map((v) => {
 					data-lang={v.lang}
 					aria-selected={i === 0 ? "true" : "false"}
 					tabindex={i === 0 ? 0 : -1}
-					class="code-tab cursor-pointer rounded-lg px-3 py-1.5 font-mono text-xs tracking-wide text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent"
+					class="code-tab cursor-pointer rounded-lg px-3 py-1.5 font-mono text-xs tracking-wide text-faint transition-colors duration-fast hover:text-accent focus-visible:text-accent"
 				>
 					{v.label}
 				</button>

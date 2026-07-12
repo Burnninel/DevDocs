@@ -47,7 +47,7 @@ const isRunnable = Boolean(
 	{
 		entry.description && (
 			<p
-				class="wrap-anywhere max-w-[var(--reading-measure)] leading-relaxed"
+				class="wrap-anywhere max-w-reading leading-relaxed"
 				class:list={[isWarn ? "text-tone-warn/90" : "text-ink-soft"]}
 				set:html={formatInline(entry.description)}
 			/>

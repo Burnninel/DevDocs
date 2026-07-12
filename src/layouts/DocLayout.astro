@@ -15,7 +15,7 @@ const { title, description, accentStyle } = Astro.props;
 <BaseLayout title={title} description={description} zone="reading">
 	<Navbar />
 	<DocProgress accentStyle={accentStyle} />
-	<div class="pt-[var(--nav-h)]" style={accentStyle}>
+	<div class="pt-nav" style={accentStyle}>
 		<slot />
 	</div>
 	<Footer />

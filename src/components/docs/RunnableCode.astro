@@ -29,7 +29,7 @@ const editorRows = Math.min(24, Math.max(4, code.split("\n").length));
 				type="button"
 				data-sandbox-edit
 				aria-pressed="false"
-				class="sandbox-action sandbox-toggle inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent disabled:cursor-wait disabled:text-faint"
+				class="sandbox-action sandbox-toggle inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-faint transition-colors duration-fast hover:text-accent focus-visible:text-accent disabled:cursor-wait disabled:text-faint"
 				style="background: color-mix(in oklab, var(--color-surface-3) 44%, transparent)"
 			>
 				<Icon
@@ -42,7 +42,7 @@ const editorRows = Math.min(24, Math.max(4, code.split("\n").length));
 			<button
 				type="button"
 				data-sandbox-run
-				class="sandbox-action inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent disabled:cursor-wait disabled:text-faint"
+				class="sandbox-action inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-faint transition-colors duration-fast hover:text-accent focus-visible:text-accent disabled:cursor-wait disabled:text-faint"
 				style="background: color-mix(in oklab, var(--color-surface-3) 44%, transparent)"
 			>
 				<Icon name="lucide:play" class="size-3.5" aria-hidden="true" />
@@ -110,10 +110,10 @@ const editorRows = Math.min(24, Math.max(4, code.split("\n").length));
 	{
 		output && (
 			<details data-sandbox-expected class="not-prose group">
-				<summary class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-xs text-faint transition-colors duration-[var(--dur-fast)] hover:text-accent focus-visible:text-accent">
+				<summary class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-xs text-faint transition-colors duration-fast hover:text-accent focus-visible:text-accent">
 					<Icon
 						name="lucide:chevron-right"
-						class="size-3.5 transition-transform duration-[var(--dur-fast)] group-open:rotate-90"
+						class="size-3.5 transition-transform duration-fast group-open:rotate-90"
 						aria-hidden="true"
 					/>
 					Saída esperada
