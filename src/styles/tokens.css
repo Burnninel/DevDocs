@@ -25,9 +25,9 @@
 	--color-accent-strong: #b3ddff;
 	--color-accent-dim: #5f96bd;
 
-	/* ---- Marca atual do logo (mantida separada do accent editorial) ---- */
-	--color-brand-mark: #c9976b;
-	--color-brand-mark-strong: #d8a878;
+	/* ---- Marca atual do logo (monocromática por design — mantida separada do accent editorial) ---- */
+	--color-brand-mark: #d6d8de;
+	--color-brand-mark-strong: #f4f5f7;
 
 	/* ---- Tons semânticos de callout (foscos) ---- */
 	--color-tone-hint: #7bb7a6; /* teal suave (dica) */
