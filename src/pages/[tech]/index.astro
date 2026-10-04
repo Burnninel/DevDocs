@@ -15,13 +15,17 @@ export const getStaticPaths = (async () => {
 	}));
 }) satisfies GetStaticPaths;
 
-const { meta, docs } = Astro.props;
+const { tech, meta, docs } = Astro.props;
 const totalSections = docs.reduce((n, d) => n + d.data.sections.length, 0);
 const accentStyle = techAccentVars(meta.accent);
 ---
 
 <SiteLayout title={meta.label} description={meta.tagline}>
-	<div style={accentStyle}>
+	<div
+		style={accentStyle}
+		data-search-tech={tech}
+		data-search-tech-label={meta.short}
+	>
 		<div class="mx-auto max-w-7xl px-5">
 			<a
 				href={withBase("/")}

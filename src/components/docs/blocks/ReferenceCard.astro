@@ -1,5 +1,7 @@
 ---
 import { formatInline } from "@/lib/format";
+import { getEntry } from "astro:content";
+import { docUrl } from "@/lib/paths";
 import type { ContentBlock } from "@/content.config";
 
 type Block = Extract<ContentBlock, { type: "reference-card" }>;
@@ -7,6 +9,23 @@ interface Props {
 	block: Block;
 }
 const { block } = Astro.props;
+const links = await Promise.all(
+	(block.links ?? []).map(async (link) => {
+		const target = await getEntry("docs", link.doc);
+		if (
+			!target ||
+			(link.section && !target.data.sections.some((s) => s.id === link.section))
+		) {
+			throw new Error(
+				`Referência de documentação inválida: ${link.doc}#${link.section ?? ""}`,
+			);
+		}
+		return {
+			label: link.label,
+			href: docUrl(target.data.tech, target.id, link.section),
+		};
+	}),
+);
 ---
 
 <section class="not-prose glass rounded-2xl p-5">
@@ -35,6 +54,22 @@ const { block } = Astro.props;
 							style="background: var(--color-accent)"
 						/>
 						<span class="wrap-anywhere" set:html={formatInline(item)} />
+					</li>
+				))}
+			</ul>
+		)
+	}
+	{
+		links.length > 0 && (
+			<ul class="mt-3 grid gap-3" data-pagefind-ignore>
+				{links.map((link) => (
+					<li>
+						<a
+							href={link.href}
+							class="wrap-anywhere text-sm leading-relaxed text-accent-strong underline decoration-accent-dim underline-offset-4 hover:text-ink focus-visible:text-ink"
+						>
+							{link.label}
+						</a>
 					</li>
 				))}
 			</ul>

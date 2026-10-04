@@ -1,0 +1,338 @@
+id: git-desfazer-recuperar
+title: "Desfazer, descartar e recuperar"
+subtitle: "Escolha pelo estado da alteração e preserve o que ainda pode precisar."
+cardDescription: "Restore, reset, revert e reflog. Tirar do stage, desfazer commit/push e recuperar trabalho perdido."
+tech: git
+order: 6
+codeLanguage: bash
+quickStart:
+  title: "Pare e localize a alteração"
+  description: "Não tente vários resets para descobrir qual funciona. Primeiro identifique o estado; se algo sumiu, vá à seção de recuperação."
+  codeLanguage: bash
+  code: |-
+    git status
+    git diff
+    git diff --staged
+    git log --oneline -5
+  callout:
+    type: warn
+    label: "Backup de branch só guarda commits:"
+    text: "Uma branch de segurança não salva edições soltas nem arquivos novos. Para eles, use stash com o escopo correto ou copie os arquivos antes de descartar."
+sections:
+  - id: escolher
+    name: "Onde está a alteração?"
+    entries:
+      - title: "Working tree → Stage → Commit local → Remote"
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "**Working tree:** edição no disco. Restore pode sobrescrevê-la."
+              - "**Stage/index:** próxima versão a commitar. Restore --staged muda essa seleção, preservando o disco."
+              - "**Commit local:** snapshot no histórico. Reset com commit de destino pode mover a branch atual."
+              - "**Remote:** commits publicados. Revert acrescenta uma compensação; reescrever exige coordenação."
+          - type: reference-card
+            title: "Qual comando eu preciso?"
+            items:
+              - "**Fiz add por engano:** restore --staged."
+              - "**Editei e quero descartar:** revise diff antes de restore."
+              - "**Último commit ainda local:** amend para corrigir; reset soft/mixed para reorganizar."
+              - "**Já fiz push:** normalmente revert e push comum."
+              - "**Perdi um commit/branch após reset:** reflog e branch de recuperação."
+        tags:
+          [
+            working tree,
+            index,
+            stage,
+            desfazer commit,
+            desfazer push,
+            recuperar commit,
+          ]
+  - id: sem-commit
+    name: "Sem commit: stage e arquivos"
+    entries:
+      - title: "Fiz git add por engano"
+        description: "Restaura a seleção do index a partir de HEAD e mantém o arquivo no disco. A forma com ponto atua nos caminhos sob o diretório atual; são alternativas."
+        code: |-
+          git restore --staged arquivo.js
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "restore --staged"
+                description: "`git restore --staged .` tira do stage os caminhos da pasta atual."
+                items:
+                  - Não move HEAD nem a branch.
+                  - É explícito sobre restaurar arquivos do index.
+              - title: "reset de caminhos"
+                description: "`git reset HEAD -- arquivo.js` é a forma antiga equivalente para esse caso."
+                items:
+                  - Com caminhos, não move a branch.
+                  - Não confunda com reset de um commit sem caminhos.
+        tags:
+          [restore --staged, tirar do stage, desfazer add, index, reset arquivo]
+      - title: "Descartar somente edições não staged de um arquivo"
+        description: "`restore` sem --source restaura o working tree a partir do index. Se o arquivo tinha mudanças staged, elas permanecem; não significa necessariamente voltar ao último commit."
+        code: |-
+          git diff -- arquivo.js
+          git restore -- arquivo.js
+        callout:
+          type: danger
+          label: "Sobrescreve edições:"
+          text: "As mudanças não staged desse arquivo serão descartadas. Se nunca foram commitadas/guardadas, reflog não as recupera. Para uma pausa reversível, use stash antes."
+        tags:
+          [
+            restore arquivo,
+            desfazer alteração,
+            working tree,
+            descartar,
+            checkout --,
+          ]
+      - title: "Descartar edições não staged da pasta inteira"
+        description: "Primeiro confira o diff de todos os caminhos abrangidos. Na raiz, `.` abrange o projeto; em subpastas, o escopo é menor. Untracked não são removidos."
+        code: |-
+          git status
+          git diff -- .
+          git restore .
+        callout:
+          type: danger
+          label: "Descarte em lote:"
+          text: "Sobrescreve mudanças não staged dos arquivos rastreados nesse escopo. Preserve com stash se quiser voltar a elas depois; não há simulação própria do restore."
+        tags: [git restore ., desfazer tudo, descartar alterações, untracked]
+      - title: "Trazer um arquivo de um commit específico"
+        description: "Substitua HASH_DO_COMMIT por um hash revisado. O exemplo escreve a versão no working tree, sem mover a branch nem commitar automaticamente. Depois revise, faça add e commit se quiser registrar a restauração."
+        code: |-
+          git show HASH_DO_COMMIT:caminho/arquivo.js
+          git diff -- caminho/arquivo.js
+          git restore --source=HASH_DO_COMMIT -- caminho/arquivo.js
+        callout:
+          type: danger
+          label: "Preserve a versão atual:"
+          text: "A restauração sobrescreve o conteúdo atual desse caminho. Se o arquivo rastreado não existir na origem escolhida, pode ser removido para corresponder àquela versão."
+        tags:
+          [
+            restore --source,
+            recuperar arquivo,
+            versão antiga,
+            commit específico,
+          ]
+  - id: commits-locais
+    name: "Commit errado ainda local"
+    entries:
+      - title: "Corrigir o último ou desmontar o commit?"
+        description: "Amend é útil para mensagem ou arquivo esquecido. Reset soft/mixed deixa o conteúdo disponível para montar novos commits. Os exemplos com HEAD~1 exigem que o commit tenha um pai."
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "reset --soft HEAD~1"
+                description: "Move a branch para o commit anterior."
+                items:
+                  - Preserva index e working tree como estavam.
+                  - As mudanças do commit removido ficam disponíveis no stage em relação à nova HEAD.
+              - title: "reset --mixed HEAD~1"
+                description: "Move a branch e restaura o index do destino."
+                items:
+                  - Preserva o conteúdo no working tree.
+                  - Desfaz a seleção staged; é o modo padrão de reset com commit.
+          - type: reference-card
+            links:
+              - {
+                  label: "Corrigir mensagem ou arquivo com amend",
+                  doc: git-historico-commits,
+                  section: amend,
+                }
+        tags: [reset, --soft, --mixed, sem push, desfazer último commit, amend]
+      - title: "Desmontar o último commit e manter a seleção"
+        description: "Com a branch correta checkoutada, inspecione e guarde a ponta antes. Execute só a variante escolhida; soft e mixed não são uma sequência."
+        code: |-
+          git status
+          git log --oneline -3
+          git branch backup/antes-do-reset
+          git reset --soft HEAD~1
+          git status
+          git diff --staged
+        callout:
+          type: warn
+          label: "Muda a história da branch:"
+          text: "Use para commits ainda privados. Se já publicou, normalmente escolha revert; para só tirar arquivos do stage, use restore --staged sem mover a branch."
+        tags: [desfazer commit local, reset soft, manter alterações, backup]
+      - title: "Reset hard também sobrescreve os arquivos"
+        description: "Diferente de soft/mixed, `--hard` alinha branch, index e working tree ao destino. Só use depois de preservar tudo o que importa e conferir exatamente o commit escolhido."
+        code: |-
+          git status
+          git diff
+          git diff --staged
+          git show --stat HASH_DESTINO
+          git branch backup/antes-do-hard
+          git reset --hard HASH_DESTINO
+        callout:
+          type: danger
+          label: "Perda de trabalho sem commit:"
+          text: "Hard descarta edições rastreadas e pode sobrescrever/remover untracked que obstruam a escrita de arquivos do destino. A branch de backup só protege commits; guarde edições e novos arquivos antes. Não há dry-run de reset."
+        tags: [reset --hard, destrutivo, perder alterações, restaurar estado]
+  - id: publicado
+    name: "O commit já foi para o remoto"
+    entries:
+      - title: "Desfazer sem reescrever histórico"
+        description: "Revert cria um novo commit que inverte o efeito de outro. Inspecione o hash, use uma árvore limpa e siga o fluxo de PR/MR do time; a correção é enviada com push comum."
+        code: |-
+          git show HASH_DO_COMMIT
+          git revert HASH_DO_COMMIT
+          git status
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Confira se o hash é o commit errado e se as alterações posteriores dependem dele."
+              - "Revert pode abrir editor para mensagem; salve para criar a compensação."
+              - "Se conflitar, resolva e faça add; conclua com `git revert --continue` ou cancele com `git revert --abort`."
+              - "Teste o resultado e publique com `git push` ou abra o PR/MR de correção na branch apropriada."
+          - type: comparison-block
+            columns:
+              - title: "Revert"
+                items:
+                  - Mantém o commit original e adiciona a inversão.
+                  - Costuma ser apropriado para histórico consumido por colegas.
+              - title: "Reset"
+                items:
+                  - Move a referência local, sem criar uma compensação.
+                  - Não desfaz sozinho um push que já aconteceu.
+        callout:
+          type: warn
+          label: "Merge commit exige outra decisão:"
+          text: "Reverter um merge exige escolher o pai principal com -m e afeta integrações futuras. Não use esta receita de commit simples sem analisar o merge."
+        tags:
+          [
+            revert,
+            desfazer push,
+            commit publicado,
+            sem reescrever histórico,
+            reset versus revert,
+          ]
+      - title: "Quando reescrever o remoto?"
+        description: "Apenas quando a substituição foi combinada e ninguém depende da história que será removida. Amend, reset e rebase sobre commits publicados podem exigir um push não fast-forward."
+        contentBlocks:
+          - type: reference-card
+            items:
+              - "Prefira `--force-with-lease`: ele compara o estado remoto esperado antes de substituir."
+              - "`--force` não tem essa checagem; lease também não torna a reescrita sem risco."
+              - "Não trate recusa de push como autorização para sobrescrever a branch."
+            links:
+              - {
+                  label: "Inspeção, dry-run, lease explícito e publicação de reescrita",
+                  doc: git-fetch-pull-merge-rebase,
+                  section: publicada,
+                }
+        callout:
+          type: danger
+          label: "Pode apagar trabalho da visão da equipe:"
+          text: "Não force push em branch compartilhada como rotina. A proteção de lease depende do valor esperado; fetch automático pode alterar a referência usada na forma implícita."
+        tags:
+          [force push, force-with-lease, force, reescrever histórico, remoto]
+  - id: limpar
+    name: "Untracked e voltar ao remoto"
+    entries:
+      - title: "Simular a limpeza de arquivos não rastreados"
+        description: "`git clean -n` lista candidatos sem apagar; `-d` inclui diretórios. Execute na pasta desejada e leia toda a lista antes de considerar a remoção."
+        code: |-
+          git status --short
+          git clean -nd
+        tags: [git clean -n, git clean -nd, dry-run, untracked, arquivos novos]
+      - title: "Remover somente depois da simulação"
+        description: "Use exatamente o mesmo diretório e escopo da simulação. A forma abaixo apaga arquivos/diretórios untracked; por padrão respeita ignored. Um caminho específico reduz o alcance, mas precisa ser inspecionado também."
+        code: "git clean -fd"
+        callout:
+          type: danger
+          label: "Git não tem commit desses arquivos:"
+          text: "Não conte com reflog para recuperar untracked apagados por clean. Copie ou guarde com stash -u antes se precisar. Não acrescente -x por hábito: ele incluiria ignored, como configurações e caches."
+        tags: [git clean -fd, limpar untracked, destrutivo, apagar arquivos]
+      - title: "Alinhar uma branch local ao estado remoto"
+        description: "Só quando decidiu abandonar a divergência local. Confira o destino: o exemplo alinha a feature à feature remota, não à master. Base e upstream têm papéis diferentes."
+        code: |-
+          git fetch origin
+          git switch SI-1234-feature/pesquisa-nps
+          git status
+          git log --oneline --left-right HEAD...origin/SI-1234-feature/pesquisa-nps
+          git diff origin/SI-1234-feature/pesquisa-nps
+          git branch backup/antes-de-alinhar
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Revise commits e diferenças; salve edições rastreadas/untracked com stash -u ou cópia. Confira ignored separadamente."
+              - "A branch backup conserva a ponta local e seus commits. Escolha outro nome se já existir."
+              - "Só após essa decisão, execute `git reset --hard origin/SI-1234-feature/pesquisa-nps`."
+              - "Confira status e log. Isso não muda o servidor e não é uma limpeza geral de untracked."
+        callout:
+          type: danger
+          label: "Descarte deliberado:"
+          text: "O hard move a branch e sobrescreve index/working tree; pode remover untracked que obstruam arquivos do destino. Não use para “atualizar sem perder trabalho”; para isso escolha merge ou rebase."
+        tags:
+          [
+            resetar para remoto,
+            reset hard origin,
+            igual ao remoto,
+            descartar commits locais,
+          ]
+  - id: recuperar
+    name: "Algo sumiu: recuperar primeiro"
+    entries:
+      - title: "Recuperar um commit após reset"
+        description: "Reflog registra movimentos locais de referências, incluindo HEAD. Procure o estado anterior, inspecione o hash e crie uma branch de recuperação antes de mexer na branch atual."
+        code: |-
+          git reflog --date=local
+          git show HASH_ENCONTRADO
+          git branch recuperacao/antes-do-reset HASH_ENCONTRADO
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Procure entradas anteriores ao reset, rebase ou troca que motivou o sumiço; não escolha só pelo número de ordem."
+              - "Use show para confirmar os arquivos/conteúdo do commit."
+              - "Branch dá um nome estável ao commit recuperado, sem trocar seus arquivos atuais."
+              - "Depois de guardar edições abertas, use `git switch recuperacao/antes-do-reset` para revisar e decidir se fará cherry-pick ou merge."
+        tags:
+          [
+            reflog,
+            recuperar commit,
+            reset,
+            sumiu,
+            desapareceu,
+            branch recuperação,
+          ]
+      - title: "Apaguei a branch ou fiz commit em detached HEAD"
+        description: "Procure pelo log geral das referências disponíveis e pelo reflog de HEAD. A branch apagada pode ter perdido seu próprio reflog; o commit ainda pode aparecer em outros registros locais."
+        code: |-
+          git reflog --all --date=local
+          git log --all --oneline --decorate
+          git show HASH_ENCONTRADO
+          git branch recuperacao/task-perdida HASH_ENCONTRADO
+        callout:
+          type: warn
+          label: "Recupere enquanto o objeto existe:"
+          text: "Reflog é local, não é enviado por push nem um backup permanente. Entradas expiram e objetos inalcançáveis podem ser limpos. Ele não registra cada edição do disco, nem garante recuperar stash descartado ou arquivos nunca commitados."
+        tags:
+          [
+            branch apagada,
+            commit perdido,
+            detached HEAD,
+            recuperar branch,
+            reflog --all,
+          ]
+      - title: "Quero voltar o working tree e recuperar depois"
+        description: "Se a intenção é uma pausa, prefira stash a descarte. Guarde com o escopo correto, volte à mesma branch e aplique o item conferido; use --index se a seleção staged importar."
+        contentBlocks:
+          - type: reference-card
+            links:
+              - {
+                  label: "Guardar com stash e restaurar depois",
+                  doc: git-stash-troca-contexto,
+                  section: task-a-b,
+                }
+              - {
+                  label: "Trazer somente um commit recuperado com cherry-pick",
+                  doc: git-historico-commits,
+                  section: cherry-pick,
+                }
+        tags:
+          [
+            recuperar alterações,
+            voltar working tree,
+            stash,
+            não perder alterações,
+          ]

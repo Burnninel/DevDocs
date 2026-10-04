@@ -26,7 +26,11 @@ const isNarrative = readerMode === "narrative";
 const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 ---
 
-<DocLayout title={doc.title} description={doc.subtitle} accentStyle={accentStyle}>
+<DocLayout
+	title={doc.title}
+	description={doc.subtitle}
+	accentStyle={accentStyle}
+>
 	<div
 		class="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:py-12"
 	>
@@ -41,12 +45,18 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 			</div>
 		</aside>
 
-		<main class="min-w-0">
+		<main
+			class="min-w-0"
+			data-search-tech={doc.tech}
+			data-search-tech-label={TECH_META[doc.tech].short}
+		>
 			<span data-doc-top class="block scroll-mt-nav"></span>
 			<Breadcrumb tech={doc.tech} docTitle={doc.title} />
 
 			<header class="mt-5 mb-8">
-				<div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+				<div
+					class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between"
+				>
 					<div class="min-w-0">
 						<h1
 							class="font-display text-4xl font-semibold text-ink sm:text-5xl"
@@ -70,6 +80,7 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 				class:list={["doc-panels", isNarrative && "doc-panels-narrative"]}
 				data-reader-mode={readerMode}
 				data-pagefind-body
+				data-pagefind-filter={`tech:${doc.tech}`}
 			>
 				{
 					doc.sections.map((section, i) => (
@@ -84,13 +95,11 @@ const accentStyle = techAccentVars(TECH_META[doc.tech].accent);
 							>
 								{section.name}
 							</h2>
-							{
-								i === 0 && doc.quickStart && (
-									<div class="mb-10">
-										<QuickStart quickStart={doc.quickStart} />
-									</div>
-								)
-							}
+							{i === 0 && doc.quickStart && (
+								<div class="mb-10">
+									<QuickStart quickStart={doc.quickStart} />
+								</div>
+							)}
 							<div class="grid gap-12">
 								{section.entries.map((e) => (
 									<Entry

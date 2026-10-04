@@ -1,0 +1,260 @@
+id: git-fetch-pull-merge-rebase
+title: "Fetch, Pull, Merge e Rebase"
+subtitle: "Atualizar uma branch atrasada escolhendo conscientemente como integrar a base."
+cardDescription: "Fetch e pull, merge versus rebase, branch publicada e force-with-lease com inspeção prévia."
+tech: git
+order: 4
+codeLanguage: bash
+quickStart:
+  title: "Minha branch ficou dias atrás da base"
+  description: "Salve edições com commit local ou stash e confira o status antes de integrar. Estar atrás não significa que seu trabalho foi perdido."
+  codeLanguage: bash
+  code: |-
+    git status
+    git fetch origin
+    git log --oneline --left-right HEAD...origin/master
+  callout:
+    type: hint
+    label: "Base do projeto:"
+    text: "Nos exemplos usamos master. Substitua por main, develop ou outra integração. `origin/master` é a posição remota conhecida após fetch, não a sua master local."
+sections:
+  - id: diferencas
+    name: "O que cada comando faz"
+    entries:
+      - title: "Buscar e integrar são etapas diferentes"
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "fetch"
+                description: "Servidor → referências remotas locais."
+                items:
+                  - Baixa objetos e atualiza referências como origin/master.
+                  - Não integra na branch atual nem altera seus arquivos.
+              - title: "pull"
+                description: "fetch → integração na branch atual."
+                items:
+                  - Usa o upstream quando não há destino explícito.
+                  - Estratégia depende das opções/configuração.
+                  - --ff-only recusa divergência; --rebase reaplica; --no-rebase escolhe merge.
+          - type: comparison-block
+            columns:
+              - title: "merge"
+                description: "Une as histórias preservando os commits existentes."
+                items:
+                  - Em divergência, normalmente cria um commit com dois pais.
+                  - Se só for preciso avançar, pode fazer fast-forward sem novo commit.
+              - title: "rebase"
+                description: "Reaplica seus commits sobre outra base."
+                items:
+                  - Ao mudar a base, cria novos commits com outros hashes.
+                  - Pode parar em cada commit que conflitar.
+        tags: [fetch, pull, merge, rebase, fast-forward, diferenças]
+      - title: "Atualizar a branch base local"
+        description: "Com arquivos salvos e árvore limpa, esta sequência atualiza master a partir da referência recém-buscada. `--ff-only` recusa se houver commits locais divergentes; investigue com log antes de decidir."
+        code: |-
+          git fetch origin
+          git switch master
+          git merge --ff-only origin/master
+        contentBlocks:
+          - type: context-block
+            variant: tip
+            text: "Em master com upstream origin/master, `git pull --ff-only` combina essas etapas. Na feature, pull normalmente atualiza a feature pelo upstream dela; não significa incorporar master."
+        tags: [atualizar master, atualizar main, pull --ff-only, upstream, base]
+  - id: preparar
+    name: "Preparar uma branch atrasada"
+    entries:
+      - title: "Inspecionar antes de integrar"
+        description: "Faça isto na sua feature. O log com três pontos lista commits exclusivos dos dois lados; nesta ordem, `<` indica só HEAD e `>` só origin/master."
+        code: |-
+          git switch SI-1234-feature/pesquisa-nps
+          git status
+          git fetch origin
+          git log --oneline --left-right HEAD...origin/master
+          git diff --stat origin/master...HEAD
+        contentBlocks:
+          - type: checklist-block
+            title: "Antes de escolher"
+            items:
+              - Guarde alterações sem commit e deixe o working tree limpo.
+              - Confirme qual é a base do PR/MR e se outras pessoas usam a sua branch.
+              - Confira `git branch -vv`; ahead/behind ali compara o upstream, que pode ser a feature remota.
+              - "Se quiser preservar a ponta atual, crie `git branch backup/pesquisa-antes-de-atualizar`; isso salva commits, não edições soltas."
+          - type: reference-card
+            links:
+              - {
+                  label: "Salvar trabalho com stash ou commit local",
+                  doc: git-stash-troca-contexto,
+                  section: escolher,
+                }
+              - {
+                  label: "Comparar o que entrará no PR/MR",
+                  doc: git-historico-commits,
+                  section: comparar,
+                }
+        tags:
+          [
+            branch atrasada,
+            atualizar branch,
+            muitos commits atrás,
+            não perder alterações,
+            comparar base,
+          ]
+      - title: "Merge ou rebase para esta task?"
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "Merge da base na feature"
+                items:
+                  - Boa escolha para branch compartilhada ou histórico já consumido.
+                  - Mantém hashes existentes; o grafo registra a integração.
+                  - Pode gerar conflitos e merge commit; normalmente o push continua comum.
+              - title: "Rebase da feature sobre a base"
+                items:
+                  - Adequado para commits privados quando o fluxo do time pede linearidade.
+                  - Troca hashes dos commits reaplicados e pode exigir nova revisão.
+                  - Se já publicou, pode exigir reescrita remota coordenada.
+          - type: context-block
+            variant: attention
+            text: "Não faça rebase de uma base compartilhada nem de commits nos quais colegas já se apoiaram como rotina. Em dúvida, preserve a história com merge e siga a política do time."
+        tags:
+          [
+            merge versus rebase,
+            branch privada,
+            branch compartilhada,
+            histórico linear,
+          ]
+  - id: merge
+    name: "Atualizar com merge"
+    entries:
+      - title: "Incorporar a base preservando os commits"
+        description: "Execute na feature, com árvore limpa. Se os dois lados avançaram, Git une os históricos com um merge commit; conflitos exigem resolução antes da conclusão."
+        code: |-
+          git fetch origin
+          git switch SI-1234-feature/pesquisa-nps
+          git merge origin/master
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Fetch atualiza origin/master; switch escolhe a branch que receberá a base."
+              - "Merge combina a base com a feature. Se abrir um editor, revise a mensagem e salve para concluir."
+              - "Se parar, siga o guia de conflitos. Para cancelar um merge em andamento, use `git merge --abort`."
+              - "Após concluir, confira `git status` e `git log --oneline --graph -10`; rode os testes e então faça push normal."
+          - type: reference-card
+            links:
+              - {
+                  label: "Resolver ou cancelar conflito durante merge",
+                  doc: git-conflitos,
+                  section: merge,
+                }
+        tags: [merge base feature, atualizar branch, merge commit, abort]
+      - title: "Quando não aparece merge commit?"
+        description: "Se HEAD é ancestral da base, o merge pode apenas avançar o ponteiro (fast-forward). Se a base já é ancestral de HEAD, não há nada a integrar. `--no-ff` pode exigir um merge commit mesmo quando avançar bastaria; use conforme o time."
+        tags: [fast-forward, ff, no-ff, already up to date, merge commit]
+  - id: rebase
+    name: "Atualizar com rebase"
+    entries:
+      - title: "Reaplicar os commits da task na base nova"
+        kicker: "Feature privada ou reescrita combinada"
+        description: "O rebase refaz a sequência de commits selecionada sobre origin/master. O pai faz parte da identidade do commit; mudar o pai muda o hash, mesmo com uma alteração parecida."
+        code: |-
+          git fetch origin
+          git switch SI-1234-feature/pesquisa-nps
+          git rebase origin/master
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Confirme que o status está limpo e a base remota foi atualizada."
+              - "Rebase reaplica commits um por vez. Não é apenas mudar o nome da base."
+              - "Se houver conflito, resolva, faça `git add arquivo.js` e `git rebase --continue`. Repita se parar de novo."
+              - "Ao concluir, confira status, log, diff da task e testes. Restaure o stash somente depois de encerrar a operação, se usou um."
+          - type: reference-card
+            links:
+              - {
+                  label: "Ciclo completo de conflitos, continue, abort e skip",
+                  doc: git-conflitos,
+                  section: rebase,
+                }
+        callout:
+          type: warn
+          label: "Histórico pode mudar além dos hashes:"
+          text: "Rebase simples não preserva a topologia dos merges; patches já presentes na base podem ser omitidos e commits podem ficar vazios. Se a feature tem merges complexos, prefira avaliar merge em vez de aplicar esta receita cegamente."
+        tags:
+          [
+            rebase,
+            atualizar branch atrasada,
+            reposicionar commits,
+            hash,
+            conflito,
+          ]
+  - id: publicada
+    name: "Depois de rebase em branch publicada"
+    entries:
+      - title: "Por que o push comum pode ser recusado?"
+        description: "Se os commits antigos estão no servidor e foram substituídos localmente, a ponta remota deixa de ser ancestral da local. O push comum recusa a atualização não fast-forward para proteger o histórico."
+        contentBlocks:
+          - type: reference-card
+            items:
+              - "Feature nunca publicada: use `git push -u origin SI-1234-feature/pesquisa-nps`; não precisa forçar."
+              - "Feature publicada mas sem commits reescritos: tente push normal."
+              - "Feature com commits publicados reescritos: combine a substituição e use lease após inspeção."
+              - "Branch compartilhada: não substitua a história dos colegas; alinhe a recuperação/integração."
+        tags:
+          [
+            rebased branch publicada,
+            non-fast-forward,
+            push rejeitado,
+            force push,
+          ]
+      - title: "Publicar uma reescrita autorizada com lease"
+        description: "Lease exige que a referência no servidor ainda corresponda ao estado remoto esperado. Aqui o destino é explícito: apenas a feature. Pare se o remoto tiver trabalho novo que você não integrou."
+        code: |-
+          git fetch origin
+          git log --oneline --left-right HEAD...origin/SI-1234-feature/pesquisa-nps
+          git push --dry-run --force-with-lease origin HEAD:SI-1234-feature/pesquisa-nps
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Inspecione os commits do remoto; hashes antigos da sua própria reescrita são esperados, commits novos de colegas precisam ser investigados."
+              - "A simulação mostra a atualização proposta, mas não reserva o remoto nem garante aceitação de todos os hooks."
+              - "Somente após a revisão, execute `git push --force-with-lease origin HEAD:SI-1234-feature/pesquisa-nps`."
+          - type: comparison-block
+            columns:
+              - title: "--force-with-lease"
+                description: "Verifica o valor esperado da referência remota."
+                items:
+                  - Pode recusar se alguém publicou após o estado que você conhece.
+                  - Não verifica se você compreendeu ou preservou o trabalho encontrado.
+              - title: "--force"
+                description: "Dispensa essa verificação do valor esperado."
+                items:
+                  - Pode sobrescrever commits alheios ainda não vistos.
+                  - Não é a alternativa quando lease recusa.
+        callout:
+          type: danger
+          label: "Reescreve o remoto:"
+          text: "Lease não elimina o risco. Sem hash explícito ele usa a referência remota local, que um fetch automático da IDE pode atualizar sem sua revisão. Se o time exige essa proteção extra, use a forma com hash esperado abaixo. Branches protegidas podem recusar a operação."
+        tags:
+          [
+            force push,
+            --force-with-lease,
+            --force,
+            reescrever histórico,
+            branch publicada,
+          ]
+      - title: "Fixar o hash remoto que você revisou"
+        description: "Para não depender de referências alteradas por fetch em segundo plano, copie o hash remoto após revisar seu conteúdo e use-o explicitamente. Substitua HASH_REVISADO e mantenha o mesmo valor na simulação e no envio."
+        code: |-
+          git rev-parse origin/SI-1234-feature/pesquisa-nps
+          git push --dry-run --force-with-lease=refs/heads/SI-1234-feature/pesquisa-nps:HASH_REVISADO origin HEAD:SI-1234-feature/pesquisa-nps
+        callout:
+          type: danger
+          label: "Só após confirmar:"
+          text: "Remover `--dry-run` efetua a reescrita. Se o lease recusar, investigue a mudança remota; não substitua o hash esperado só para passar na verificação."
+        tags:
+          [
+            lease explícito,
+            hash esperado,
+            fetch automático,
+            proteção,
+            force-with-lease,
+          ]

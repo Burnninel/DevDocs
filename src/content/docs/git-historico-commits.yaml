@@ -1,0 +1,259 @@
+id: git-historico-commits
+title: "Histórico e commits avançados"
+subtitle: "Inspecionar o que mudou, revisar a task e organizar commits antes de publicar."
+cardDescription: "Log, show, diff de PR/MR, blame, amend, cherry-pick e squash com rebase interativo."
+tech: git
+order: 7
+codeLanguage: bash
+quickStart:
+  title: "O que minha task acrescenta à base?"
+  description: "Na feature, busque a base e confira commits e patch. Use main, master, develop ou a base real do PR/MR."
+  codeLanguage: bash
+  code: |-
+    git fetch origin
+    git log --oneline origin/master..HEAD
+    git diff --stat origin/master...HEAD
+  callout:
+    type: hint
+    label: "Sem commit não entra nessa comparação:"
+    text: "Esses comandos comparam commits. Confira também status, diff e diff --staged para identificar trabalho ainda fora do histórico."
+sections:
+  - id: inspecionar
+    name: "Histórico e alterações específicas"
+    entries:
+      - title: "Encontrar commits e visualizar o grafo"
+        description: "Oneline resume; graph desenha relações; decorate mostra nomes de refs. All inclui commits alcançáveis por todas as referências, mas não recupera sozinho commits inalcançáveis após reset."
+        code: |-
+          git log --oneline --graph --decorate --all -20
+          git log --oneline -- caminho/arquivo.js
+          git log -p -3 -- caminho/arquivo.js
+        tags: [log, --oneline, --graph, --decorate, --all, histórico, arquivo]
+      - title: "Inspecionar um commit ou uma versão de arquivo"
+        description: "Substitua HASH_DO_COMMIT pelo hash encontrado no log. Show exibe metadados e patch; com hash:caminho, mostra o conteúdo daquele arquivo naquela versão."
+        code: |-
+          git show --stat HASH_DO_COMMIT
+          git show HASH_DO_COMMIT -- caminho/arquivo.js
+          git show HASH_DO_COMMIT:caminho/arquivo.js
+        tags: [show, commit específico, arquivo antigo, --stat, inspecionar]
+      - title: "Qual diff responde à minha pergunta?"
+        contentBlocks:
+          - type: tech-list
+            termHeader: Comando
+            descriptionHeader: Comparação
+            items:
+              - {
+                  term: git diff,
+                  description: "Working tree × index: edições rastreadas ainda não staged.",
+                }
+              - {
+                  term: git diff --staged,
+                  description: "Index × HEAD: seleção do próximo commit.",
+                }
+              - {
+                  term: git diff HEAD,
+                  description: "Working tree × HEAD: resultado combinado de mudanças rastreadas staged e não staged.",
+                }
+              - {
+                  term: git diff --stat,
+                  description: "Resumo por arquivo; pode ser usado também com revisões explícitas.",
+                }
+              - {
+                  term: git diff --name-only,
+                  description: "Somente nomes de arquivos alterados na comparação escolhida.",
+                }
+          - type: context-block
+            variant: tip
+            text: "Diff não exibe conteúdo de untracked por padrão; status identifica esses arquivos. Acrescente `-- caminho/arquivo.js` para limitar uma comparação."
+        tags:
+          [
+            diff,
+            diff --staged,
+            diff HEAD,
+            --stat,
+            --name-only,
+            stage,
+            working tree,
+          ]
+      - title: "Investigar a última alteração de uma linha"
+        description: "Blame mostra o commit que tocou cada linha da versão escolhida. Leia o commit com show para entender o motivo; atribuição de linha não substitui contexto e pode refletir uma movimentação/refatoração."
+        code: |-
+          git blame -L 20,40 -- src/pesquisa.js
+        tags: [blame, autor, linha, histórico de arquivo]
+  - id: comparar
+    name: "Comparar a task com a base"
+    entries:
+      - title: "O que entra no Pull Request / Merge Request?"
+        description: "Após fetch, compare a feature com a base correta. O log lista commits exclusivos da feature; o diff com três pontos compara o ancestral comum com HEAD, destacando o que a task introduziu."
+        code: |-
+          git fetch origin
+          git log --oneline origin/master..HEAD
+          git diff --stat origin/master...HEAD
+          git diff --name-only origin/master...HEAD
+          git diff origin/master...HEAD
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Confira a branch atual e a base configurada no PR/MR."
+              - "Leia os commits exclusivos; um commit WIP também será publicado se fizer parte dessa história."
+              - "Revise nomes, tamanho e conteúdo do patch. Mudanças em dependências, configurações e arquivos novos merecem atenção."
+              - "Faça `git status` e confira trabalho sem commit. Compare também com a feature remota se quiser saber se seu HEAD já foi enviado."
+        callout:
+          type: hint
+          label: "Limite da prévia local:"
+          text: "A comparação usa as referências do último fetch e seu HEAD local. A interface do provedor usa branches publicadas e pode ter base atualizada, diff de versão anterior ou resultado de merge diferente; confirme base e commits lá antes da revisão final."
+        tags:
+          [
+            comparar branch base,
+            diff PR,
+            pull request,
+            merge request,
+            o que será enviado,
+            três pontos,
+          ]
+      - title: "Dois pontos no log não significam o mesmo no diff"
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "Histórico"
+                items:
+                  - "`git log base..HEAD` — commits alcançáveis por HEAD e não pela base."
+                  - "`git log --left-right base...HEAD` — commits exclusivos de cada lado."
+              - title: "Conteúdo"
+                items:
+                  - "`git diff base HEAD` e `git diff base..HEAD` — comparação entre as duas pontas."
+                  - "`git diff base...HEAD` — ancestral comum até HEAD; a ordem importa."
+        tags: [dois pontos, três pontos, diff branch, merge-base, log]
+      - title: "Commits locais ainda não enviados ao upstream"
+        description: "Use quando upstream estiver configurado para a sua feature remota. A comparação depende do último fetch; ela responde ao push da feature, não à integração na base."
+        code: |-
+          git fetch origin
+          git branch -vv
+          git log --oneline '@{upstream}..HEAD'
+        tags: [commits não enviados, upstream, ahead, antes do push]
+  - id: amend
+    name: "Corrigir o último commit"
+    entries:
+      - title: "Corrigir só a mensagem"
+        description: "Sem alterações staged, amend substitui o último commit pela versão com mensagem corrigida. Ele muda o hash; se houver algo no stage, isso também será incluído."
+        code: |-
+          git status
+          git diff --staged
+          git commit --amend -m "feat: adiciona pesquisa NPS"
+        callout:
+          type: warn
+          label: "Prefira antes do push:"
+          text: "Se o commit já foi publicado, coordenar a reescrita pode ser necessário. Para uma branch compartilhada, normalmente acrescente um novo commit de correção."
+        tags: [amend, corrigir mensagem, último commit, sem push]
+      - title: "Incluir um arquivo esquecido"
+        description: "Selecione o arquivo, confira tudo que está staged e use --no-edit para manter a mensagem. Todo o stage será incluído, não apenas o último arquivo adicionado."
+        code: |-
+          git add arquivo-esquecido.js
+          git diff --staged
+          git commit --amend --no-edit
+        callout:
+          type: warn
+          label: "Substitui o commit anterior:"
+          text: "Amend não adiciona um commit independente. Antes de alterar commits já publicados, consulte o fluxo de lease e combine com quem usa a branch."
+        tags: [arquivo esquecido, amend --no-edit, corrigir último commit]
+  - id: cherry-pick
+    name: "Trazer um commit de outra branch"
+    entries:
+      - title: "Selecionar a mudança, não mesclar a branch inteira"
+        description: "Cherry-pick aplica a alteração de um commit na branch atual e normalmente cria outro commit com novo hash. Inspecione dependências: um commit pode exigir arquivos ou mudanças anteriores."
+        code: |-
+          git show HASH_DO_COMMIT
+          git switch SI-5678-fix/login
+          git status
+          git cherry-pick HASH_DO_COMMIT
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Confira o patch e escolha a branch que deve receber a correção."
+              - "Deixe a árvore limpa antes de aplicar. O commit de origem continua existindo na outra branch."
+              - "Se concluir, confira status, log e testes antes de publicar."
+              - "Se conflitar, resolva, faça add e use `git cherry-pick --continue`; `git cherry-pick --abort` cancela a sequência."
+          - type: reference-card
+            links:
+              - {
+                  label: "Resolver conflito de cherry-pick",
+                  doc: git-conflitos,
+                  section: cherry-pick,
+                }
+        callout:
+          type: warn
+          label: "Não é sincronização de branches:"
+          text: "Copiar vários commits ao acaso pode duplicar mudanças e omitir dependências. Esta receita é para commits comuns; cherry-pick de merge exige analisar o pai principal."
+        tags: [cherry-pick, copiar commit, trazer correção, conflito]
+  - id: interativo
+    name: "Squash e rebase interativo"
+    entries:
+      - title: "Organizar uma sequência de commits locais"
+        kicker: "Avançado — comece com uma sequência linear e privada"
+        description: "Inspecione os últimos três commits, crie uma branch de segurança e abra a lista de reescrita. HEAD~3 deve existir; escolha uma quantidade que não inclua commits compartilhados da base."
+        code: |-
+          git status
+          git log --oneline -4
+          git branch backup/antes-do-squash
+          git rebase -i HEAD~3
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Garanta uma árvore limpa. A lista do editor vem do commit mais antigo para o mais novo, diferente do log padrão."
+              - "Mantenha o primeiro como pick. Troque comandos das linhas seguintes conforme o objetivo."
+              - "Salve e feche a lista; Git pode abrir outro editor para mensagens."
+              - "Se conflitar, use o mesmo ciclo resolver → add → rebase --continue. Para desistir da operação em andamento, use rebase --abort."
+              - "Ao finalizar, revise log, diff da task e testes antes de publicar."
+        callout:
+          type: danger
+          label: "Reescreve a sequência:"
+          text: "Os hashes dos commits alterados e de seus descendentes podem mudar. Evite em histórico compartilhado; apagar linhas da lista pode remover commits. Não use como rotina em uma branch base."
+        tags:
+          [
+            squash,
+            rebase interativo,
+            rebase -i,
+            juntar commits,
+            histórico local,
+          ]
+      - title: "Pick, reword, squash ou fixup?"
+        contentBlocks:
+          - type: tech-list
+            termHeader: Ação no editor
+            descriptionHeader: Efeito
+            items:
+              - { term: pick, description: "Manter/reaplicar o commit." }
+              - {
+                  term: reword,
+                  description: "Editar a mensagem mantendo a mudança.",
+                }
+              - {
+                  term: squash,
+                  description: "Juntar ao commit anterior e editar a mensagem combinada.",
+                }
+              - {
+                  term: fixup,
+                  description: "Juntar ao anterior descartando a mensagem deste commit.",
+                }
+          - type: reference-card
+            title: "Exemplo de decisão"
+            items:
+              - "Primeiro commit implementa a tarefa: mantenha pick."
+              - "Segundo só corrige um detalhe do primeiro: escolha fixup."
+              - "Terceiro traz outra parte da mesma tarefa com mensagem útil: escolha squash."
+            links:
+              - {
+                  label: "Rebase parou: resolver ou cancelar",
+                  doc: git-conflitos,
+                  section: rebase,
+                }
+              - {
+                  label: "Já publiquei: consequências da reescrita e lease",
+                  doc: git-fetch-pull-merge-rebase,
+                  section: publicada,
+                }
+              - {
+                  label: "Recuperar a sequência anterior pelo reflog",
+                  doc: git-desfazer-recuperar,
+                  section: recuperar,
+                }
+        tags: [pick, reword, squash, fixup, corrigir mensagem, juntar commits]

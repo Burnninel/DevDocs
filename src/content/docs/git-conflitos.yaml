@@ -1,0 +1,224 @@
+id: git-conflitos
+title: "Conflitos no Git"
+subtitle: "Identificar a operação, resolver os arquivos e continuar ou cancelar corretamente."
+cardDescription: "Merge, rebase com várias paradas e cherry-pick. Marcadores, VS Code, continue, abort e os riscos de skip."
+tech: git
+order: 5
+codeLanguage: bash
+quickStart:
+  title: "O Git parou. Primeiro descubra o motivo."
+  description: "Não comece outro pull ou reset. O status mostra a operação em andamento e os arquivos que precisam de decisão."
+  codeLanguage: bash
+  code: |-
+    git status
+    git diff --name-only --diff-filter=U
+  steps:
+    - Escolha abaixo o fluxo de merge, rebase ou cherry-pick.
+    - Resolva o conteúdo, marque os arquivos e continue a operação correta.
+    - Se não quiser prosseguir, use o abort específico da operação.
+sections:
+  - id: identificar
+    name: "Identificar e resolver"
+    entries:
+      - title: "Conflito é uma decisão que Git não conseguiu tomar"
+        description: "Mudanças incompatíveis no mesmo trecho, exclusão contra edição e renomeações podem conflitar. Não significa que os commits desapareceram. Conflitos de arquivos binários podem não ter marcadores; confira sempre o status."
+        codeLanguage: text
+        code: |-
+          <<<<<<< HEAD
+          const limite = 10;
+          =======
+          const limite = 20;
+          >>>>>>> commit-ou-branch
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Leia os dois lados e o requisito da task; escolha ou combine o resultado correto."
+              - "Remova as linhas `<<<<<<<`, `=======` e `>>>>>>>`, mantendo somente o conteúdo final."
+              - "Se o estilo diff3 mostrar `|||||||`, esse trecho é a base comum; remova seus marcadores também."
+              - "Salve o arquivo. Resolver não é apenas apagar marcadores: execute os testes do comportamento combinado."
+        tags:
+          [
+            conflito,
+            marcadores,
+            conflict markers,
+            unmerged,
+            resolver manualmente,
+          ]
+      - title: "VS Code, Current e Incoming"
+        description: "Abra Source Control e o arquivo em conflito, ou o Merge Editor. Confira nomes, hashes e o painel Result antes de aceitar um lado. “Accept Both” também pode duplicar lógica ou quebrar o código."
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "Durante merge"
+                items:
+                  - "Current/ours: estado da branch checkoutada, que recebe o merge."
+                  - "Incoming/theirs: branch/commit que está sendo integrado."
+              - title: "Durante rebase"
+                items:
+                  - "Current/ours: base nova mais commits já reaplicados."
+                  - "Incoming/theirs: seu commit que está sendo reaplicado agora."
+          - type: context-block
+            variant: common-error
+            text: "Não decore “Current é sempre meu código”. Os lados mudam de papel no rebase; leia os rótulos e o diff. Durante cherry-pick, compare o estado atual com o commit escolhido."
+        tags: [VS Code, Current, Incoming, ours, theirs, merge editor, rebase]
+      - title: "Conferir a resolução antes de continuar"
+        description: "Inspecione os arquivos, marque a resolução e revise o stage. Os checks podem apontar marcadores introduzidos e problemas de whitespace; não substituem revisão e testes."
+        code: |-
+          git diff --check
+          git add arquivo.js
+          git diff --staged --check
+          git diff --staged
+          git diff --name-only --diff-filter=U
+        contentBlocks:
+          - type: checklist-block
+            items:
+              - Não restam caminhos unmerged no status.
+              - "Busque no editor por `<<<<<<<`, `=======`, `>>>>>>>` e `|||||||`; confira os resultados, pois podem ser texto legítimo."
+              - "Se decidiu excluir um arquivo em conflito, registre com `git rm arquivo.js` em vez de add."
+              - Confira que o stage contém só o necessário para esta resolução.
+        tags:
+          [
+            git add,
+            status,
+            diff --check,
+            marcadores restantes,
+            resolver conflito,
+          ]
+  - id: merge
+    name: "Conflito durante merge"
+    entries:
+      - title: "Resolver e concluir o merge"
+        description: "Se `git merge origin/master` parou, edite os arquivos primeiro. Execute os comandos abaixo depois de salvar o resultado desejado."
+        code: |-
+          git status
+          git add arquivo.js
+          git diff --staged --check
+          git diff --staged
+          git commit
+          git status
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Status identifica conflitos; resolva cada arquivo conforme a seção anterior."
+              - "Add marca a resolução. Repita para todos os arquivos, ou use rm se a decisão for exclusão."
+              - "Commit conclui o merge com a resolução; revise a mensagem no editor e salve."
+              - "Confirme o fim da operação e rode os testes antes do push normal."
+        tags: [conflito merge, resolver merge, git commit, merge continue]
+      - title: "Cancelar um merge em andamento"
+        code: "git merge --abort"
+        description: "Tenta reconstruir o estado anterior ao merge. Use enquanto a operação ainda está em andamento; após o merge commit, a escolha passa a ser desfazer/reverter."
+        callout:
+          type: warn
+          label: "Não é garantia para trabalho misturado:"
+          text: "Alterações não commitadas presentes antes do merge, especialmente se editadas durante a resolução, podem impedir restauração completa. Comece operações com árvore limpa; copie resoluções que queira conservar antes de abortar."
+        tags: [merge --abort, cancelar merge, desistir conflito]
+  - id: rebase
+    name: "Rebase parou novamente"
+    entries:
+      - title: "O ciclo de resolução acontece por commit"
+        kicker: "Continue pode revelar outro conflito"
+        description: "Ao executar `git rebase origin/master`, Git reaplica seus commits individualmente. Resolver o primeiro não garante que os seguintes apliquem sem conflito."
+        code: |-
+          git status
+          git rebase --show-current-patch
+        contentBlocks:
+          - type: flow-steps
+            title: "Repita até a mensagem de conclusão"
+            steps:
+              - "Confira no status qual commit/operação está parado; `--show-current-patch` mostra o patch sendo reaplicado."
+              - "Resolva manualmente os arquivos, salve e execute `git add arquivo.js` para cada um."
+              - "Revise `git diff --staged` e `git diff --staged --check`."
+              - "Execute `git rebase --continue`. Se abrir editor de mensagem, revise, salve e feche."
+              - "Se parar de novo, volte ao status e repita resolver → add → continue. Não reinicie o rebase."
+              - "Só terminou quando Git confirmar a conclusão e o status não indicar rebase em andamento. Revise o diff completo da task e rode os testes."
+        tags:
+          [
+            rebase conflito,
+            rebase parou novamente,
+            vários conflitos,
+            --continue,
+            resolver rebase,
+          ]
+      - title: "Comandos de uma rodada após editar os arquivos"
+        description: "Use os nomes reais dos arquivos resolvidos. `--continue` cria/reaplica o commit dentro da sequência; não finalize um rebase usando o fluxo de commit de merge."
+        code: |-
+          git add arquivo.js
+          git diff --staged --check
+          git rebase --continue
+          git status
+        contentBlocks:
+          - type: reference-card
+            links:
+              - {
+                  label: "Rebase terminou: decidir como publicar a branch",
+                  doc: git-fetch-pull-merge-rebase,
+                  section: publicada,
+                }
+        tags:
+          [
+            git rebase --continue,
+            git add,
+            conflito seguinte,
+            rebase múltiplos commits,
+          ]
+      - title: "Cancelar ou pular são decisões diferentes"
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "git rebase --abort"
+                description: "Cancela a sequência e retorna à branch/posição inicial do rebase."
+                items:
+                  - Abandona as resoluções feitas durante essa tentativa.
+                  - Salve fora da operação qualquer resolução que queira reutilizar.
+              - title: "git rebase --skip"
+                description: "Omite o commit atual da sequência e segue para o próximo."
+                items:
+                  - Use somente se a mudança já está presente ou deve ser abandonada.
+                  - Inspecione --show-current-patch antes de decidir.
+        callout:
+          type: danger
+          label: "Skip pode eliminar trabalho:"
+          text: "`--skip` não significa “aceitar minha resolução”. Ele descarta da sequência o commit que estava sendo reaplicado, incluindo alterações que não geraram conflito. Para manter a resolução, o caminho é add e continue."
+        tags:
+          [
+            git rebase --abort,
+            git rebase --skip,
+            cancelar rebase,
+            commit vazio,
+            perder commit,
+          ]
+  - id: cherry-pick
+    name: "Conflito durante cherry-pick"
+    entries:
+      - title: "Trazer um commit e concluir a resolução"
+        description: "Na branch de destino limpa, inspecione `git show HASH_DO_COMMIT` e execute `git cherry-pick HASH_DO_COMMIT`. Se conflitar, use o ciclo específico abaixo."
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Rode `git status` e resolva os arquivos manualmente."
+              - "Use `git add arquivo.js` para cada resolução e confira `git diff --staged`."
+              - "Confira `git diff --staged --check` e execute `git cherry-pick --continue`."
+              - "Se selecionou vários commits, a sequência pode parar novamente. Repita até concluir."
+        code: |-
+          git add arquivo.js
+          git diff --staged --check
+          git cherry-pick --continue
+          git status
+        tags: [cherry-pick, conflito cherry-pick, --continue, copiar commit]
+      - title: "Cancelar a sequência de cherry-pick"
+        description: "`--abort` cancela a sequência em andamento e retorna ao estado anterior a ela. Copie qualquer resolução útil que precise conservar antes."
+        code: "git cherry-pick --abort"
+        contentBlocks:
+          - type: reference-card
+            links:
+              - {
+                  label: "Escolher e inspecionar o commit antes de cherry-pick",
+                  doc: git-historico-commits,
+                  section: cherry-pick,
+                }
+              - {
+                  label: "O conflito aconteceu em stash apply/pop",
+                  doc: git-stash-troca-contexto,
+                  section: aplicar,
+                }
+        tags: [cherry-pick --abort, cancelar cherry-pick, cancelar sequência]

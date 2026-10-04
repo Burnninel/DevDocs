@@ -1,0 +1,108 @@
+id: git-tags-releases
+title: "Tags e Releases"
+subtitle: "Marcar versões, publicar referências e evitar ambiguidades em releases."
+cardDescription: "Tags leves e anotadas, inspeção, publicação explícita e remoção local/remota com cuidado."
+tech: git
+order: 8
+codeLanguage: bash
+quickStart:
+  title: "Conferir antes de marcar uma versão"
+  description: "Tag marca um commit, não arquivos ainda sem commit. Confirme o hash aprovado pelo time e se a versão já existe."
+  codeLanguage: bash
+  code: |-
+    git status
+    git log --oneline -5
+    git tag --list 'v1.2.*'
+sections:
+  - id: conceito
+    name: "Tag e release"
+    entries:
+      - title: "Uma referência estável para uma versão"
+        description: "Branches avançam com trabalho novo; tags normalmente permanecem no mesmo ponto. Uma release no GitHub/GitLab pode associar notas e artefatos à tag, mas criar uma tag não cria automaticamente essa página."
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "Tag leve"
+                description: "Um nome apontando diretamente para um objeto, normalmente um commit."
+                items:
+                  - Útil como marcação local simples.
+                  - Não tem objeto próprio de tag com mensagem e tagger.
+              - title: "Tag anotada"
+                description: "Objeto de tag com tagger, data e mensagem, além do alvo."
+                items:
+                  - Preferível para versões/release quando o time adota tags.
+                  - Pode ser assinada; assinatura depende da configuração de chaves.
+        tags: [tag leve, tag anotada, release, versão, GitHub, GitLab]
+  - id: criar
+    name: "Criar e inspecionar"
+    entries:
+      - title: "Criar uma tag anotada no commit aprovado"
+        description: "Confira o hash antes. Sem o hash final, git tag usa HEAD; informe-o quando o commit aprovado não for a ponta atual."
+        code: |-
+          git show --stat HASH_APROVADO
+          git tag -a v1.2.0 HASH_APROVADO -m "release: v1.2.0"
+          git show v1.2.0
+        tags: [git tag -a, criar tag, versão, hash, release]
+      - title: "Criar uma marca leve local"
+        description: "Este exemplo marca HEAD sem mensagem/objeto de tag anotada. Criar uma tag local ainda não a envia ao servidor."
+        code: |-
+          git tag teste-local
+          git show teste-local
+        tags: [tag leve, lightweight, tag local]
+      - title: "Listar e verificar conteúdo e destino"
+        description: "Tag lista nomes locais; show exibe o objeto/commit e o patch. Ls-remote consulta as referências publicadas; --tags no fetch busca tags do remoto sem transformá-las em branches."
+        code: |-
+          git tag --list
+          git show v1.2.0
+          git ls-remote --tags origin
+          git fetch origin --tags
+        tags:
+          [listar tags, git show, inspecionar tag, tags remotas, fetch --tags]
+  - id: publicar
+    name: "Enviar tags ao remoto"
+    entries:
+      - title: "Publicar uma versão específica"
+        description: "Envie a referência completa para evitar ambiguidade com uma branch do mesmo nome. O push de uma branch não deve ser tomado como publicação automática de todas as tags."
+        code: |-
+          git push --dry-run origin refs/tags/v1.2.0
+          git push origin refs/tags/v1.2.0
+        callout:
+          type: warn
+          label: "Pode iniciar automações:"
+          text: "O servidor pode disparar CI, deploy ou publicação de pacotes ao receber uma tag. Confira o commit e o nome antes de enviar."
+        tags: [push tag, publicar versão, enviar uma tag, release]
+      - title: "Enviar todas as tags locais"
+        description: "Use somente quando revisou todas as tags que serão enviadas. Para publicar apenas a release atual, prefira o comando específico acima."
+        code: |-
+          git tag --list
+          git push --dry-run origin --tags
+          git push origin --tags
+        callout:
+          type: warn
+          label: "Escopo maior:"
+          text: "`--tags` tenta enviar todas as tags locais, inclusive marcas de teste, e pode disparar várias automações."
+        tags: [git push --tags, enviar tags, todas as tags]
+  - id: remover
+    name: "Remover sem confundir versões"
+    entries:
+      - title: "Remover a tag local criada por engano"
+        description: "Inspecione antes; esta remoção não altera a tag no servidor nem apaga o commit apontado."
+        code: |-
+          git show v1.2.0
+          git tag -d v1.2.0
+        callout:
+          type: danger
+          label: "Remove a referência local:"
+          text: "Registre o hash se precisar conservar a marca. Remover uma tag não desfaz um deploy nem a publicação dos artefatos."
+        tags: [tag -d, remover tag local, apagar versão]
+      - title: "Remover a referência no servidor"
+        description: "Confirme a tag remota e combine com o time. A referência completa torna explícito que está removendo uma tag, não uma branch."
+        code: |-
+          git ls-remote --tags origin refs/tags/v1.2.0
+          git push --dry-run origin --delete refs/tags/v1.2.0
+          git push origin --delete refs/tags/v1.2.0
+        callout:
+          type: danger
+          label: "Afeta consumidores da versão:"
+          text: "Apagar e recriar uma tag usada em release pode deixar máquinas/artefatos com versões diferentes sob o mesmo nome. Prefira uma nova versão; a remoção não apaga cópias de colegas nem substitui a gestão da release no provedor."
+        tags: [remover tag remota, delete tag, release publicada, alterar tag]

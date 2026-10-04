@@ -7,7 +7,7 @@ interface Props {
 	block: Block;
 }
 const { block } = Astro.props;
-const columns = block.columns.slice(0, 2);
+const columns = block.columns;
 ---
 
 <section class="not-prose">
@@ -18,7 +18,12 @@ const columns = block.columns.slice(0, 2);
 			</h4>
 		)
 	}
-	<div class="grid gap-4 sm:grid-cols-2">
+	<div
+		class:list={[
+			"grid gap-4 sm:grid-cols-2",
+			columns.length === 3 && "xl:grid-cols-3",
+		]}
+	>
 		{
 			columns.map((col) => (
 				<article class="glass rounded-2xl p-5">

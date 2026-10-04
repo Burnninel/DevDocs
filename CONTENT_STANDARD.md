@@ -100,6 +100,40 @@ decisões, evita erros recorrentes ou substitui uma busca externa.
 - Use callouts de perigo em comandos destrutivos ou irreversíveis.
 - Prefira lacunas de fluxo real, como conflito, `.gitignore`, tags e releases,
   em vez de transformar a página em curso.
+- Divida fluxos com riscos ou várias etapas em guias especializados; mantenha
+  o guia diário como hub curto, preservando slug e IDs de seção existentes.
+- Use `flow-steps` para procedimentos e `comparison-block` para decisões
+  (inclusive três alternativas, como stash/commit local/worktree).
+- Conceitos e listas não pertencem a blocos de terminal. Use `codeLanguage: text`
+  apenas para conteúdo textual literal de arquivo, como marcadores de conflito.
+- Inspecione antes de descartar; ofereça dry-run quando o comando suporta.
+  Comandos destrutivos exigem callout `danger`; backup de branch não salva
+  edições sem commit.
+- Tags são indexadas com peso menor que a prosa no Pagefind. Inclua o nome do
+  comando e sinônimos do problema, sem depender apenas do quickStart (não indexado).
+
+## Links entre guias
+
+O `reference-card` aceita `links` além de `items`. O destino usa o ID completo
+da coleção; a seção é opcional. O componente resolve com `docUrl`, respeita o
+base do GitHub Pages e falha no build se o guia ou a seção não existir.
+
+```yaml
+contentBlocks:
+  - type: reference-card
+    title: Continuar este fluxo
+    links:
+      - label: Resolver conflitos durante rebase
+        doc: git-conflitos
+        section: rebase
+```
+
+Evite inserir HTML ou URLs com `/DevDocs` fixo no YAML. Os rótulos desses
+links não entram na busca, para que referências não concorram com o guia alvo.
+
+A busca aberta numa tecnologia ou guia começa nessa tecnologia, com seletor
+visível para ampliar para todas. A home continua global. O filtro `tech` do
+Pagefind deriva da coleção, sem listas de páginas ou palavras especiais.
 
 ## Checklist Antes De Propagar
 

@@ -26,6 +26,16 @@ const referenceCardBlock = z.object({
 	title: z.string().optional(),
 	description: z.string().optional(),
 	items: z.array(z.string()).optional(),
+	/** Destinos da coleção; resolvidos com docUrl e validados durante o build. */
+	links: z
+		.array(
+			z.object({
+				label: z.string(),
+				doc: z.string(),
+				section: z.string().optional(),
+			}),
+		)
+		.optional(),
 });
 
 const techListBlock = z.object({
@@ -136,7 +146,7 @@ export type ContentBlock = z.infer<typeof contentBlockSchema>;
 
 // --- Entry / Section / Doc ----------------------------------------------------
 
-const entrySchema = z.object({
+const entrySchemaBase = z.object({
 	title: z.string(),
 	kicker: z.string().optional(),
 	description: z.string().optional(),
@@ -160,12 +170,27 @@ const entrySchema = z.object({
 		)
 		.optional(),
 	span: z.literal("full").optional(),
+	/** Sinônimos visíveis e indexáveis pelo Pagefind. */
+	aliases: z.array(z.string()).default([]),
 	tags: z.array(z.string()).default([]),
 	callout: calloutSchema.optional(),
 	contentBlocks: z.array(contentBlockSchema).optional(),
 	/** Permite executar este código no navegador (php-wasm). Opt-in/opt-out por entry. */
 	runnable: z.boolean().optional(),
+	/** Renderiza `code` como preview real em um iframe isolado. */
+	preview: z.literal(true).optional(),
 });
+
+const entrySchema = entrySchemaBase.refine(
+	(entry) =>
+		!entry.preview ||
+		(Boolean(entry.code?.trim()) && (entry.codeVariants?.length ?? 0) === 0),
+	{
+		message:
+			"Entries com preview precisam definir code e não podem usar codeVariants.",
+		path: ["preview"],
+	},
+);
 export type DocEntry = z.infer<typeof entrySchema>;
 
 const sectionSchema = z.object({
@@ -198,6 +223,7 @@ export const TECHS = [
 	"git",
 	"php",
 	"go",
+	"ui",
 	"javascript",
 	"vue",
 	"arquitetura",

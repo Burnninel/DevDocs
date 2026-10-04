@@ -1,0 +1,183 @@
+id: git-worktree
+title: "Git Worktree"
+subtitle: "Duas tasks abertas em diretórios separados, com um único repositório."
+cardDescription: "Criar worktrees, preparar outra task, trabalhar e remover a pasta sem perder commits."
+tech: git
+order: 3
+codeLanguage: bash
+quickStart:
+  title: "Preciso atender B sem mexer nos arquivos de A"
+  description: "Um worktree vinculado é outra árvore de trabalho do mesmo repositório, normalmente em outra branch. Ele não é uma branch de uma pasta específica."
+  codeLanguage: bash
+  code: "git worktree list"
+  steps:
+    - Identifique qual branch já está aberta em cada diretório.
+    - Crie a segunda árvore numa pasta irmã do projeto.
+    - Abra essa pasta no editor e trabalhe normalmente.
+sections:
+  - id: conceito
+    name: "O que é compartilhado"
+    entries:
+      - title: "Repositório comum, arquivos independentes"
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "Cada worktree tem"
+                items:
+                  - Seu working tree, com arquivos e edições próprios.
+                  - Seu index/stage e seu HEAD.
+                  - Configurações locais de ambiente e dependências no disco que você precisa preparar.
+              - title: "Os worktrees compartilham"
+                items:
+                  - Objetos Git, commits e referências de branches.
+                  - Remotos e normalmente a configuração do repositório.
+                  - Tags e a lista de stashes.
+          - type: context-block
+            variant: common-error
+            title: "A branch continua sendo do repositório inteiro"
+            text: "`SI-1234-feature/minha-task` não versiona só a pasta do worktree. Ela aponta para um commit do projeto; a pasta contém uma árvore checkoutada desse commit."
+        tags:
+          [worktree, árvore de trabalho, branch pasta, index, HEAD, duas tasks]
+      - title: "Organizar as pastas"
+        description: "Use pastas irmãs para evitar misturar o segundo checkout com arquivos do primeiro. No worktree vinculado, .git geralmente é um arquivo que aponta para metadados compartilhados."
+        contentBlocks:
+          - type: tech-list
+            termHeader: Diretório
+            descriptionHeader: Uso
+            items:
+              - {
+                  term: dev/projeto/,
+                  description: "Checkout principal, por exemplo na Task A.",
+                }
+              - {
+                  term: dev/projeto-SI-1234/,
+                  description: "Worktree vinculado, na branch da Task B.",
+                }
+          - type: context-block
+            variant: tip
+            text: "As duas aplicações podem precisar de portas e bancos de desenvolvimento distintos. Untracked, ignored e alterações não commitadas de A não são copiados para B."
+        tags: [estrutura de diretórios, pasta irmã, .git, ambiente]
+  - id: criar
+    name: "Criar para uma task"
+    entries:
+      - title: "Worktree com uma nova branch da base atualizada"
+        description: "Execute a partir do repositório existente. O exemplo usa origin/master; substitua pela base do projeto. A quebra de linha com barra invertida é de Bash/Git Bash; em PowerShell use tudo em uma linha."
+        code: |-
+          git fetch origin
+          git worktree add --no-track \
+            -b SI-1234-feature/minha-task \
+            ../projeto-SI-1234 \
+            origin/master
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "`git fetch origin` atualiza referências como `origin/master`, sem alterar os arquivos da task atual."
+              - "`worktree add` registra e cria a nova árvore."
+              - "`-b SI-1234-feature/minha-task` cria a branch; escolha um nome que ainda não exista."
+              - "`../projeto-SI-1234` é o caminho da pasta irmã, não o nome da branch."
+              - "`origin/master` é o commit inicial. `--no-track` evita associar a feature ao upstream da base; o vínculo correto virá no push -u."
+        tags:
+          [
+            worktree add,
+            nova branch,
+            criar task,
+            origin/master,
+            origin/main,
+            duas tasks,
+          ]
+      - title: "Abrir uma branch local que já existe"
+        description: "Não use -b neste caso. A branch deve estar livre, sem checkout em outro worktree."
+        code: |-
+          git worktree add ../projeto-revisao SI-5678-fix/login
+          git worktree list
+        tags: [worktree branch existente, worktree list, checkout]
+      - title: "A branch só existe no remoto"
+        description: "Busque primeiro e crie uma branch local acompanhando a branch remota correspondente. Aqui tracking faz sentido porque é a mesma task, não a base."
+        code: |-
+          git fetch origin
+          git worktree add --track -b SI-5678-fix/login ../projeto-revisao origin/SI-5678-fix/login
+        tags: [worktree remoto, --track, upstream, branch remota]
+  - id: trabalhar
+    name: "Trabalhar e publicar"
+    entries:
+      - title: "Dentro da nova pasta, Git funciona normalmente"
+        description: "Abra o diretório no editor e prepare dependências/configurações do projeto. Confira a branch antes do commit; o outro worktree mantém suas edições."
+        code: |-
+          cd ../projeto-SI-1234
+          git status
+          git add src/pesquisa.js
+          git diff --staged
+          git commit -m "feat: adiciona pesquisa NPS"
+          git push -u origin SI-1234-feature/minha-task
+        contentBlocks:
+          - type: checklist-block
+            items:
+              - Confira a pasta do terminal e a branch no status.
+              - Prepare .env e dependências sem copiar segredos para arquivos rastreados.
+              - Rode os testes do projeto antes de publicar.
+        tags: [commit worktree, push worktree, ambiente, duas tasks]
+      - title: "Por que a mesma branch não abre nos dois?"
+        description: "A referência da branch é compartilhada. Um commit em uma pasta moveria a branch enquanto os arquivos/index da outra ainda representariam outro estado; Git normalmente bloqueia essa situação."
+        contentBlocks:
+          - type: reference-card
+            items:
+              - "Use `git worktree list` e abra a pasta que já tem a branch."
+              - "Para outro trabalho, crie outra branch."
+              - "Para inspeção temporária, `git worktree add --detach ../projeto-inspecao HEAD` abre sem branch."
+          - type: context-block
+            variant: attention
+            text: "Em detached HEAD você pode commitar, mas crie uma branch com `git switch -c recuperacao/inspecao` antes de sair se quiser guardar esses commits. Não contorne o bloqueio com --force por rotina."
+        tags:
+          [
+            already checked out,
+            branch em dois worktrees,
+            detached HEAD,
+            mesma branch,
+          ]
+  - id: remover
+    name: "Remover e limpar registros"
+    entries:
+      - title: "Encerrar o worktree de uma task"
+        description: "Faça a inspeção ainda dentro dele; finalize/guarde alterações e copie arquivos locais importantes, inclusive ignored. Depois saia da pasta para removê-la a partir do checkout principal."
+        code: |-
+          git -C ../projeto-SI-1234 status --short --ignored
+          git -C ../projeto-SI-1234 log --oneline -5
+          git worktree remove ../projeto-SI-1234
+          git worktree list
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Os caminhos do exemplo são relativos ao checkout principal. Confira arquivos e se os commits estão numa branch."
+              - "Feche processos e terminais que estejam usando a pasta."
+              - "`worktree remove` remove a árvore e seu registro. A branch e seus commits permanecem no repositório."
+        callout:
+          type: danger
+          label: "A pasta será removida:"
+          text: "A remoção comum exige árvore limpa e recusa mudanças rastreadas/untracked. Não conte com isso para proteger ignored como .env; copie-os antes. Se houver recusa, resolva a causa sem acrescentar --force automaticamente."
+        tags: [worktree remove, remover worktree, apagar pasta, ignored]
+      - title: "Pasta apagada manualmente ou worktree órfão"
+        description: "Um registro pode ficar obsoleto quando a pasta desaparece. Prune limpa metadados obsoletos; não substitui remove e não apaga uma árvore de trabalho válida."
+        code: |-
+          git worktree list --porcelain
+          git worktree prune --dry-run --verbose
+          git worktree prune --verbose
+        callout:
+          type: warn
+          label: "Confirme que a pasta não voltará:"
+          text: 'Disco externo desconectado não é necessariamente worktree abandonado. Prune respeita a expiração configurada; use `git worktree lock --reason "disco externo" CAMINHO` para proteger registros de uma árvore temporariamente indisponível.'
+        tags: [worktree prune, órfão, worktree orfao, pasta apagada, dry-run]
+      - title: "A branch pode ser removida separadamente"
+        contentBlocks:
+          - type: reference-card
+            links:
+              - {
+                  label: "Verificar integração e remover a branch local/remota",
+                  doc: git-branches-remotos,
+                  section: organizar,
+                }
+              - {
+                  label: "Localizar commits perdidos com reflog",
+                  doc: git-desfazer-recuperar,
+                  section: recuperar,
+                }
+        tags: [branch, remover, recuperar commit]

@@ -1,0 +1,244 @@
+id: git-stash-troca-contexto
+title: "Stash e troca de contexto"
+subtitle: "Guardar alterações, atender outra task e retomar o trabalho com clareza."
+cardDescription: "Stash + pop, staged/untracked, conflitos e a escolha entre stash, commit local e worktree."
+tech: git
+order: 2
+codeLanguage: bash
+quickStart:
+  title: "Guardar agora, restaurar depois"
+  description: "`git stash` + `git stash pop` é o fluxo comum para uma pausa curta. Execute pop só ao voltar ao contexto correto; não é preciso criar um commit."
+  steps:
+    - "Confira `git status`; use `git stash push -u -m 'Task A: pesquisa NPS'` se também houver arquivos novos."
+    - "Troque de branch e conclua ou guarde o trabalho da Task B."
+    - "Volte à Task A, localize o stash com `git stash list` e restaure com `git stash pop 'stash@{0}'` se esse for o item correto."
+  callout:
+    type: hint
+    label: "O que fica guardado:"
+    text: "Por padrão, mudanças rastreadas, inclusive staged. `-u` inclui untracked, mas não ignored. Para tentar recuperar a seleção de stage também, use `pop --index`."
+sections:
+  - id: escolher
+    name: "Stash, commit local ou worktree?"
+    entries:
+      - title: "Escolha pelo tempo e pela forma de trabalhar"
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "Stash"
+                description: "Pausa curta no mesmo diretório."
+                items:
+                  - Guarda um rascunho sem entrar no histórico da branch.
+                  - Exige reaplicação e pode gerar conflito.
+                  - É local e compartilhado pelos worktrees desse repositório.
+              - title: "Commit local"
+                description: "Trabalho que deve ficar salvo por dias."
+                items:
+                  - Dá nome e histórico ao progresso na branch.
+                  - Não exige push.
+                  - Pode ser reorganizado antes de publicar.
+              - title: "Worktree"
+                description: "Duas tasks abertas ao mesmo tempo."
+                items:
+                  - Cada diretório mantém seus arquivos e stage.
+                  - Dispensa guardar A para editar B.
+                  - Dependências e configuração local precisam ser preparadas na nova pasta.
+        tags:
+          [
+            stash,
+            commit local,
+            worktree,
+            duas tasks,
+            trocar contexto,
+            guardar alterações,
+          ]
+      - title: "Alternativa com commit temporário"
+        description: "Na Task A, selecione somente os arquivos desejados e registre um WIP local. Troque para B; ao voltar, o trabalho estará no commit. Revise e use amend/squash antes de publicar, se fizer sentido."
+        code: |-
+          git add src/pesquisa.js
+          git diff --staged
+          git commit -m "wip: rascunho da pesquisa NPS"
+          git switch SI-5678-fix/login
+        contentBlocks:
+          - type: reference-card
+            links:
+              - {
+                  label: "Manter as duas tasks abertas com worktree",
+                  doc: git-worktree,
+                  section: criar,
+                }
+              - {
+                  label: "Corrigir e juntar commits locais",
+                  doc: git-historico-commits,
+                  section: interativo,
+                }
+        tags: [commit local, wip, sem push, pausar task, vários dias]
+  - id: task-a-b
+    name: "Task A → Task B → Task A"
+    entries:
+      - title: "Pausar a Task A"
+        description: "O stash registra o estado selecionado e volta os arquivos rastreados ao HEAD. Com `-u`, arquivos novos também são guardados e retirados do diretório; ignored permanecem."
+        code: |-
+          git status
+          git stash push -u -m 'Task A: pesquisa NPS'
+          git stash list
+          git status
+          git switch SI-5678-fix/login
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Confira o status e salve arquivos abertos no editor; buffers não salvos não entram no Git."
+              - "Guarde com uma mensagem identificável e confirme que um novo stash foi criado."
+              - "Confira se ainda há alterações antes do switch. Não ignore a mensagem de que não havia mudanças para guardar."
+        tags:
+          [
+            guardar alterações,
+            pausar task,
+            trocar branch,
+            não perder alterações,
+            stash push -u,
+          ]
+      - title: "Retomar exatamente o contexto da Task A"
+        description: "Antes de sair de B, commite ou guarde o trabalho dela. Ao voltar a A, o índice do stash pode ter mudado; confira mensagem e conteúdo, não só o número."
+        code: |-
+          git switch SI-1234-feature/pesquisa-nps
+          git stash list
+          git stash show -p -u 'stash@{0}'
+          git stash pop --index 'stash@{0}'
+          git status
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Volte à branch original com working tree limpo e identifique o stash da Task A."
+              - "No exemplo ele é `stash@{0}`; substitua se necessário. Aspas também evitam interpretação especial em shells como PowerShell."
+              - "`--index` tenta restaurar tanto os arquivos quanto a seleção staged. Sem ele, não conte com a seleção anterior."
+              - "Confira os dois diffs: `git diff` e `git diff --staged`. Se a base mudou, a aplicação pode conflitar."
+        callout:
+          type: warn
+          label: "Limite de “exatamente”:"
+          text: "Stash não salva buffers do editor, serviços, banco de dados ou ignored por padrão. Voltar à mesma base e usar `--index` ajuda a recuperar o estado Git original; não é um snapshot de todo o ambiente."
+        tags: [retomar task, stash pop, --index, staged, recuperar alterações]
+  - id: guardar-inspecionar
+    name: "Guardar e inspecionar"
+    entries:
+      - title: "Stash simples, com nome ou com arquivos novos"
+        description: "Estas são alternativas; escolha uma por pausa. `git stash` equivale a `git stash push`. Alterações staged também entram por padrão."
+        contentBlocks:
+          - type: tech-list
+            termHeader: Comando
+            descriptionHeader: Quando usar
+            items:
+              - {
+                  term: git stash,
+                  description: "Guardar mudanças em arquivos rastreados, com mensagem automática.",
+                }
+              - {
+                  term: 'git stash push -m "Task A"',
+                  description: "Mesmo escopo, mas com uma identificação fácil de localizar.",
+                }
+              - {
+                  term: 'git stash push -u -m "Task A"',
+                  description: "Incluir arquivos novos/untracked, além dos rastreados.",
+                }
+          - type: context-block
+            title: "Ignored precisam de uma decisão separada"
+            variant: attention
+            text: "`-u` não inclui ignored. `-a` inclui também ignored e os retira do diretório: pode guardar .env, caches e dependências enormes. Prefira copiar configurações importantes para um local seguro e não use -a automaticamente."
+        tags:
+          [
+            stash push -m,
+            stash push -u,
+            untracked,
+            ignored,
+            staged,
+            arquivos novos,
+          ]
+      - title: "Ver a lista, o resumo e o patch"
+        description: "`list` identifica os itens; `show` normalmente resume arquivos/linhas e `show -p` mostra o patch. `-u` na inspeção inclui os untracked que foram guardados."
+        code: |-
+          git stash list
+          git stash show 'stash@{1}'
+          git stash show -p -u 'stash@{1}'
+        tags: [stash list, stash show, stash show -p, inspecionar stash]
+  - id: aplicar
+    name: "Apply, pop e conflitos"
+    entries:
+      - title: "Aplicar mantendo ou consumindo o stash"
+        description: "Ambos aplicam sobre o contexto atual; não trocam de branch. Sem um item explícito, usam o mais recente."
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "apply"
+                description: "`git stash apply 'stash@{1}'`."
+                items:
+                  - Mantém o stash mesmo se a aplicação funcionar.
+                  - Útil para conferir antes de decidir removê-lo.
+                  - Acrescente --index se precisar restaurar o stage.
+              - title: "pop"
+                description: "`git stash pop 'stash@{1}'`."
+                items:
+                  - Aplica e remove da lista se tiver sucesso.
+                  - Se conflitar, o stash permanece.
+                  - Não repita pop para “terminar” um conflito.
+        tags:
+          [
+            stash apply,
+            stash pop,
+            aplicar stash específico,
+            diferença apply pop,
+          ]
+      - title: "Pop ou apply gerou conflito"
+        description: "Resolva os arquivos e confira o resultado; não existe `git stash --continue` nem `git stash --abort`. A operação deixa alterações no working tree e conflitos no index."
+        code: |-
+          git status
+          git diff --name-only --diff-filter=U
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Abra os arquivos listados, combine o conteúdo correto e remova os marcadores."
+              - "Use `git add arquivo.js` em cada resolvido. Se a resolução exige excluir um arquivo, use `git rm arquivo.js` após confirmar."
+              - "Confira `git diff --staged` e `git diff --staged --check`; teste o comportamento."
+              - "Pode continuar editando sem commit. Para tirar um arquivo resolvido do stage, use `git restore --staged arquivo.js`."
+              - "O stash que conflitou continua na lista. Só remova depois de validar a recuperação."
+          - type: reference-card
+            links:
+              - {
+                  label: "Entender marcadores e resolver no VS Code",
+                  doc: git-conflitos,
+                  section: identificar,
+                }
+        callout:
+          type: warn
+          label: "Não há rollback automático:"
+          text: "Se quiser desistir da aplicação, preserve quaisquer edições anteriores ou posteriores antes de descartar arquivos. Não use reset --hard como “abort de stash”."
+        tags:
+          [
+            conflito stash,
+            pop conflito,
+            apply conflito,
+            stash continue,
+            stash abort,
+          ]
+  - id: limpar
+    name: "Remover stashes com cuidado"
+    entries:
+      - title: "Remover um item já recuperado"
+        description: "Liste e confira novamente; remover um item renumera os seguintes. Drop não tem simulação, então inspecione o patch antes."
+        code: |-
+          git stash list
+          git stash show -p -u 'stash@{0}'
+          git stash drop 'stash@{0}'
+        callout:
+          type: danger
+          label: "Pode eliminar a única referência:"
+          text: "Drop remove o item da lista. Recuperação posterior não é garantida; confirme que o trabalho está nos arquivos, num commit ou em outra cópia."
+        tags: [stash drop, apagar stash, remover stash]
+      - title: "Limpar toda a lista"
+        description: "Só após revisar e decidir que todos os itens podem ser descartados. Clear não aplica nem salva nada em outra branch."
+        code: |-
+          git stash list
+          git stash clear
+        callout:
+          type: danger
+          label: "Afeta todos os stashes:"
+          text: "A lista é compartilhada entre os worktrees do repositório. Clear pode tornar trabalho irrecuperável; não é limpeza rotineira obrigatória."
+        tags: [stash clear, apagar todos, destrutivo]

@@ -6,8 +6,10 @@ a Fase 5 pediu.
 
 ## Cobertura atual
 
-- **Git/GitHub** — 1 guia (completo, com conflito de merge, `.gitignore` e
-  tags/releases cobertos).
+- **Git** — 9 guias de rotina: consulta diária, branches/remotos,
+  stash/troca de contexto, worktree, fetch/pull/merge/rebase, conflitos,
+  desfazer/recuperar, histórico/commits e tags/releases. O slug
+  `git-github-terminal` e seus seis IDs de seção foram preservados.
 - **PHP** — 19 guias (núcleo premium concluído: fundamentos, OOP, arrays,
   strings, JSON, HTTP, PDO, sessões, arquivos, CLI, testes, recursos modernos e
   capstone de API).
@@ -16,13 +18,24 @@ a Fase 5 pediu.
   os 13 guias originais ganharam fecho reflexivo padronizado — `Decisão Rápida`
   com `reference-card` + `context-block`).
 
-Total: **35 docs · 220 seções · 394 entries · 137 callouts · 84 content-blocks ·
-363 blocos de código** (contagem atual, `grep` sobre `src/content/docs/*.yaml`).
+A contagem global da migração não representa o inventário atual: a coleção
+também contém JavaScript, Arquitetura e UI, que não faziam parte daquela
+contagem. A landing de cada tecnologia calcula guias e seções
+diretamente da coleção, evitando usar contagens históricas como inventário.
 O conteúdo legado foi migrado com fidelidade verificada por round-trip +
 contagens no `scripts/migrate-content.mjs`; todo o conteúdo (migrado e novo)
 segue o padrão editorial de `CONTENT_STANDARD.md`.
 
 ## Lacunas (TODO — não preencher com conteúdo inventado)
+
+### 🟢 Git — rotina de equipe coberta
+
+- Nove guias, com 44 seções e 104 entries curtas, organizados por problema.
+- Receitas de task, pausa/retomada, atualização de branch, conflitos repetidos,
+  reescrita publicada e recuperação com reflog.
+- Fora deste recorte: submodules, Git LFS, bisect, hooks, assinatura de commits,
+  remoção de segredos de todo o histórico e reversão/cherry-pick de merge com
+  escolha de mainline. Acrescentar somente quando surgir demanda concreta.
 
 ### 🔴 Vue — ausente
 O prompt do rebuild listava Vue como "já documentado", mas **não existe nenhum

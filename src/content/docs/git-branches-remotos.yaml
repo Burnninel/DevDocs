@@ -1,0 +1,223 @@
+id: git-branches-remotos
+title: "Branches e remotos"
+subtitle: "Começar uma task, trocar de branch e entender o que existe só localmente."
+cardDescription: "Criar tasks da base atualizada, tracking/upstream, branches remotas e troca de branch com alterações."
+tech: git
+order: 1
+codeLanguage: bash
+quickStart:
+  title: "Onde estou e o que estou acompanhando?"
+  codeLanguage: bash
+  code: |-
+    git status -sb
+    git branch -vv
+    git remote -v
+  description: "Confira branch, upstream e URLs antes de publicar. Os exemplos usam master; adapte para main, develop ou outra base do time."
+sections:
+  - id: referencias
+    name: "main, master e upstream"
+    entries:
+      - title: "main, master ou develop: qual é a base?"
+        description: "Esses nomes não mudam o funcionamento do Git. Confira as branches existentes e a base de integração indicada pelo time; origin/main e origin/master são referências diferentes, não sinônimos."
+        code: |-
+          git remote show origin
+          git branch -r
+        contentBlocks:
+          - type: context-block
+            variant: tip
+            text: "Remote show consulta o servidor e informa sua branch padrão (HEAD branch). Ela pode ser main ou master, mas a base da sua task/PR/MR pode ser develop ou outra branch definida pelo time."
+        tags: [main, master, develop, branch base, origin/main, origin/master]
+      - title: "Referências locais e remotas"
+        contentBlocks:
+          - type: tech-list
+            termHeader: Referência
+            descriptionHeader: O que representa
+            items:
+              - {
+                  term: master,
+                  description: "Branch local: um nome que aponta para um commit e avança quando você commita nela.",
+                }
+              - {
+                  term: origin/master,
+                  description: "Referência local de acompanhamento remoto. Registra a posição conhecida da master no origin; não consulta o servidor ao ser lida.",
+                }
+              - {
+                  term: origin,
+                  description: "Nome configurado para um remoto. Pode apontar para GitHub, GitLab ou outro servidor.",
+                }
+              - {
+                  term: HEAD,
+                  description: "Normalmente aponta para a branch checkoutada. Em detached HEAD, aponta diretamente para um commit.",
+                }
+          - type: context-block
+            variant: tip
+            text: "`git fetch origin` atualiza o conhecimento do remoto. Não move automaticamente a sua `master` local."
+        tags: [origin, refs, HEAD, main, master, branch local, branch remota]
+      - title: "Listar branches e acompanhar divergências"
+        description: "`-r` mostra referências remotas conhecidas; `-a` inclui locais. `-vv` mostra upstream e ahead/behind quando disponíveis, calculados com as referências locais."
+        code: |-
+          git fetch origin
+          git branch
+          git branch -r
+          git branch -a
+          git branch -vv
+        tags: [listar branches, branch -vv, tracking, upstream, ahead, behind]
+      - title: "Upstream não é necessariamente a base do PR/MR"
+        description: "Upstream é a branch associada usada por status e pull sem argumentos, e por configurações comuns de push. Sua feature normalmente acompanha a feature remota; a base de integração pode continuar sendo master."
+        code: "git branch --set-upstream-to=origin/SI-1234-feature/pesquisa-nps"
+        callout:
+          type: hint
+          label: "Pré-condição:"
+          text: "Execute na feature local e só depois de a referência remota existir. `git push -u` configura esse vínculo ao publicar; não altera a base de um Pull Request (GitHub) / Merge Request (GitLab)."
+        tags: [upstream, tracking, set-upstream-to, pull request, merge request]
+  - id: comecar-task
+    name: "Começar uma task"
+    entries:
+      - title: "Criar diretamente da base remota atualizada"
+        kicker: "Sem depender de uma master local antiga"
+        description: "Com o working tree limpo, crie sua task a partir da posição da base obtida no fetch. `--no-track` evita que a feature acompanhe origin/master por acidente."
+        code: |-
+          git status
+          git fetch origin
+          git switch --no-track -c SI-1234-feature/pesquisa-nps origin/master
+        contentBlocks:
+          - type: flow-steps
+            steps:
+              - "Se houver trabalho aberto, salve com stash ou commit local antes de trocar."
+              - "`fetch` baixa objetos e atualiza referências como `origin/master`."
+              - "`switch -c` cria a nova branch nesse commit e passa a trabalhar nela. Sua branch master local não precisa ser atualizada."
+        tags:
+          [
+            criar branch,
+            começar task,
+            base atualizada,
+            origin/master,
+            origin/main,
+            não perder alterações,
+          ]
+      - title: "Alternativa pela base local"
+        description: "Use se também quiser atualizar a master local. `pull --ff-only` busca e avança até o upstream se não houver divergência; se recusar, pare e compare os commits antes de integrar."
+        code: |-
+          git switch master
+          git pull --ff-only
+          git switch -c SI-1234-feature/pesquisa-nps
+        callout:
+          type: hint
+          label: "Confira antes:"
+          text: "A master local precisa acompanhar origin/master. `git pull` sem opção segue a estratégia configurada; `--ff-only` torna esta receita explícita."
+        tags: [pull, ff-only, main, master, criar task]
+      - title: "Deixar a task só local por alguns dias"
+        description: "Branch e commits continuam locais até você enviá-los. Pode commitar, fechar o editor e retomar depois; não existe obrigação de push por commit."
+        code: |-
+          git add src/pesquisa.js
+          git commit -m "wip: inicia pesquisa NPS"
+        callout:
+          type: warn
+          label: "Local não é backup externo:"
+          text: "Falha de disco pode perder esse trabalho. Revise o histórico antes de publicar uma branch com commits temporários."
+        tags: [commit local, sem push, branch local, alguns dias, wip]
+  - id: publicar
+    name: "Publicar ou abrir branch remota"
+    entries:
+      - title: "Primeira publicação e próximas atualizações"
+        description: "A branch passa a existir no servidor quando o push cria a referência remota. `-u` registra o upstream; depois, confira com `branch -vv` e use `git push` para a branch acompanhada."
+        code: |-
+          git push -u origin SI-1234-feature/pesquisa-nps
+          git branch -vv
+        tags: [push -u, publicar branch, upstream, tracking, origin]
+      - title: "Trabalhar numa branch que já existe no remoto"
+        description: "Fetch primeiro. O comando cria uma branch local com o mesmo nome e configura o acompanhamento explícito. Se a local já existe, use somente switch com seu nome."
+        code: |-
+          git fetch origin
+          git switch --track origin/SI-1234-feature/pesquisa-nps
+        tags: [branch remota existente, switch --track, baixar branch, checkout]
+  - id: trocar
+    name: "Trocar de branch sem perder trabalho"
+    entries:
+      - title: "Por que às vezes switch funciona com arquivos alterados?"
+        description: "Git pode carregar alterações locais para a outra branch quando a troca não precisa sobrescrevê-las. Se arquivos modificados ou untracked seriam sobrescritos, bloqueia. Essas edições ainda não pertencem a um commit da task original."
+        code: |-
+          git status
+          git switch SI-5678-fix/login
+        contentBlocks:
+          - type: context-block
+            title: "Não force a troca para contornar a proteção"
+            variant: common-error
+            text: "Se o Git bloquear, salve o trabalho. Mesmo quando permite trocar, confirme no status se você levou alterações da task errada."
+          - type: reference-card
+            links:
+              - {
+                  label: "Escolher stash, commit local ou worktree",
+                  doc: git-stash-troca-contexto,
+                  section: escolher,
+                }
+        tags:
+          [
+            trocar branch,
+            switch,
+            alterações locais,
+            não perder alterações,
+            would be overwritten,
+          ]
+      - title: "switch, restore e o checkout dos materiais antigos"
+        description: "Checkout acumulou troca de branch e restauração de arquivos. Os comandos modernos separam as intenções; checkout continua válido em scripts e guias antigos."
+        contentBlocks:
+          - type: comparison-block
+            columns:
+              - title: "Prefira hoje"
+                items:
+                  - "`git switch minha-branch` — trocar."
+                  - "`git switch -c minha-branch` — criar e trocar."
+                  - "`git restore arquivo.js` — restaurar do index."
+              - title: "Equivalentes antigos"
+                items:
+                  - "`git checkout minha-branch`."
+                  - "`git checkout -b minha-branch`."
+                  - "`git checkout -- arquivo.js`."
+        callout:
+          type: danger
+          label: "Restaurar descarta:"
+          text: "Os dois exemplos de restauração sobrescrevem edições não staged. Leia o diff e guarde o que precisar antes; não são comandos de troca de branch."
+        tags: [checkout, checkout -b, checkout --, switch, restore]
+  - id: organizar
+    name: "Renomear e remover"
+    entries:
+      - title: "Renomear a branch atual"
+        description: "`-m` renomeia localmente e preserva configuração e reflog. Uma branch já publicada não muda de nome no servidor automaticamente; publique o novo nome e combine a remoção do antigo com o time."
+        code: |-
+          git branch -m SI-1234-feature/pesquisa-nps
+          git branch -vv
+        tags: [renomear branch, branch -m, nome]
+      - title: "Remover uma branch local integrada"
+        description: "Saia da branch e confira os commits exclusivos em relação à base. `-d` exige integração no upstream configurado ou, sem upstream, em HEAD; isso não garante integração na base do PR/MR."
+        code: |-
+          git switch master
+          git log --oneline master..SI-1234-feature/pesquisa-nps
+          git branch -d SI-1234-feature/pesquisa-nps
+        callout:
+          type: warn
+          label: "Squash pode confundir a verificação:"
+          text: "Mesmo com a alteração integrada por squash, os commits originais podem não ser ancestrais da base. Confira o PR/MR antes de remover; uma branch checkoutada em outro worktree também é protegida."
+        tags: [remover branch, branch -d, não mergeada, squash]
+      - title: "Forçar exclusão de uma branch não integrada"
+        description: "Só quando decidiu abandonar aqueles commits. Primeiro inspecione e crie uma referência de segurança se quiser mantê-los acessíveis."
+        code: |-
+          git log --oneline master..SI-1234-feature/pesquisa-nps
+          git branch backup/pesquisa-nps SI-1234-feature/pesquisa-nps
+          git branch -D SI-1234-feature/pesquisa-nps
+        callout:
+          type: danger
+          label: "Remove sem exigir merge:"
+          text: "`-D` elimina a proteção de integração e o reflog dessa branch. Não use como resposta automática a uma recusa de `-d`; a branch não pode estar checkoutada."
+        tags: [branch -D, apagar branch, não mergeada, destrutivo]
+      - title: "Remover no remoto e limpar referências obsoletas"
+        description: "Depois de confirmar integração e alinhar com o time, remova a referência no servidor. O fetch com prune elimina referências locais de branches remotas que já não existem; não apaga branches locais."
+        code: |-
+          git ls-remote --heads origin SI-1234-feature/pesquisa-nps
+          git push origin --delete SI-1234-feature/pesquisa-nps
+          git fetch origin --prune
+        callout:
+          type: danger
+          label: "Afeta a equipe:"
+          text: "A exclusão remota pode afetar PR/MR e automações. Confira nome e destino; a branch local é independente e não será removida por esse push."
+        tags: [remover branch remota, delete, prune, origin]

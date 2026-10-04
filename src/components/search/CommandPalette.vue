@@ -26,6 +26,9 @@ const baseNoSlash = base.replace(/\/$/, "");
 
 const open = ref(false);
 const query = ref("");
+const contextTech = ref("");
+const contextLabel = ref("");
+const scopeTech = ref("");
 const rawResults = ref<PalettePageResult[]>([]);
 const activeIndex = ref(0);
 const loading = ref(false);
@@ -33,6 +36,7 @@ const unavailable = ref(false);
 const inputEl = ref<HTMLInputElement | null>(null);
 let lastFocused: HTMLElement | null = null;
 let debounce = 0;
+let searchRevision = 0;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let pagefind: any = null;
@@ -58,25 +62,33 @@ function withBase(url: string): string {
 	return clean[1] ? `${path}#${clean[1]}` : path;
 }
 
-async function runSearch(q: string) {
+async function runSearch(q: string, scope: string, revision: number) {
 	const pf = await loadPagefind();
+	if (revision !== searchRevision) return;
 	if (!pf || !q.trim()) {
 		rawResults.value = [];
+		loading.value = false;
 		return;
 	}
 	loading.value = true;
-	const search = await pf.search(q);
+	const search = await pf.search(q, scope ? { filters: { tech: scope } } : {});
 	const data = await Promise.all(
-		search.results.slice(0, 6).map((r: { data: () => Promise<PalettePageResult> }) => r.data()),
+		search.results
+			.slice(0, 6)
+			.map((r: { data: () => Promise<PalettePageResult> }) => r.data()),
 	);
+	if (revision !== searchRevision) return;
 	rawResults.value = data;
 	activeIndex.value = 0;
 	loading.value = false;
 }
 
-watch(query, (q) => {
+watch([query, scopeTech], ([q, scope]) => {
 	window.clearTimeout(debounce);
-	debounce = window.setTimeout(() => runSearch(q), 150);
+	const revision = ++searchRevision;
+	rawResults.value = [];
+	loading.value = Boolean(q.trim());
+	debounce = window.setTimeout(() => runSearch(q, scope, revision), 150);
 });
 
 const items = computed<Item[]>(() => {
@@ -90,7 +102,12 @@ const items = computed<Item[]>(() => {
 		});
 		for (const s of (r.sub_results ?? []).slice(0, 3)) {
 			if (s.url && s.title) {
-				list.push({ title: s.title, url: withBase(s.url), excerpt: s.excerpt, sub: true });
+				list.push({
+					title: s.title,
+					url: withBase(s.url),
+					excerpt: s.excerpt,
+					sub: true,
+				});
 			}
 		}
 	}
@@ -99,11 +116,17 @@ const items = computed<Item[]>(() => {
 
 function openPalette() {
 	lastFocused = document.activeElement as HTMLElement;
+	const context = document.querySelector<HTMLElement>("[data-search-tech]");
+	contextTech.value = context?.dataset.searchTech ?? "";
+	contextLabel.value = context?.dataset.searchTechLabel ?? "";
+	scopeTech.value = contextTech.value;
 	open.value = true;
 	loadPagefind();
 	nextTick(() => inputEl.value?.focus());
 }
 function closePalette() {
+	window.clearTimeout(debounce);
+	searchRevision++;
 	open.value = false;
 	query.value = "";
 	rawResults.value = [];
@@ -131,6 +154,8 @@ function onKeydown(e: KeyboardEvent) {
 	if (e.key === "Escape") {
 		e.preventDefault();
 		closePalette();
+	} else if (tag === "SELECT") {
+		return;
 	} else if (e.key === "ArrowDown") {
 		e.preventDefault();
 		activeIndex.value = Math.min(activeIndex.value + 1, items.value.length - 1);
@@ -171,7 +196,7 @@ onUnmounted(() => {
 				aria-label="Buscar na documentação"
 				@click.self="closePalette"
 			>
-			<div class="palette-panel glass">
+				<div class="palette-panel glass">
 					<div class="palette-input-row">
 						<span class="palette-search-icon" aria-hidden="true">⌕</span>
 						<input
@@ -185,6 +210,21 @@ onUnmounted(() => {
 						/>
 						<kbd class="palette-kbd">esc</kbd>
 					</div>
+
+					<label
+						v-if="contextTech"
+						class="flex flex-wrap items-center gap-2 px-5 pb-3 text-sm text-muted"
+					>
+						Buscar em
+						<select
+							v-model="scopeTech"
+							class="rounded-lg border-0 bg-surface-2 px-2 py-1 text-ink"
+							aria-label="Escopo da busca"
+						>
+							<option :value="contextTech">{{ contextLabel }}</option>
+							<option value="">Todas as documentações</option>
+						</select>
+					</label>
 
 					<div v-if="items.length" class="palette-results" role="listbox">
 						<a
@@ -210,13 +250,17 @@ onUnmounted(() => {
 					<div v-else class="palette-empty">
 						<template v-if="unavailable">
 							A busca é indexada no build. Rode
-							<code>npm run build &amp;&amp; npm run preview</code> para testá-la.
+							<code>npm run build &amp;&amp; npm run preview</code> para
+							testá-la.
 						</template>
 						<template v-else-if="query.trim() && !loading">
 							Nada encontrado para “{{ query }}”.
 						</template>
 						<template v-else>
-							Digite para buscar em todas as documentações.
+							Digite para buscar
+							{{
+								scopeTech ? "em " + contextLabel : "em todas as documentações"
+							}}.
 						</template>
 					</div>
 				</div>
@@ -256,6 +300,7 @@ onUnmounted(() => {
 }
 .palette-input {
 	flex: 1;
+	min-width: 0;
 	background: transparent;
 	border: none;
 	outline: none;
